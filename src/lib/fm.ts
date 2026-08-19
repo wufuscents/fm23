@@ -86,21 +86,23 @@ export interface Player {
   isHeadCoach: boolean;
   isRetired: boolean;
   biography: string;
+  milestones: { first: number; second: number; third: number };
+  teamMilestones: { first: number; second: number; third: number };
   raw: Row;
 }
 
 export const toPlayer = (row: Row): Player => ({
   id: str(row, ["id", "player_id", "uuid", "slug"]),
   name: str(row, ["name", "player_name", "full_name", "display_name"]),
-  imageUrl: str(row, ["image_url", "photo_url", "picture_url", "avatar_url"]),
-  flagUrl: str(row, ["nationality_flag_url", "flag_url", "country_flag_url"]),
+  imageUrl: storageUrl(str(row, ["image_url", "photo_url", "picture_url", "avatar_url"])),
+  flagUrl: storageUrl(str(row, ["nationality_flag_url", "flag_url", "country_flag_url"])),
   nationality: str(row, ["nationality", "country", "nation"]),
   club: str(row, ["club", "current_club", "team", "current_team", "club_name"]),
   role: str(row, ["primary_role", "role", "position", "primary_position"]),
   status: str(row, ["status", "player_status", "category", "type"]),
   apps: num(row, ["apps", "appearances", "career_apps", "total_apps", "matches"]),
   goals: num(row, ["goals", "career_goals", "total_goals"]),
-  caps: num(row, ["caps", "international_caps", "national_caps"]),
+  caps: num(row, ["caps", "international_caps", "national_caps", "international_apps"]),
   legendClubs: list(row, ["legend_at_clubs", "legend_clubs"]),
   iconClubs: list(row, ["icon_at_clubs", "icon_clubs"]),
   isHeadCoach: bool(row, ["is_head_coach", "head_coach", "is_coach"]),

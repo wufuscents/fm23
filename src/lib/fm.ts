@@ -156,20 +156,24 @@ export const toCareer = (row: Row): CareerEntry => ({
   goals: num(row, ["goals", "wins", "goals_scored"]),
 });
 
-const fail = (label: string, error: { message: string } | null) => {
-  if (error) throw new Error(`${label}: ${error.message}`);
-};
+/**
+ * Reads never throw: a blocked table (missing grant / RLS policy) must degrade
+ * to an empty dataset plus a visible notice, not a blank SSR crash.
+ */
+const soft = (label: string, error: { message: string } | null): string | null =>
+  error ? `${label}: ${error.message}` : null;
 
-export async function fetchPlayers(): Promise<Player[]> {
+export async function fetchPlayers(): Promise<{ players: Player[]; error: string | null }> {
   const { data, error } = await supabase.from("players").select("*");
-  fail("players", error);
-  return (data ?? []).map((r) => toPlayer(r as Row));
+  return { players: (data ?? []).map((r) => toPlayer(r as Row)), error: soft("players", error) };
 }
 
-export async function fetchHonours(): Promise<Honour[]> {
+export async function fetchHonours(): Promise<{ honours: Honour[]; error: string | null }> {
   const { data, error } = await supabase.from("awards_and_trophies").select("*");
-  fail("awards_and_trophies", error);
-  return (data ?? []).map((r) => toHonour(r as Row));
+  return {
+    honours: (data ?? []).map((r) => toHonour(r as Row)),
+    error: soft("awards_and_trophies", error),
+  };
 }
 
 export interface HonourCounts {
@@ -192,11 +196,16 @@ export function countHonours(honours: Honour[]): Map<string, HonourCounts> {
 export interface Directory {
   players: Player[];
   counts: Map<string, HonourCounts>;
+  error: string | null;
 }
 
 export async function fetchDirectory(): Promise<Directory> {
-  const [players, honours] = await Promise.all([fetchPlayers(), fetchHonours()]);
-  return { players, counts: countHonours(honours) };
+  const [p, h] = await Promise.all([fetchPlayers(), fetchHonours()]);
+  return {
+    players: p.players,
+    counts: countHonours(h.honours),
+    error: p.error ?? h.error,
+  };
 }
 
 export interface PlayerDetail {
@@ -204,6 +213,7 @@ export interface PlayerDetail {
   playerCareer: CareerEntry[];
   coachCareer: CareerEntry[];
   honours: Honour[];
+  error: string | null;
 }
 
 export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
@@ -213,12 +223,13 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
     supabase.from("coach_career_history").select("*").eq("player_id", id),
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),
   ]);
-  fail("players", p.error);
-  fail("player_career_history", pc.error);
-  fail("coach_career_history", cc.error);
-  fail("awards_and_trophies", at.error);
 
   return {
+    error:
+      soft("players", p.error) ??
+      soft("player_career_history", pc.error) ??
+      soft("coach_career_history", cc.error) ??
+      soft("awards_and_trophies", at.error),
     player: p.data ? toPlayer(p.data as Row) : null,
     playerCareer: (pc.data ?? []).map((r) => toCareer(r as Row)),
     coachCareer: (cc.data ?? []).map((r) => toCareer(r as Row)),

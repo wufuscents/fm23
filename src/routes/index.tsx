@@ -71,7 +71,7 @@ function statusOf(p: Player): string {
 
 function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
-  const { players, counts } = data;
+  const { players, counts, error } = data;
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -123,6 +123,15 @@ function Directory() {
       <SiteHeader />
 
       <main className="mx-auto max-w-7xl px-4 py-8">
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive-foreground"
+          >
+            Database read blocked: {error}. Grant SELECT on the tables to the anon role in your
+            Supabase project to load live data.
+          </div>
+        )}
         <div className="fm-panel p-5">
           <p className="fm-label">Database</p>
           <h1 className="mt-1 text-3xl font-bold uppercase sm:text-4xl">Squad Directory</h1>

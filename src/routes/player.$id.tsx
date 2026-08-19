@@ -55,9 +55,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 function PlayerDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(detailQuery(id));
-  const { player, playerCareer, coachCareer, honours } = data;
+  const { player, playerCareer, coachCareer, honours, error } = data;
   const [tab, setTab] = useState<"trophies" | "awards">("trophies");
 
+  if (error) return <Shell>Database read blocked: {error}</Shell>;
   if (!player) return <Shell>Player not found.</Shell>;
 
   const trophies = honours.filter((h) => h.kind === "player_trophy");

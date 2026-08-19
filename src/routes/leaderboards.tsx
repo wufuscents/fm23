@@ -48,7 +48,7 @@ export const Route = createFileRoute("/leaderboards")({
 
 function Leaderboards() {
   const { data } = useSuspenseQuery(directoryQuery);
-  const { players, counts } = data;
+  const { players, counts, error } = data;
   const c = (id: string) => counts.get(id) ?? { trophies: 0, awards: 0 };
 
   const boards: { title: string; unit: string; rows: { p: Player; v: number }[] }[] = [
@@ -81,6 +81,14 @@ function Leaderboards() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-8">
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive-foreground"
+          >
+            Database read blocked: {error}.
+          </div>
+        )}
         <p className="fm-label">Records</p>
         <h1 className="mt-1 text-3xl font-bold uppercase sm:text-4xl">Hall of Fame</h1>
 

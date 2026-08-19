@@ -1,0 +1,129 @@
+import { Link } from "@tanstack/react-router";
+import type { HonourCounts, Player } from "@/lib/fm";
+
+export function Avatar({
+  src,
+  name,
+  className = "",
+}: {
+  src: string;
+  name: string;
+  className?: string;
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        loading="lazy"
+        className={`object-cover ${className}`}
+      />
+    );
+  }
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+  return (
+    <span
+      className={`grid place-items-center bg-panel font-display font-bold text-muted-foreground ${className}`}
+      aria-label={name}
+    >
+      {initials || "?"}
+    </span>
+  );
+}
+
+export function Flag({ src, nationality }: { src: string; nationality: string }) {
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={nationality ? `${nationality} flag` : "Flag"}
+      loading="lazy"
+      className="h-3.5 w-5 rounded-[2px] object-cover ring-1 ring-border"
+    />
+  );
+}
+
+export function PlayerCard({
+  player,
+  counts,
+}: {
+  player: Player;
+  counts: HonourCounts;
+}) {
+  return (
+    <Link
+      to="/player/$id"
+      params={{ id: player.id }}
+      className="fm-panel group flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:border-primary/60"
+    >
+      <div className="relative aspect-[4/3] overflow-hidden bg-panel">
+        <Avatar
+          src={player.imageUrl}
+          name={player.name}
+          className="h-full w-full text-3xl transition-transform duration-300 group-hover:scale-105"
+        />
+        {player.status ? (
+          <span className="absolute left-2 top-2 rounded-sm bg-background/80 px-2 py-0.5 font-display text-[0.65rem] uppercase tracking-widest text-primary">
+            {player.status}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3 p-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Flag src={player.flagUrl} nationality={player.nationality} />
+            <h3 className="truncate text-base font-semibold">{player.name}</h3>
+          </div>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {[player.role, player.club].filter(Boolean).join(" · ") || "—"}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-4 gap-1 rounded-md bg-panel/70 p-2 text-center">
+          <Stat label="Apps" value={player.apps} />
+          <Stat label="Gls" value={player.goals} />
+          <Stat label="Trph" value={counts.trophies} tone="gold" />
+          <Stat label="Awd" value={counts.awards} tone="primary" />
+        </div>
+
+        {player.legendClubs.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {player.legendClubs.slice(0, 3).map((c) => (
+              <span
+                key={c}
+                className="rounded-sm border border-gold/40 px-1.5 py-0.5 text-[0.65rem] text-gold"
+              >
+                Legend · {c}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </Link>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "gold" | "primary";
+}) {
+  const color =
+    tone === "gold" ? "text-gold" : tone === "primary" ? "text-primary" : "text-foreground";
+  return (
+    <div>
+      <div className={`fm-stat text-lg ${color}`}>{value}</div>
+      <div className="fm-label text-[0.6rem]">{label}</div>
+    </div>
+  );
+}

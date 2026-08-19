@@ -55,6 +55,20 @@ export const list = (row: Row | undefined, keys: string[]): string[] => {
   return [];
 };
 
+/**
+ * Image columns hold either a bare storage path or a URL still pointing at the
+ * placeholder project ref, so every image is normalised to the public bucket.
+ */
+const BUCKET = "https://fenmghxzmawubuxavrol.supabase.co/storage/v1/object/public/fm-images/";
+
+export const storageUrl = (value: string): string => {
+  if (!value) return "";
+  const placeholder = /^https?:\/\/[^/]*(YOUR-PROJECT-REF|your-project-ref)[^/]*\.supabase\.co\/storage\/v1\/object\/public\/([^/]+)\//;
+  if (placeholder.test(value)) return value.replace(placeholder, BUCKET);
+  if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
+  return BUCKET + value.replace(/^\/+/, "").replace(/^fm-images\//, "");
+};
+
 export interface Player {
   id: string;
   name: string;
@@ -72,26 +86,38 @@ export interface Player {
   isHeadCoach: boolean;
   isRetired: boolean;
   biography: string;
+  milestones: { first: number; second: number; third: number };
+  teamMilestones: { first: number; second: number; third: number };
   raw: Row;
 }
 
 export const toPlayer = (row: Row): Player => ({
   id: str(row, ["id", "player_id", "uuid", "slug"]),
   name: str(row, ["name", "player_name", "full_name", "display_name"]),
-  imageUrl: str(row, ["image_url", "photo_url", "picture_url", "avatar_url"]),
-  flagUrl: str(row, ["nationality_flag_url", "flag_url", "country_flag_url"]),
+  imageUrl: storageUrl(str(row, ["image_url", "photo_url", "picture_url", "avatar_url"])),
+  flagUrl: storageUrl(str(row, ["nationality_flag_url", "flag_url", "country_flag_url"])),
   nationality: str(row, ["nationality", "country", "nation"]),
   club: str(row, ["club", "current_club", "team", "current_team", "club_name"]),
   role: str(row, ["primary_role", "role", "position", "primary_position"]),
   status: str(row, ["status", "player_status", "category", "type"]),
   apps: num(row, ["apps", "appearances", "career_apps", "total_apps", "matches"]),
   goals: num(row, ["goals", "career_goals", "total_goals"]),
-  caps: num(row, ["caps", "international_caps", "national_caps"]),
+  caps: num(row, ["caps", "international_caps", "national_caps", "international_apps"]),
   legendClubs: list(row, ["legend_at_clubs", "legend_clubs"]),
   iconClubs: list(row, ["icon_at_clubs", "icon_clubs"]),
   isHeadCoach: bool(row, ["is_head_coach", "head_coach", "is_coach"]),
-  isRetired: bool(row, ["is_retired", "retired"]),
+  isRetired: bool(row, ["is_retired", "retired", "is_retired_player"]),
   biography: str(row, ["biography", "bio", "description", "about"]),
+  milestones: {
+    first: num(row, ["personal_1st"]),
+    second: num(row, ["personal_2nd"]),
+    third: num(row, ["personal_3rd"]),
+  },
+  teamMilestones: {
+    first: num(row, ["team_1st"]),
+    second: num(row, ["team_2nd"]),
+    third: num(row, ["team_3rd"]),
+  },
   raw: row,
 });
 
@@ -105,6 +131,7 @@ export interface Honour {
   club: string;
   season: string;
   placement: string;
+  amount: number;
   raw: Row;
 }
 
@@ -129,8 +156,9 @@ export const toHonour = (row: Row): Honour => ({
   kind: classify(row),
   title: str(row, ["title", "name", "award_name", "trophy_name", "competition"]),
   club: str(row, ["club", "team", "club_name", "team_name", "organisation"]),
-  season: str(row, ["season", "year", "years", "date"]),
+  season: str(row, ["season", "year", "years", "date", "years_or_details"]),
   placement: str(row, ["placement", "position", "rank", "result", "medal"]),
+  amount: Math.max(1, num(row, ["amount", "count", "wins", "quantity"]) || 1),
   raw: row,
 });
 
@@ -150,7 +178,7 @@ export const toCareer = (row: Row): CareerEntry => ({
   playerId: str(row, ["player_id", "coach_id", "playerid", "player"]),
   team: str(row, ["team", "team_name", "club", "club_name"]),
   country: str(row, ["country", "nation", "league_country"]),
-  logoUrl: str(row, ["club_logo_url", "team_logo_url", "logo_url"]),
+  logoUrl: storageUrl(str(row, ["club_logo_url", "team_logo_url", "logo_url"])),
   years: str(row, ["years", "season", "period", "seasons", "year"]),
   apps: num(row, ["apps", "appearances", "matches", "games"]),
   goals: num(row, ["goals", "wins", "goals_scored"]),
@@ -186,11 +214,41 @@ export function countHonours(honours: Honour[]): Map<string, HonourCounts> {
   for (const h of honours) {
     if (!h.playerId) continue;
     const entry = map.get(h.playerId) ?? { trophies: 0, awards: 0 };
-    if (h.kind === "player_award") entry.awards += 1;
-    else entry.trophies += 1;
+    if (h.kind === "player_award") entry.awards += h.amount;
+    else entry.trophies += h.amount;
     map.set(h.playerId, entry);
   }
   return map;
+}
+
+export interface CareerTotals {
+  apps: number;
+  goals: number;
+}
+
+export const sumCareer = (rows: CareerEntry[]): CareerTotals =>
+  rows.reduce(
+    (acc, r) => ({ apps: acc.apps + r.apps, goals: acc.goals + r.goals }),
+    { apps: 0, goals: 0 },
+  );
+
+/** Career totals per player, summed from every player_career_history stint. */
+export async function fetchCareerTotals(): Promise<{
+  totals: Map<string, CareerTotals>;
+  error: string | null;
+}> {
+  const { data, error } = await supabase.from("player_career_history").select("*");
+  const totals = new Map<string, CareerTotals>();
+  for (const row of data ?? []) {
+    const entry = toCareer(row as Row);
+    if (!entry.playerId) continue;
+    const current = totals.get(entry.playerId) ?? { apps: 0, goals: 0 };
+    totals.set(entry.playerId, {
+      apps: current.apps + entry.apps,
+      goals: current.goals + entry.goals,
+    });
+  }
+  return { totals, error: soft("player_career_history", error) };
 }
 
 export interface Directory {
@@ -200,11 +258,16 @@ export interface Directory {
 }
 
 export async function fetchDirectory(): Promise<Directory> {
-  const [p, h] = await Promise.all([fetchPlayers(), fetchHonours()]);
+  const [p, h, t] = await Promise.all([fetchPlayers(), fetchHonours(), fetchCareerTotals()]);
+  // Club apps/goals are not stored on players — they are the sum of career stints.
+  const players = p.players.map((player) => {
+    const totals = t.totals.get(player.id);
+    return totals ? { ...player, apps: totals.apps, goals: totals.goals } : player;
+  });
   return {
-    players: p.players,
+    players,
     counts: countHonours(h.honours),
-    error: p.error ?? h.error,
+    error: p.error ?? h.error ?? t.error,
   };
 }
 
@@ -213,6 +276,7 @@ export interface PlayerDetail {
   playerCareer: CareerEntry[];
   coachCareer: CareerEntry[];
   honours: Honour[];
+  totals: CareerTotals;
   error: string | null;
 }
 
@@ -224,16 +288,21 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),
   ]);
 
+  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row));
+  const totals = sumCareer(playerCareer);
+  const player = p.data ? toPlayer(p.data as Row) : null;
+
   return {
     error:
       soft("players", p.error) ??
       soft("player_career_history", pc.error) ??
       soft("coach_career_history", cc.error) ??
       soft("awards_and_trophies", at.error),
-    player: p.data ? toPlayer(p.data as Row) : null,
-    playerCareer: (pc.data ?? []).map((r) => toCareer(r as Row)),
+    player: player ? { ...player, apps: totals.apps, goals: totals.goals } : null,
+    playerCareer,
     coachCareer: (cc.data ?? []).map((r) => toCareer(r as Row)),
     honours: (at.data ?? []).map((r) => toHonour(r as Row)),
+    totals,
   };
 }
 

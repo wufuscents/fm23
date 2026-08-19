@@ -258,11 +258,16 @@ export interface Directory {
 }
 
 export async function fetchDirectory(): Promise<Directory> {
-  const [p, h] = await Promise.all([fetchPlayers(), fetchHonours()]);
+  const [p, h, t] = await Promise.all([fetchPlayers(), fetchHonours(), fetchCareerTotals()]);
+  // Club apps/goals are not stored on players — they are the sum of career stints.
+  const players = p.players.map((player) => {
+    const totals = t.totals.get(player.id);
+    return totals ? { ...player, apps: totals.apps, goals: totals.goals } : player;
+  });
   return {
-    players: p.players,
+    players,
     counts: countHonours(h.honours),
-    error: p.error ?? h.error,
+    error: p.error ?? h.error ?? t.error,
   };
 }
 
@@ -271,6 +276,7 @@ export interface PlayerDetail {
   playerCareer: CareerEntry[];
   coachCareer: CareerEntry[];
   honours: Honour[];
+  totals: CareerTotals;
   error: string | null;
 }
 

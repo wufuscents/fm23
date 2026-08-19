@@ -3,12 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { SiteHeader } from "@/components/fm/SiteHeader";
 import { Avatar, Flag } from "@/components/fm/PlayerCard";
-import {
-  fetchPlayerDetail,
-  medalCounts,
-  type CareerEntry,
-  type Honour,
-} from "@/lib/fm";
+import { fetchPlayerDetail, type CareerEntry, type Honour } from "@/lib/fm";
 
 const detailQuery = (id: string) =>
   queryOptions({
@@ -55,7 +50,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 function PlayerDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(detailQuery(id));
-  const { player, playerCareer, coachCareer, honours, error } = data;
+  const { player, playerCareer, coachCareer, honours, totals, error } = data;
   const [tab, setTab] = useState<"trophies" | "awards">("trophies");
 
   if (error) return <Shell>Database read blocked: {error}</Shell>;
@@ -63,7 +58,9 @@ function PlayerDetail() {
 
   const trophies = honours.filter((h) => h.kind === "player_trophy");
   const awards = honours.filter((h) => h.kind === "player_award");
-  const medals = medalCounts(honours);
+  const sum = (rows: Honour[]) => rows.reduce((n, h) => n + h.amount, 0);
+  const trophyCount = sum(trophies);
+  const awardCount = sum(awards);
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,26 +112,28 @@ function PlayerDetail() {
 
             <div className="mt-4 grid max-w-md grid-cols-4 gap-2 text-center">
               <Metric label="Caps" value={player.caps} />
-              <Metric label="Apps" value={player.apps} />
-              <Metric label="Goals" value={player.goals} />
-              <Metric label="Trophies" value={trophies.length} tone="gold" />
+              <Metric label="Apps" value={totals.apps} />
+              <Metric label="Goals" value={totals.goals} />
+              <Metric label="Trophies" value={trophyCount} tone="gold" />
             </div>
           </div>
         </section>
 
         <section className="mt-4">
           <h2 className="fm-label">Milestones</h2>
-          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Medal label="Personal 1st" value={medals.personal.first} tone="text-gold" />
-            <Medal label="Personal 2nd" value={medals.personal.second} tone="text-silver" />
-            <Medal label="Personal 3rd" value={medals.personal.third} tone="text-bronze" />
-            <Medal label="Team Honours" value={medals.team} tone="text-accent" />
+          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <Medal label="Personal 1st" value={player.milestones.first} tone="text-gold" />
+            <Medal label="Personal 2nd" value={player.milestones.second} tone="text-silver" />
+            <Medal label="Personal 3rd" value={player.milestones.third} tone="text-bronze" />
+            <Medal label="Team 1st" value={player.teamMilestones.first} tone="text-accent" />
+            <Medal label="Team 2nd" value={player.teamMilestones.second} tone="text-silver" />
+            <Medal label="Team 3rd" value={player.teamMilestones.third} tone="text-bronze" />
           </div>
         </section>
 
         <section className="mt-6">
           <h2 className="text-2xl font-bold uppercase">Player Career</h2>
-          <CareerTable rows={playerCareer} goalsLabel="Goals" />
+          <CareerTable rows={playerCareer} goalsLabel="Goals" showTotals />
         </section>
 
         {player.isHeadCoach || coachCareer.length > 0 ? (
@@ -148,8 +147,8 @@ function PlayerDetail() {
           <div className="flex gap-2">
             {(
               [
-                ["trophies", `Team Trophies (${trophies.length})`],
-                ["awards", `Individual Awards (${awards.length})`],
+                ["trophies", `Team Trophies (${trophyCount})`],
+                ["awards", `Individual Awards (${awardCount})`],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -201,7 +200,15 @@ function Medal({ label, value, tone }: { label: string; value: number; tone: str
   );
 }
 
-function CareerTable({ rows, goalsLabel }: { rows: CareerEntry[]; goalsLabel: string }) {
+function CareerTable({
+  rows,
+  goalsLabel,
+  showTotals = false,
+}: {
+  rows: CareerEntry[];
+  goalsLabel: string;
+  showTotals?: boolean;
+}) {
   if (rows.length === 0) {
     return (
       <p className="fm-panel mt-2 p-5 text-sm text-muted-foreground">No records available.</p>
@@ -242,6 +249,21 @@ function CareerTable({ rows, goalsLabel }: { rows: CareerEntry[]; goalsLabel: st
             </tr>
           ))}
         </tbody>
+        {showTotals ? (
+          <tfoot>
+            <tr className="border-t border-border">
+              <td className="fm-label px-4 py-2" colSpan={3}>
+                Total
+              </td>
+              <td className="fm-stat px-4 py-2 text-right">
+                {rows.reduce((n, r) => n + r.apps, 0)}
+              </td>
+              <td className="fm-stat px-4 py-2 text-right text-primary">
+                {rows.reduce((n, r) => n + r.goals, 0)}
+              </td>
+            </tr>
+          </tfoot>
+        ) : null}
       </table>
     </div>
   );
@@ -261,7 +283,7 @@ function HonourList({ rows }: { rows: Honour[] }) {
       {Array.from(grouped.entries()).map(([title, items]) => (
         <div key={title} className="fm-panel flex items-center gap-3 p-3">
           <span className="fm-stat grid h-10 w-10 shrink-0 place-items-center rounded-full bg-panel text-lg text-gold">
-            {items.length}
+            {items.reduce((n, i) => n + i.amount, 0)}
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{title}</p>

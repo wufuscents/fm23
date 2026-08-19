@@ -131,6 +131,7 @@ export interface Honour {
   club: string;
   season: string;
   placement: string;
+  amount: number;
   raw: Row;
 }
 
@@ -155,8 +156,9 @@ export const toHonour = (row: Row): Honour => ({
   kind: classify(row),
   title: str(row, ["title", "name", "award_name", "trophy_name", "competition"]),
   club: str(row, ["club", "team", "club_name", "team_name", "organisation"]),
-  season: str(row, ["season", "year", "years", "date"]),
+  season: str(row, ["season", "year", "years", "date", "years_or_details"]),
   placement: str(row, ["placement", "position", "rank", "result", "medal"]),
+  amount: Math.max(1, num(row, ["amount", "count", "wins", "quantity"]) || 1),
   raw: row,
 });
 
@@ -176,7 +178,7 @@ export const toCareer = (row: Row): CareerEntry => ({
   playerId: str(row, ["player_id", "coach_id", "playerid", "player"]),
   team: str(row, ["team", "team_name", "club", "club_name"]),
   country: str(row, ["country", "nation", "league_country"]),
-  logoUrl: str(row, ["club_logo_url", "team_logo_url", "logo_url"]),
+  logoUrl: storageUrl(str(row, ["club_logo_url", "team_logo_url", "logo_url"])),
   years: str(row, ["years", "season", "period", "seasons", "year"]),
   apps: num(row, ["apps", "appearances", "matches", "games"]),
   goals: num(row, ["goals", "wins", "goals_scored"]),
@@ -212,11 +214,41 @@ export function countHonours(honours: Honour[]): Map<string, HonourCounts> {
   for (const h of honours) {
     if (!h.playerId) continue;
     const entry = map.get(h.playerId) ?? { trophies: 0, awards: 0 };
-    if (h.kind === "player_award") entry.awards += 1;
-    else entry.trophies += 1;
+    if (h.kind === "player_award") entry.awards += h.amount;
+    else entry.trophies += h.amount;
     map.set(h.playerId, entry);
   }
   return map;
+}
+
+export interface CareerTotals {
+  apps: number;
+  goals: number;
+}
+
+export const sumCareer = (rows: CareerEntry[]): CareerTotals =>
+  rows.reduce(
+    (acc, r) => ({ apps: acc.apps + r.apps, goals: acc.goals + r.goals }),
+    { apps: 0, goals: 0 },
+  );
+
+/** Career totals per player, summed from every player_career_history stint. */
+export async function fetchCareerTotals(): Promise<{
+  totals: Map<string, CareerTotals>;
+  error: string | null;
+}> {
+  const { data, error } = await supabase.from("player_career_history").select("*");
+  const totals = new Map<string, CareerTotals>();
+  for (const row of data ?? []) {
+    const entry = toCareer(row as Row);
+    if (!entry.playerId) continue;
+    const current = totals.get(entry.playerId) ?? { apps: 0, goals: 0 };
+    totals.set(entry.playerId, {
+      apps: current.apps + entry.apps,
+      goals: current.goals + entry.goals,
+    });
+  }
+  return { totals, error: soft("player_career_history", error) };
 }
 
 export interface Directory {

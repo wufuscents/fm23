@@ -106,8 +106,18 @@ export const toPlayer = (row: Row): Player => ({
   legendClubs: list(row, ["legend_at_clubs", "legend_clubs"]),
   iconClubs: list(row, ["icon_at_clubs", "icon_clubs"]),
   isHeadCoach: bool(row, ["is_head_coach", "head_coach", "is_coach"]),
-  isRetired: bool(row, ["is_retired", "retired"]),
+  isRetired: bool(row, ["is_retired", "retired", "is_retired_player"]),
   biography: str(row, ["biography", "bio", "description", "about"]),
+  milestones: {
+    first: num(row, ["personal_1st"]),
+    second: num(row, ["personal_2nd"]),
+    third: num(row, ["personal_3rd"]),
+  },
+  teamMilestones: {
+    first: num(row, ["team_1st"]),
+    second: num(row, ["team_2nd"]),
+    third: num(row, ["team_3rd"]),
+  },
   raw: row,
 });
 

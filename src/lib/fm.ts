@@ -55,6 +55,20 @@ export const list = (row: Row | undefined, keys: string[]): string[] => {
   return [];
 };
 
+/**
+ * Image columns hold either a bare storage path or a URL still pointing at the
+ * placeholder project ref, so every image is normalised to the public bucket.
+ */
+const BUCKET = "https://fenmghxzmawubuxavrol.supabase.co/storage/v1/object/public/fm-images/";
+
+export const storageUrl = (value: string): string => {
+  if (!value) return "";
+  const placeholder = /^https?:\/\/[^/]*(YOUR-PROJECT-REF|your-project-ref)[^/]*\.supabase\.co\/storage\/v1\/object\/public\/([^/]+)\//;
+  if (placeholder.test(value)) return value.replace(placeholder, BUCKET);
+  if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
+  return BUCKET + value.replace(/^\/+/, "").replace(/^fm-images\//, "");
+};
+
 export interface Player {
   id: string;
   name: string;

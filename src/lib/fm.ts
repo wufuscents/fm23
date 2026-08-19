@@ -156,20 +156,24 @@ export const toCareer = (row: Row): CareerEntry => ({
   goals: num(row, ["goals", "wins", "goals_scored"]),
 });
 
-const fail = (label: string, error: { message: string } | null) => {
-  if (error) throw new Error(`${label}: ${error.message}`);
-};
+/**
+ * Reads never throw: a blocked table (missing grant / RLS policy) must degrade
+ * to an empty dataset plus a visible notice, not a blank SSR crash.
+ */
+const soft = (label: string, error: { message: string } | null): string | null =>
+  error ? `${label}: ${error.message}` : null;
 
-export async function fetchPlayers(): Promise<Player[]> {
+export async function fetchPlayers(): Promise<{ players: Player[]; error: string | null }> {
   const { data, error } = await supabase.from("players").select("*");
-  fail("players", error);
-  return (data ?? []).map((r) => toPlayer(r as Row));
+  return { players: (data ?? []).map((r) => toPlayer(r as Row)), error: soft("players", error) };
 }
 
-export async function fetchHonours(): Promise<Honour[]> {
+export async function fetchHonours(): Promise<{ honours: Honour[]; error: string | null }> {
   const { data, error } = await supabase.from("awards_and_trophies").select("*");
-  fail("awards_and_trophies", error);
-  return (data ?? []).map((r) => toHonour(r as Row));
+  return {
+    honours: (data ?? []).map((r) => toHonour(r as Row)),
+    error: soft("awards_and_trophies", error),
+  };
 }
 
 export interface HonourCounts {

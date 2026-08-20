@@ -12,12 +12,14 @@ export function Avatar({
 }) {
   if (src) {
     return (
-      <img
-        src={src}
-        alt={name}
-        loading="lazy"
-        className={`object-cover ${className}`}
-      />
+      <span className={`inline-block overflow-hidden bg-black/20 ${className}`}>
+        <img
+          src={src}
+          alt={name}
+          loading="lazy"
+          className="h-full w-full object-contain object-top"
+        />
+      </span>
     );
   }
   const initials = name

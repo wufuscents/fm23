@@ -184,6 +184,26 @@ export const toCareer = (row: Row): CareerEntry => ({
   goals: num(row, ["goals", "wins", "goals_scored"]),
 });
 
+/** Parse a year range like "2102-12" or "2112-17" into full start/end years. */
+export const careerYears = (years: string): { start: number; end: number } => {
+  const clean = years.replace(/[–—]/g, "-");
+  const digits = clean.match(/\d{2,4}/g) ?? [];
+  if (digits.length === 0) return { start: 0, end: 0 };
+  const base = Number(digits[0]);
+  if (digits.length === 1) return { start: base, end: base };
+  const endRaw = Number(digits[1]);
+  const end = endRaw < 100 && base >= 100 ? Math.floor(base / 100) * 100 + endRaw : endRaw;
+  return { start: base, end };
+};
+
+export const sortCareer = (a: CareerEntry, b: CareerEntry): number => {
+  const ya = careerYears(a.years);
+  const yb = careerYears(b.years);
+  if (ya.start !== yb.start) return ya.start - yb.start;
+  if (ya.end !== yb.end) return ya.end - yb.end;
+  return a.team.localeCompare(b.team);
+};
+
 /**
  * Reads never throw: a blocked table (missing grant / RLS policy) must degrade
  * to an empty dataset plus a visible notice, not a blank SSR crash.
@@ -288,7 +308,8 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),
   ]);
 
-  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row));
+  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareer);
+  const coachCareer = (cc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareer);
   const totals = sumCareer(playerCareer);
   const player = p.data ? toPlayer(p.data as Row) : null;
 
@@ -300,7 +321,7 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
       soft("awards_and_trophies", at.error),
     player: player ? { ...player, apps: totals.apps, goals: totals.goals } : null,
     playerCareer,
-    coachCareer: (cc.data ?? []).map((r) => toCareer(r as Row)),
+    coachCareer,
     honours: (at.data ?? []).map((r) => toHonour(r as Row)),
     totals,
   };

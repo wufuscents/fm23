@@ -99,45 +99,48 @@ function Leaderboards() {
                 <h2 className="text-lg font-semibold uppercase">{b.title}</h2>
                 <span className="fm-label">{b.unit}</span>
               </header>
-              {b.rows.length === 0 ? (
-                <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No data recorded.
-                </p>
-              ) : (
-                <ol>
-                  {b.rows.map((r, i) => (
-                    <li key={r.p.id}>
-                      <Link
-                        to="/player/$id"
-                        params={{ id: r.p.id }}
-                        className="flex items-center gap-3 border-b border-border/60 px-4 py-2.5 transition-colors last:border-0 hover:bg-panel"
-                      >
-                        <span
-                          className={`fm-stat w-7 text-right text-lg ${
-                            i === 0
-                              ? "text-gold"
-                              : i === 1
-                                ? "text-silver"
-                                : i === 2
-                                  ? "text-bronze"
-                                  : "text-muted-foreground"
-                          }`}
+              <div className="max-h-[580px] overflow-y-auto fm-scrollbar">
+                {b.rows.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    No data recorded.
+                  </p>
+                ) : (
+                  <ol>
+                    {b.rows.map((r, i) => (
+                      <li key={r.p.id}>
+                        <Link
+                          to="/player/$id"
+                          params={{ id: r.p.id }}
+                          className="flex items-center gap-3 border-b border-border/60 px-4 py-2.5 transition-colors last:border-0 hover:bg-panel"
                         >
-                          {i + 1}
-                        </span>
-                        <Avatar
-                          src={r.p.imageUrl}
-                          name={r.p.name}
-                          className="h-9 w-9 shrink-0 rounded-full text-xs"
-                        />
-                        <Flag src={r.p.flagUrl} nationality={r.p.nationality} />
-                        <span className="truncate text-sm font-medium">{r.p.name}</span>
-                        <span className="fm-stat ml-auto text-lg text-primary">{r.v}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              )}
+                          <span
+                            className={`fm-stat w-7 text-right text-lg ${
+                              i === 0
+                                ? "text-gold"
+                                : i === 1
+                                  ? "text-silver"
+                                  : i === 2
+                                    ? "text-bronze"
+                                    : "text-muted-foreground"
+                            }`}
+                          >
+                            {i + 1}
+                          </span>
+                          <Avatar
+                            src={r.p.imageUrl}
+                            name={r.p.name}
+                            className="h-9 w-9 shrink-0 rounded-full text-xs"
+                          />
+                          <Flag src={r.p.flagUrl} nationality={r.p.nationality} />
+                          <span className="truncate text-sm font-medium">{r.p.name}</span>
+                          <span className="fm-stat ml-auto text-lg text-primary">{r.v}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+
             </section>
           ))}
         </div>

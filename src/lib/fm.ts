@@ -314,6 +314,18 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
   const player = p.data ? toPlayer(p.data as Row) : null;
 
   return {
+    error:
+      soft("players", p.error) ??
+      soft("player_career_history", pc.error) ??
+      soft("coach_career_history", cc.error) ??
+      soft("awards_and_trophies", at.error),
+    player: player ? { ...player, apps: totals.apps, goals: totals.goals } : null,
+    playerCareer,
+    coachCareer,
+    honours: (at.data ?? []).map((r) => toHonour(r as Row)),
+    totals,
+  };
+}
 
 /** Personal 1st/2nd/3rd medals derived from placement text on individual awards. */
 export function medalCounts(honours: Honour[]) {

@@ -308,8 +308,12 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),
   ]);
 
-  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareer);
-  const coachCareer = (cc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareer);
+  const playerCareer = (pc.data ?? [])
+    .map((r) => toCareer(r as Row))
+    .sort((a, b) => b.id.localeCompare(a.id));
+  const coachCareer = (cc.data ?? [])
+    .map((r) => toCareer(r as Row))
+    .sort((a, b) => b.id.localeCompare(a.id));
   const totals = sumCareer(playerCareer);
   const player = p.data ? toPlayer(p.data as Row) : null;
 

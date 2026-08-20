@@ -39,12 +39,14 @@ export function Avatar({
 export function Flag({ src, nationality }: { src: string; nationality: string }) {
   if (!src) return null;
   return (
-    <img
-      src={src}
-      alt={nationality ? `${nationality} flag` : "Flag"}
-      loading="lazy"
-      className="h-3.5 w-5 rounded-[2px] object-cover ring-1 ring-border"
-    />
+    <span className="inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full">
+      <img
+        src={src}
+        alt={nationality ? `${nationality} flag` : "Flag"}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    </span>
   );
 }
 

@@ -308,23 +308,12 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),
   ]);
 
-  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row));
+  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareer);
+  const coachCareer = (cc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareer);
   const totals = sumCareer(playerCareer);
   const player = p.data ? toPlayer(p.data as Row) : null;
 
   return {
-    error:
-      soft("players", p.error) ??
-      soft("player_career_history", pc.error) ??
-      soft("coach_career_history", cc.error) ??
-      soft("awards_and_trophies", at.error),
-    player: player ? { ...player, apps: totals.apps, goals: totals.goals } : null,
-    playerCareer,
-    coachCareer: (cc.data ?? []).map((r) => toCareer(r as Row)),
-    honours: (at.data ?? []).map((r) => toHonour(r as Row)),
-    totals,
-  };
-}
 
 /** Personal 1st/2nd/3rd medals derived from placement text on individual awards. */
 export function medalCounts(honours: Honour[]) {

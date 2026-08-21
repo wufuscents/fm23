@@ -81,6 +81,8 @@ export interface Player {
   apps: number;
   goals: number;
   caps: number;
+  trophies: number;
+  awards: number;
   legendClubs: string[];
   iconClubs: string[];
   isHeadCoach: boolean;
@@ -90,6 +92,7 @@ export interface Player {
   teamMilestones: { first: number; second: number; third: number };
   raw: Row;
 }
+
 
 export const toPlayer = (row: Row): Player => ({
   id: str(row, ["id", "player_id", "uuid", "slug"]),
@@ -103,6 +106,8 @@ export const toPlayer = (row: Row): Player => ({
   apps: num(row, ["apps", "appearances", "career_apps", "total_apps", "matches"]),
   goals: num(row, ["goals", "career_goals", "total_goals"]),
   caps: num(row, ["caps", "international_caps", "national_caps", "international_apps"]),
+  trophies: num(row, ["trophies", "team_trophies", "total_trophies"]),
+  awards: num(row, ["awards", "individual_awards", "total_awards"]),
   legendClubs: list(row, ["legend_at_clubs", "legend_clubs"]),
   iconClubs: list(row, ["icon_at_clubs", "icon_clubs"]),
   isHeadCoach: bool(row, ["is_head_coach", "head_coach", "is_coach"]),
@@ -120,6 +125,7 @@ export const toPlayer = (row: Row): Player => ({
   },
   raw: row,
 });
+
 
 export type HonourKind = "player_trophy" | "player_award";
 
@@ -193,9 +199,10 @@ const soft = (label: string, error: { message: string } | null): string | null =
   error ? `${label}: ${error.message}` : null;
 
 export async function fetchPlayers(): Promise<{ players: Player[]; error: string | null }> {
-  const { data, error } = await supabase.from("players").select("*");
+  const { data, error } = await supabase.from("players").select("*, trophies, awards");
   return { players: (data ?? []).map((r) => toPlayer(r as Row)), error: soft("players", error) };
 }
+
 
 export async function fetchHonours(): Promise<{ honours: Honour[]; error: string | null }> {
   const { data, error } = await supabase.from("awards_and_trophies").select("*");

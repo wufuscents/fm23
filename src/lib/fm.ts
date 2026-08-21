@@ -199,9 +199,10 @@ const soft = (label: string, error: { message: string } | null): string | null =
   error ? `${label}: ${error.message}` : null;
 
 export async function fetchPlayers(): Promise<{ players: Player[]; error: string | null }> {
-  const { data, error } = await supabase.from("players").select("*");
+  const { data, error } = await supabase.from("players").select("*, trophies, awards");
   return { players: (data ?? []).map((r) => toPlayer(r as Row)), error: soft("players", error) };
 }
+
 
 export async function fetchHonours(): Promise<{ honours: Honour[]; error: string | null }> {
   const { data, error } = await supabase.from("awards_and_trophies").select("*");

@@ -106,6 +106,8 @@ export const toPlayer = (row: Row): Player => ({
   apps: num(row, ["apps", "appearances", "career_apps", "total_apps", "matches"]),
   goals: num(row, ["goals", "career_goals", "total_goals"]),
   caps: num(row, ["caps", "international_caps", "national_caps", "international_apps"]),
+  trophies: num(row, ["trophies", "team_trophies", "total_trophies"]),
+  awards: num(row, ["awards", "individual_awards", "total_awards"]),
   legendClubs: list(row, ["legend_at_clubs", "legend_clubs"]),
   iconClubs: list(row, ["icon_at_clubs", "icon_clubs"]),
   isHeadCoach: bool(row, ["is_head_coach", "head_coach", "is_coach"]),
@@ -123,6 +125,7 @@ export const toPlayer = (row: Row): Player => ({
   },
   raw: row,
 });
+
 
 export type HonourKind = "player_trophy" | "player_award";
 

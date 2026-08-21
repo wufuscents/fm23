@@ -81,6 +81,8 @@ export interface Player {
   apps: number;
   goals: number;
   caps: number;
+  trophies: number;
+  awards: number;
   legendClubs: string[];
   iconClubs: string[];
   isHeadCoach: boolean;
@@ -90,6 +92,7 @@ export interface Player {
   teamMilestones: { first: number; second: number; third: number };
   raw: Row;
 }
+
 
 export const toPlayer = (row: Row): Player => ({
   id: str(row, ["id", "player_id", "uuid", "slug"]),

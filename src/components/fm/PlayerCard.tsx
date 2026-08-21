@@ -59,7 +59,14 @@ export function PlayerCard({
   player: Player;
   counts: HonourCounts;
 }) {
+  const trophies =
+    player.trophies ||
+    player.teamMilestones.first + player.teamMilestones.second + player.teamMilestones.third;
+  const awards =
+    player.awards ||
+    player.milestones.first + player.milestones.second + player.milestones.third;
   return (
+
     <Link
       to="/player/$id"
       params={{ id: player.id }}

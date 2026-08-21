@@ -99,8 +99,9 @@ export function PlayerCard({
         <div className="grid grid-cols-4 gap-1 rounded-md bg-panel/70 p-2 text-center">
           <Stat label="Apps" value={player.apps} />
           <Stat label="Gls" value={player.goals} />
-          <Stat label="Trph" value={counts.trophies} tone="gold" />
-          <Stat label="Awd" value={counts.awards} tone="primary" />
+          <Stat label="Trph" value={trophies} tone="gold" />
+          <Stat label="Awd" value={awards} tone="primary" />
+
         </div>
 
         {player.legendClubs.length > 0 ? (

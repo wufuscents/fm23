@@ -1,5 +1,44 @@
 import { supabase } from "./supabase";
 
+export interface ParsedYears {
+  startYear: number;
+  endYear: number;
+}
+
+export function parseYears(yearsStr: string): ParsedYears {
+  const str = yearsStr.trim();
+  const [startPart, endPart] = str.split("-");
+  const startYear = Number(startPart);
+  if (Number.isNaN(startYear)) return { startYear: 0, endYear: 0 };
+  if (!endPart) return { startYear, endYear: startYear };
+  const endRaw = Number(endPart.trim());
+  if (Number.isNaN(endRaw)) return { startYear, endYear: startYear };
+  const startCentury = Math.floor(startYear / 100) * 100;
+  const startLastTwo = startYear % 100;
+  let endYear: number;
+  if (endPart.trim().length <= 2) {
+    // Short form like '39' or '19' — expand to the same century as startYear,
+    // rolling into the next century when the short end is less than start's last two digits.
+    endYear = endRaw < startLastTwo ? startCentury + endRaw + 100 : startCentury + endRaw;
+  } else {
+    // Full year form like '2139'.
+    endYear = endRaw;
+  }
+  return { startYear, endYear };
+}
+
+/** Sort career entries in strict reverse-chronological order by year range. */
+export function sortCareerByYears(a: CareerEntry, b: CareerEntry): number {
+  const yearsA = parseYears(a.years);
+  const yearsB = parseYears(b.years);
+  // Primary: end year descending.
+  if (yearsB.endYear !== yearsA.endYear) {
+    return yearsB.endYear - yearsA.endYear;
+  }
+  // Secondary tie-breaker: start year descending.
+  return yearsB.startYear - yearsA.startYear;
+}
+
 /**
  * All data comes from the live database. Column names differ slightly between
  * datasets, so every value is read through tolerant accessors instead of being

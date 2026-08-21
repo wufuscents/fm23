@@ -78,11 +78,6 @@ export function PlayerCard({
           name={player.name}
           className="h-full w-full text-3xl transition-transform duration-300 group-hover:scale-105"
         />
-        {player.status ? (
-          <span className="absolute left-2 top-2 rounded-sm bg-background/80 px-2 py-0.5 font-display text-[0.65rem] uppercase tracking-widest text-primary">
-            {player.status}
-          </span>
-        ) : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-3">
@@ -104,14 +99,18 @@ export function PlayerCard({
 
         </div>
 
-        {player.legendClubs.length > 0 ? (
+        {player.status === "Legend" || player.status === "Icon" ? (
           <div className="flex flex-wrap gap-1">
             {player.legendClubs.slice(0, 3).map((c) => (
               <span
                 key={c}
-                className="rounded-sm border border-gold/40 px-1.5 py-0.5 text-[0.65rem] text-gold"
+                className={`rounded-sm border px-1.5 py-0.5 text-[0.65rem] ${
+                  player.status === "Legend"
+                    ? "border-gold/40 text-gold"
+                    : "border-silver/40 text-silver"
+                }`}
               >
-                Legend · {c}
+                {player.status} · {c}
               </span>
             ))}
           </div>

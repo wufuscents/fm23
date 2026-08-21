@@ -199,7 +199,7 @@ const soft = (label: string, error: { message: string } | null): string | null =
   error ? `${label}: ${error.message}` : null;
 
 export async function fetchPlayers(): Promise<{ players: Player[]; error: string | null }> {
-  const { data, error } = await supabase.from("players").select("*, trophies, awards");
+  const { data, error } = await supabase.from("players").select("*, status, trophies, awards");
   return { players: (data ?? []).map((r) => toPlayer(r as Row)), error: soft("players", error) };
 }
 
@@ -290,7 +290,7 @@ export interface PlayerDetail {
 
 export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
   const [p, pc, cc, at] = await Promise.all([
-    supabase.from("players").select("*").eq("id", id).maybeSingle(),
+    supabase.from("players").select("*, status").eq("id", id).maybeSingle(),
     supabase.from("player_career_history").select("*").eq("player_id", id),
     supabase.from("coach_career_history").select("*").eq("player_id", id),
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),

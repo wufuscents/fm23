@@ -87,22 +87,20 @@ function PlayerDetail() {
             </p>
 
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {player.legendClubs.map((c) => (
-                <span
-                  key={`l-${c}`}
-                  className="rounded-sm border border-gold/40 px-2 py-0.5 text-xs text-gold"
-                >
-                  Legend · {c}
-                </span>
-              ))}
-              {player.iconClubs.map((c) => (
-                <span
-                  key={`i-${c}`}
-                  className="rounded-sm border border-primary/40 px-2 py-0.5 text-xs text-primary"
-                >
-                  Icon · {c}
-                </span>
-              ))}
+              {player.status === "Legend" || player.status === "Icon"
+                ? player.legendClubs.map((c) => (
+                    <span
+                      key={`${player.status}-${c}`}
+                      className={`rounded-sm border px-2 py-0.5 text-xs ${
+                        player.status === "Legend"
+                          ? "border-gold/40 text-gold"
+                          : "border-silver/40 text-silver"
+                      }`}
+                    >
+                      {player.status} · {c}
+                    </span>
+                  ))
+                : null}
               {player.isHeadCoach ? (
                 <span className="rounded-sm border border-accent/40 px-2 py-0.5 text-xs text-accent">
                   Head Coach

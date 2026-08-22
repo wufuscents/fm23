@@ -101,7 +101,6 @@ function Directory() {
       return true;
     });
 
-    const c = (id: string) => counts.get(id) ?? { trophies: 0, awards: 0 };
     return rows.sort((a, b) => {
       switch (sort) {
         case "trophies":

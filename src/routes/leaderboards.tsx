@@ -55,26 +55,26 @@ function Leaderboards() {
     {
       title: "Top Goalscorers",
       unit: "Goals",
-      rows: players.map((p) => ({ p, v: p.goals })),
+      rows: players.map((p) => ({ p, v: Number(p.goals) || 0 })),
     },
     {
       title: "Most Appearances",
       unit: "Apps",
-      rows: players.map((p) => ({ p, v: p.apps })),
+      rows: players.map((p) => ({ p, v: Number(p.apps) || 0 })),
     },
     {
       title: "Most Decorated",
       unit: "Trophies",
-      rows: players.map((p) => ({ p, v: c(p.id).trophies })),
+      rows: players.map((p) => ({ p, v: Number(p.trophies) || c(p.id).trophies })),
     },
     {
       title: "Most Individual Awards",
       unit: "Awards",
-      rows: players.map((p) => ({ p, v: c(p.id).awards })),
+      rows: players.map((p) => ({ p, v: Number(p.awards) || c(p.id).awards })),
     },
   ].map((b) => ({
     ...b,
-    rows: b.rows.filter((r) => r.v > 0).sort((a, z) => z.v - a.v).slice(0, 15),
+    rows: [...b.rows].sort((a, z) => Number(z.v) - Number(a.v)),
   }));
 
   return (

@@ -101,22 +101,23 @@ function Directory() {
       return true;
     });
 
-    const c = (id: string) => counts.get(id) ?? { trophies: 0, awards: 0 };
     return rows.sort((a, b) => {
       switch (sort) {
         case "trophies":
-          return c(b.id).trophies - c(a.id).trophies;
+          // Sort strictly by the trophies column on the players table.
+          return Number(b.trophies) - Number(a.trophies);
         case "awards":
-          return c(b.id).awards - c(a.id).awards;
+          // Sort strictly by the awards column on the players table.
+          return Number(b.awards) - Number(a.awards);
         case "caps":
-          return b.caps - a.caps;
+          return Number(b.caps) - Number(a.caps);
         case "goals":
-          return b.goals - a.goals;
+          return Number(b.goals) - Number(a.goals);
         default:
           return a.name.localeCompare(b.name);
       }
     });
-  }, [players, counts, search, status, club, nation, sort]);
+  }, [players, search, status, club, nation, sort]);
 
   return (
     <div className="min-h-screen bg-background">

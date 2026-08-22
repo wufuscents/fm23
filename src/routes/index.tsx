@@ -117,7 +117,7 @@ function Directory() {
           return a.name.localeCompare(b.name);
       }
     });
-  }, [players, counts, search, status, club, nation, sort]);
+  }, [players, search, status, club, nation, sort]);
 
   return (
     <div className="min-h-screen bg-background">

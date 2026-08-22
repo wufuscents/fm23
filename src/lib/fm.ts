@@ -335,7 +335,7 @@ export async function fetchPlayerDetail(id: string): Promise<PlayerDetail> {
     supabase.from("awards_and_trophies").select("*").eq("player_id", id),
   ]);
 
-  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row));
+  const playerCareer = (pc.data ?? []).map((r) => toCareer(r as Row)).sort(sortCareerByYears);
   const coachCareer = (cc.data ?? []).map((r) => toCareer(r as Row));
   const totals = sumCareer(playerCareer);
   const player = p.data ? toPlayer(p.data as Row) : null;

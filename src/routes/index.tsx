@@ -104,13 +104,11 @@ function Directory() {
     return rows.sort((a, b) => {
       switch (sort) {
         case "trophies":
-          // Sort strictly by the trophies column on the players table (descending, numeric).
           return Number(b.trophies || 0) - Number(a.trophies || 0);
         case "awards":
-          // Sort strictly by the awards column on the players table (descending, numeric).
           return Number(b.awards || 0) - Number(a.awards || 0);
         case "caps":
-          return Number(b.caps || 0) - Number(a.caps || 0);
+          return Number(b.apps || 0) - Number(a.apps || 0);
         case "goals":
           return Number(b.goals || 0) - Number(a.goals || 0);
         default:

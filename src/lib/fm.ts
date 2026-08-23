@@ -311,8 +311,14 @@ export async function fetchDirectory(): Promise<Directory> {
     const totals = t.totals.get(player.id);
     return totals ? { ...player, apps: totals.apps, goals: totals.goals } : player;
   });
+  // Ensure the default directory order is numeric descending regardless of how the
+  // database stores the trophies column (integer or text). Client-side sort handles
+  // all dropdown variations.
+  const sorted = players.sort(
+    (a, b) => Number(b.trophies || 0) - Number(a.trophies || 0),
+  );
   return {
-    players,
+    players: sorted,
     counts: countHonours(h.honours),
     error: p.error ?? h.error ?? t.error,
   };

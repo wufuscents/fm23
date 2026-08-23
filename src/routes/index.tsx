@@ -158,20 +158,16 @@ function Directory() {
           </div>
         </div>
 
-        <p className="fm-label mt-6">{visible.length} results</p>
+        <p className="fm-label mt-6">{sortedPlayers.length} results</p>
 
-        {visible.length === 0 ? (
+        {sortedPlayers.length === 0 ? (
           <p className="mt-10 text-center text-sm text-muted-foreground">
             No players match these filters.
           </p>
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {visible.map((p) => (
-              <PlayerCard
-                key={p.id}
-                player={p}
-                counts={counts.get(p.id) ?? { trophies: 0, awards: 0 }}
-              />
+            {sortedPlayers.map((p) => (
+              <PlayerCard key={p.id} player={p} />
             ))}
           </div>
         )}

@@ -57,14 +57,10 @@ export function PlayerCard({
   counts,
 }: {
   player: Player;
-  counts: HonourCounts;
+  counts?: HonourCounts;
 }) {
-  const trophies =
-    player.trophies ||
-    player.teamMilestones.first + player.teamMilestones.second + player.teamMilestones.third;
-  const awards =
-    player.awards ||
-    player.milestones.first + player.milestones.second + player.milestones.third;
+  const trophies = player.trophies;
+  const awards = player.awards;
   return (
 
     <Link

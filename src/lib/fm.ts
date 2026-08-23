@@ -238,7 +238,10 @@ const soft = (label: string, error: { message: string } | null): string | null =
   error ? `${label}: ${error.message}` : null;
 
 export async function fetchPlayers(): Promise<{ players: Player[]; error: string | null }> {
-  const { data, error } = await supabase.from("players").select("*, status, trophies, awards");
+  const { data, error } = await supabase
+    .from("players")
+    .select("*, status, trophies, awards")
+    .order("trophies", { ascending: false });
   return { players: (data ?? []).map((r) => toPlayer(r as Row)), error: soft("players", error) };
 }
 
@@ -305,22 +308,13 @@ export interface Directory {
 }
 
 export async function fetchDirectory(): Promise<Directory> {
-  const [p, h, t] = await Promise.all([fetchPlayers(), fetchHonours(), fetchCareerTotals()]);
-  // Club apps/goals are not stored on players — they are the sum of career stints.
-  const players = p.players.map((player) => {
-    const totals = t.totals.get(player.id);
-    return totals ? { ...player, apps: totals.apps, goals: totals.goals } : player;
-  });
-  // Ensure the default directory order is numeric descending regardless of how the
-  // database stores the trophies column (integer or text). Client-side sort handles
-  // all dropdown variations.
-  const sorted = players.sort(
-    (a, b) => Number(b.trophies || 0) - Number(a.trophies || 0),
-  );
+  const [p, h] = await Promise.all([fetchPlayers(), fetchHonours()]);
+  // Default directory order is already players.trophies DESC from the database query.
+  // Client-side sort options strictly use the primary players table values.
   return {
-    players: sorted,
+    players: p.players,
     counts: countHonours(h.honours),
-    error: p.error ?? h.error ?? t.error,
+    error: p.error ?? h.error,
   };
 }
 

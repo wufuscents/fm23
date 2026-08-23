@@ -308,13 +308,14 @@ export interface Directory {
 }
 
 export async function fetchDirectory(): Promise<Directory> {
-  const [p, h] = await Promise.all([fetchPlayers(), fetchHonours()]);
-  // Default directory order is already players.trophies DESC from the database query.
-  // Client-side sort options strictly use the primary players table values.
+  const [p, h] = await Promise.all([
+    supabase.from("player_directory_view").select("*"),
+    fetchHonours(),
+  ]);
   return {
-    players: p.players,
+    players: (p.data ?? []).map((r) => toPlayer(r as Row)),
     counts: countHonours(h.honours),
-    error: p.error ?? h.error,
+    error: soft("player_directory_view", p.error) ?? h.error,
   };
 }
 

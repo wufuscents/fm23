@@ -71,7 +71,7 @@ function statusOf(p: Player): string {
 
 function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
-  const { players, counts, error } = data;
+  const { players, error } = data;
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -86,7 +86,7 @@ function Directory() {
   );
   const nations = useMemo(() => uniq(players.map((p) => p.nationality)), [players]);
 
-  const visible = useMemo(() => {
+  const sortedPlayers = useMemo(() => {
     const q = search.trim().toLowerCase();
     const rows = players.filter((p) => {
       if (q) {
@@ -101,19 +101,13 @@ function Directory() {
       return true;
     });
 
-    return rows.sort((a, b) => {
-      switch (sort) {
-        case "trophies":
-          return Number(b.trophies || 0) - Number(a.trophies || 0);
-        case "awards":
-          return Number(b.awards || 0) - Number(a.awards || 0);
-        case "caps":
-          return Number(b.apps || 0) - Number(a.apps || 0);
-        case "goals":
-          return Number(b.goals || 0) - Number(a.goals || 0);
-        default:
-          return a.name.localeCompare(b.name);
-      }
+    return [...rows].sort((a, b) => {
+      if (sort === "trophies") return Number(b.trophies || 0) - Number(a.trophies || 0);
+      if (sort === "awards") return Number(b.awards || 0) - Number(a.awards || 0);
+      if (sort === "caps") return Number(b.apps || 0) - Number(a.apps || 0);
+      if (sort === "goals") return Number(b.goals || 0) - Number(a.goals || 0);
+      if (sort === "name") return (a.name || "").localeCompare(b.name || "");
+      return 0;
     });
   }, [players, search, status, club, nation, sort]);
 

@@ -134,13 +134,15 @@ function Directory() {
           </div>
         )}
         <div className="fm-panel p-5">
-          <p className="fm-label">Database</p>
+          <p className="fm-label cursor-pointer select-none" onClick={handleGenderToggle}>
+            {genderMode === "All" ? "Database" : genderMode === "Male" ? "Database · M" : "Database · F"}
+          </p>
           <h1 className="mt-1 text-3xl font-bold uppercase sm:text-4xl">Squad Directory</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
             {players.length} profiles across legends, icons, retired greats and head coaches.
           </p>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-[2fr_repeat(5,1fr)]">
+          <div className="mt-5 grid gap-3 lg:grid-cols-[2fr_repeat(4,1fr)]">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -151,14 +153,6 @@ function Directory() {
             <Select value={status} onChange={setStatus} label="All Statuses" options={statuses} />
             <Select value={club} onChange={setClub} label="All Clubs" options={clubs} />
             <Select value={nation} onChange={setNation} label="All Nations" options={nations} />
-            <button
-              type="button"
-              onClick={handleGenderToggle}
-              aria-label="Toggle gender filter"
-              className="h-10 rounded-md border border-border bg-input px-2 text-sm text-left outline-none focus:border-primary"
-            >
-              Gender: {genderMode}
-            </button>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}

@@ -78,6 +78,13 @@ function Directory() {
   const [club, setClub] = useState("");
   const [nation, setNation] = useState("");
   const [sort, setSort] = useState<SortKey>("trophies");
+  const [genderMode, setGenderMode] = useState<"All" | "Male" | "Female">("All");
+
+  const handleGenderToggle = () => {
+    if (genderMode === "All") setGenderMode("Male");
+    else if (genderMode === "Male") setGenderMode("Female");
+    else setGenderMode("All");
+  };
 
   const statuses = useMemo(() => uniq(players.map(statusOf)), [players]);
   const clubs = useMemo(
@@ -98,6 +105,7 @@ function Directory() {
       if (status && statusOf(p) !== status) return false;
       if (club && ![p.club, ...p.legendClubs, ...p.iconClubs].includes(club)) return false;
       if (nation && p.nationality !== nation) return false;
+      if (genderMode !== "All" && p.gender !== genderMode) return false;
       return true;
     });
 
@@ -109,7 +117,7 @@ function Directory() {
       if (sort === "name") return (a.name || "").localeCompare(b.name || "");
       return 0;
     });
-  }, [players, search, status, club, nation, sort]);
+  }, [players, search, status, club, nation, sort, genderMode]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,7 +140,7 @@ function Directory() {
             {players.length} profiles across legends, icons, retired greats and head coaches.
           </p>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-[2fr_repeat(4,1fr)]">
+          <div className="mt-5 grid gap-3 lg:grid-cols-[2fr_repeat(5,1fr)]">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -143,6 +151,14 @@ function Directory() {
             <Select value={status} onChange={setStatus} label="All Statuses" options={statuses} />
             <Select value={club} onChange={setClub} label="All Clubs" options={clubs} />
             <Select value={nation} onChange={setNation} label="All Nations" options={nations} />
+            <button
+              type="button"
+              onClick={handleGenderToggle}
+              aria-label="Toggle gender filter"
+              className="h-10 rounded-md border border-border bg-input px-2 text-sm text-left outline-none focus:border-primary"
+            >
+              Gender: {genderMode}
+            </button>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}

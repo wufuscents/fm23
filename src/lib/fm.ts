@@ -129,6 +129,7 @@ export interface Player {
   biography: string;
   milestones: { first: number; second: number; third: number };
   teamMilestones: { first: number; second: number; third: number };
+  gender?: string;
   raw: Row;
 }
 
@@ -152,6 +153,7 @@ export const toPlayer = (row: Row): Player => ({
   isHeadCoach: bool(row, ["is_head_coach", "head_coach", "is_coach"]),
   isRetired: bool(row, ["is_retired", "retired", "is_retired_player"]),
   biography: str(row, ["biography", "bio", "description", "about"]),
+  gender: str(row, ["gender", "sex"]),
   milestones: {
     first: num(row, ["personal_1st"]),
     second: num(row, ["personal_2nd"]),

@@ -130,8 +130,10 @@ export interface Player {
   milestones: { first: number; second: number; third: number };
   teamMilestones: { first: number; second: number; third: number };
   gender?: string;
+  conceded?: number;
   raw: Row;
 }
+
 
 
 export const toPlayer = (row: Row): Player => ({
@@ -154,6 +156,7 @@ export const toPlayer = (row: Row): Player => ({
   isRetired: bool(row, ["is_retired", "retired", "is_retired_player"]),
   biography: str(row, ["biography", "bio", "description", "about"]),
   gender: str(row, ["gender", "sex"]),
+  conceded: Number(row["conceded"] || 0),
   milestones: {
     first: num(row, ["personal_1st"]),
     second: num(row, ["personal_2nd"]),
@@ -166,6 +169,7 @@ export const toPlayer = (row: Row): Player => ({
   },
   raw: row,
 });
+
 
 
 export type HonourKind = "player_trophy" | "player_award";
@@ -218,7 +222,9 @@ export interface CareerEntry {
   years: string;
   apps: number;
   goals: number;
+  conceded?: number;
 }
+
 
 export const toCareer = (row: Row): CareerEntry => ({
   id: str(row, ["id", "uuid"]) || Math.random().toString(36).slice(2),
@@ -229,7 +235,9 @@ export const toCareer = (row: Row): CareerEntry => ({
   years: str(row, ["years", "season", "period", "seasons", "year"]),
   apps: num(row, ["apps", "appearances", "matches", "games"]),
   goals: num(row, ["goals", "wins", "goals_scored"]),
+  conceded: num(row, ["conceded"]),
 });
+
 
 
 /**

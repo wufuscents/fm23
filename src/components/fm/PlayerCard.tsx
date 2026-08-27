@@ -61,7 +61,10 @@ export function PlayerCard({
 }) {
   const trophies = player.trophies;
   const awards = player.awards;
+  const isGK =
+    player.role?.toLowerCase().includes("goalkeeper") || player.role === "GK";
   return (
+
 
     <Link
       to="/player/$id"
@@ -89,11 +92,11 @@ export function PlayerCard({
 
         <div className="grid grid-cols-4 gap-1 rounded-md bg-panel/70 p-2 text-center">
           <Stat label="Apps" value={player.apps} />
-          <Stat label="Gls" value={player.goals} />
+          <Stat label={isGK ? "Conc" : "Gls"} value={isGK ? player.conceded ?? 0 : player.goals} />
           <Stat label="Trph" value={trophies} tone="gold" />
           <Stat label="Awd" value={awards} tone="primary" />
-
         </div>
+
 
         {player.status === "Legend" || player.status === "Icon" ? (
           <div className="flex flex-wrap gap-1">

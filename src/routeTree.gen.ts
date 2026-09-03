@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LeaderboardsRouteImport } from './routes/leaderboards'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as PlayerIdRouteImport } from './routes/player.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const LeaderboardsRoute = LeaderboardsRouteImport.update({
   path: '/leaderboards',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayerIdRoute = PlayerIdRouteImport.update({
   id: '/player/$id',
   path: '/player/$id',
@@ -32,30 +38,34 @@ const PlayerIdRoute = PlayerIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leaderboards': typeof LeaderboardsRoute
+  '/login': typeof LoginRoute
   '/player/$id': typeof PlayerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/leaderboards': typeof LeaderboardsRoute
+  '/login': typeof LoginRoute
   '/player/$id': typeof PlayerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/leaderboards': typeof LeaderboardsRoute
+  '/login': typeof LoginRoute
   '/player/$id': typeof PlayerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/leaderboards' | '/player/$id'
+  fullPaths: '/' | '/leaderboards' | '/login' | '/player/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/leaderboards' | '/player/$id'
-  id: '__root__' | '/' | '/leaderboards' | '/player/$id'
+  to: '/' | '/leaderboards' | '/login' | '/player/$id'
+  id: '__root__' | '/' | '/leaderboards' | '/login' | '/player/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LeaderboardsRoute: typeof LeaderboardsRoute
+  LoginRoute: typeof LoginRoute
   PlayerIdRoute: typeof PlayerIdRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/player/$id': {
       id: '/player/$id'
       path: '/player/$id'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LeaderboardsRoute: LeaderboardsRoute,
+  LoginRoute: LoginRoute,
   PlayerIdRoute: PlayerIdRoute,
 }
 export const routeTree = rootRouteImport

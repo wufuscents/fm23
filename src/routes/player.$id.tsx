@@ -47,11 +47,18 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function isGoalkeeper(player: { role?: string } | null) {
+  if (!player?.role) return false;
+  const r = player.role.toLowerCase();
+  return r.includes("goalkeeper") || r === "gk";
+}
+
 function PlayerDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(detailQuery(id));
   const { player, playerCareer, coachCareer, honours, totals, error } = data;
   const [tab, setTab] = useState<"trophies" | "awards">("trophies");
+  const isGK = isGoalkeeper(player);
 
   if (error) return <Shell>Database read blocked: {error}</Shell>;
   if (!player) return <Shell>Player not found.</Shell>;
@@ -111,7 +118,7 @@ function PlayerDetail() {
             <div className="mt-4 grid max-w-md grid-cols-4 gap-2 text-center">
               <Metric label="Caps" value={player.caps} />
               <Metric label="Apps" value={totals.apps} />
-              <Metric label="Goals" value={totals.goals} />
+              <Metric label={isGK ? "Conc" : "Gls"} value={isGK ? totals.conceded : totals.goals} />
               <Metric label="Trophies" value={trophyCount} tone="gold" />
             </div>
           </div>

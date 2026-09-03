@@ -138,7 +138,7 @@ function PlayerDetail() {
 
         <section className="mt-6">
           <h2 className="text-2xl font-bold uppercase">Player Career</h2>
-          <CareerTable rows={playerCareer} goalsLabel="Goals" showTotals />
+          <CareerTable rows={playerCareer} goalsLabel={isGK ? "Conc" : "Gls"} showTotals useConceded={isGK} />
         </section>
 
         {player.isHeadCoach || coachCareer.length > 0 ? (

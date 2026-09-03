@@ -303,10 +303,11 @@ export async function fetchCareerTotals(): Promise<{
   for (const row of data ?? []) {
     const entry = toCareer(row as Row);
     if (!entry.playerId) continue;
-    const current = totals.get(entry.playerId) ?? { apps: 0, goals: 0 };
+    const current = totals.get(entry.playerId) ?? { apps: 0, goals: 0, conceded: 0 };
     totals.set(entry.playerId, {
       apps: current.apps + entry.apps,
       goals: current.goals + entry.goals,
+      conceded: current.conceded + (entry.conceded || 0),
     });
   }
   return { totals, error: soft("player_career_history", error) };

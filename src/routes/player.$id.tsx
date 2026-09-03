@@ -209,11 +209,14 @@ function CareerTable({
   rows,
   goalsLabel,
   showTotals = false,
+  useConceded = false,
 }: {
   rows: CareerEntry[];
   goalsLabel: string;
   showTotals?: boolean;
+  useConceded?: boolean;
 }) {
+  const statValue = (r: CareerEntry) => (useConceded ? r.conceded ?? 0 : r.goals);
   if (rows.length === 0) {
     return (
       <p className="fm-panel mt-2 p-5 text-sm text-muted-foreground">No records available.</p>
@@ -250,7 +253,7 @@ function CareerTable({
               <td className="px-4 py-2 text-muted-foreground">{r.country || "—"}</td>
               <td className="px-4 py-2 text-muted-foreground">{r.years || "—"}</td>
               <td className="fm-stat px-4 py-2 text-right">{r.apps}</td>
-              <td className="fm-stat px-4 py-2 text-right text-primary">{r.goals}</td>
+              <td className="fm-stat px-4 py-2 text-right text-primary">{statValue(r)}</td>
             </tr>
           ))}
         </tbody>
@@ -264,7 +267,7 @@ function CareerTable({
                 {rows.reduce((n, r) => n + r.apps, 0)}
               </td>
               <td className="fm-stat px-4 py-2 text-right text-primary">
-                {rows.reduce((n, r) => n + r.goals, 0)}
+                {rows.reduce((n, r) => n + statValue(r), 0)}
               </td>
             </tr>
           </tfoot>

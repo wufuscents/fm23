@@ -1,6 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import type { HonourCounts, Player } from "@/lib/fm";
 
+function cacheBust(url: string) {
+  if (!url) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}t=${Date.now()}`;
+}
+
 export function Avatar({
   src,
   name,
@@ -14,7 +20,7 @@ export function Avatar({
     return (
       <span className={`inline-block overflow-hidden bg-black/20 ${className}`}>
         <img
-          src={src}
+          src={cacheBust(src)}
           alt={name}
           loading="lazy"
           className="h-full w-full object-contain object-top"
@@ -43,7 +49,7 @@ export function Flag({ src, nationality }: { src: string; nationality: string })
   return (
     <span className="inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full">
       <img
-        src={src}
+        src={cacheBust(src)}
         alt={nationality ? `${nationality} flag` : "Flag"}
         loading="lazy"
         className="h-full w-full object-cover"

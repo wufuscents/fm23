@@ -47,11 +47,18 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function isGoalkeeper(player: { role?: string } | null) {
+  if (!player?.role) return false;
+  const r = player.role.toLowerCase();
+  return r.includes("goalkeeper") || r === "gk";
+}
+
 function PlayerDetail() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(detailQuery(id));
   const { player, playerCareer, coachCareer, honours, totals, error } = data;
   const [tab, setTab] = useState<"trophies" | "awards">("trophies");
+  const isGK = isGoalkeeper(player);
 
   if (error) return <Shell>Database read blocked: {error}</Shell>;
   if (!player) return <Shell>Player not found.</Shell>;
@@ -111,7 +118,7 @@ function PlayerDetail() {
             <div className="mt-4 grid max-w-md grid-cols-4 gap-2 text-center">
               <Metric label="Caps" value={player.caps} />
               <Metric label="Apps" value={totals.apps} />
-              <Metric label="Goals" value={totals.goals} />
+              <Metric label={isGK ? "Conc" : "Gls"} value={isGK ? totals.conceded : totals.goals} />
               <Metric label="Trophies" value={trophyCount} tone="gold" />
             </div>
           </div>
@@ -131,7 +138,7 @@ function PlayerDetail() {
 
         <section className="mt-6">
           <h2 className="text-2xl font-bold uppercase">Player Career</h2>
-          <CareerTable rows={playerCareer} goalsLabel="Goals" showTotals />
+          <CareerTable rows={playerCareer} goalsLabel={isGK ? "Conc" : "Gls"} showTotals useConceded={isGK} />
         </section>
 
         {player.isHeadCoach || coachCareer.length > 0 ? (
@@ -202,11 +209,14 @@ function CareerTable({
   rows,
   goalsLabel,
   showTotals = false,
+  useConceded = false,
 }: {
   rows: CareerEntry[];
   goalsLabel: string;
   showTotals?: boolean;
+  useConceded?: boolean;
 }) {
+  const statValue = (r: CareerEntry) => (useConceded ? r.conceded ?? 0 : r.goals);
   if (rows.length === 0) {
     return (
       <p className="fm-panel mt-2 p-5 text-sm text-muted-foreground">No records available.</p>
@@ -243,7 +253,7 @@ function CareerTable({
               <td className="px-4 py-2 text-muted-foreground">{r.country || "—"}</td>
               <td className="px-4 py-2 text-muted-foreground">{r.years || "—"}</td>
               <td className="fm-stat px-4 py-2 text-right">{r.apps}</td>
-              <td className="fm-stat px-4 py-2 text-right text-primary">{r.goals}</td>
+              <td className="fm-stat px-4 py-2 text-right text-primary">{statValue(r)}</td>
             </tr>
           ))}
         </tbody>
@@ -257,7 +267,7 @@ function CareerTable({
                 {rows.reduce((n, r) => n + r.apps, 0)}
               </td>
               <td className="fm-stat px-4 py-2 text-right text-primary">
-                {rows.reduce((n, r) => n + r.goals, 0)}
+                {rows.reduce((n, r) => n + statValue(r), 0)}
               </td>
             </tr>
           </tfoot>

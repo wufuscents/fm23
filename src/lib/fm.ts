@@ -284,12 +284,13 @@ export function countHonours(honours: Honour[]): Map<string, HonourCounts> {
 export interface CareerTotals {
   apps: number;
   goals: number;
+  conceded: number;
 }
 
 export const sumCareer = (rows: CareerEntry[]): CareerTotals =>
   rows.reduce(
-    (acc, r) => ({ apps: acc.apps + r.apps, goals: acc.goals + r.goals }),
-    { apps: 0, goals: 0 },
+    (acc, r) => ({ apps: acc.apps + r.apps, goals: acc.goals + r.goals, conceded: acc.conceded + (r.conceded || 0) }),
+    { apps: 0, goals: 0, conceded: 0 },
   );
 
 /** Career totals per player, summed from every player_career_history stint. */
@@ -302,10 +303,11 @@ export async function fetchCareerTotals(): Promise<{
   for (const row of data ?? []) {
     const entry = toCareer(row as Row);
     if (!entry.playerId) continue;
-    const current = totals.get(entry.playerId) ?? { apps: 0, goals: 0 };
+    const current = totals.get(entry.playerId) ?? { apps: 0, goals: 0, conceded: 0 };
     totals.set(entry.playerId, {
       apps: current.apps + entry.apps,
       goals: current.goals + entry.goals,
+      conceded: current.conceded + (entry.conceded || 0),
     });
   }
   return { totals, error: soft("player_career_history", error) };

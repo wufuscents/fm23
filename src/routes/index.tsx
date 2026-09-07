@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { SiteHeader } from "@/components/fm/SiteHeader";
 import { PlayerCard } from "@/components/fm/PlayerCard";
 import { fetchDirectory, type Player } from "@/lib/fm";
@@ -11,7 +11,47 @@ const directoryQuery = queryOptions({
   staleTime: 60_000,
 });
 
+type SortKey = "trophies" | "awards" | "caps" | "goals" | "name";
+type GenderMode = "All" | "Male" | "Female";
+
+type DirectorySearch = {
+  search: string;
+  status: string;
+  club: string;
+  nation: string;
+  sort: SortKey;
+  gender: GenderMode;
+  page: number;
+};
+
+const SORT_KEYS: SortKey[] = ["trophies", "awards", "caps", "goals", "name"];
+const GENDER_MODES: GenderMode[] = ["All", "Male", "Female"];
+
+function validateSearch(search: Record<string, unknown>): DirectorySearch {
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const sort = SORT_KEYS.includes(search.sort as SortKey)
+    ? (search.sort as SortKey)
+    : "trophies";
+  const gender = GENDER_MODES.includes(search.gender as GenderMode)
+    ? (search.gender as GenderMode)
+    : "All";
+  const page =
+    typeof search.page === "number" && Number.isFinite(search.page) && search.page >= 1
+      ? Math.floor(search.page)
+      : 1;
+  return {
+    search: str(search.search),
+    status: str(search.status),
+    club: str(search.club),
+    nation: str(search.nation),
+    sort,
+    gender,
+    page,
+  };
+}
+
 export const Route = createFileRoute("/")({
+  validateSearch,
   head: () => ({
     meta: [
       { title: "FM Squad Archive — Legends, Icons & Head Coaches" },
@@ -48,8 +88,6 @@ function Failure({ message }: { message: string }) {
   );
 }
 
-type SortKey = "trophies" | "awards" | "caps" | "goals" | "name";
-
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "trophies", label: "Most Trophies Won" },
   { key: "awards", label: "Most Individual Awards" },
@@ -57,6 +95,8 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "goals", label: "Most Career Goals" },
   { key: "name", label: "Name (A–Z)" },
 ];
+
+const PLAYERS_PER_PAGE = 20;
 
 const uniq = (values: string[]) =>
   Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
@@ -73,19 +113,24 @@ function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { players, error } = data;
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [club, setClub] = useState("");
-  const [nation, setNation] = useState("");
-  const [sort, setSort] = useState<SortKey>("trophies");
-  const [genderMode, setGenderMode] = useState<"All" | "Male" | "Female">("All");
-  const PLAYERS_PER_PAGE = 20;
-  const [currentPage, setCurrentPage] = useState(1);
+  const { search, status, club, nation, sort, gender: genderMode, page: currentPage } =
+    Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const setParam = (patch: Partial<DirectorySearch>, resetPage = true) =>
+    navigate({
+      search: (prev: DirectorySearch) => ({
+        ...prev,
+        ...patch,
+        ...(resetPage ? { page: 1 } : {}),
+      }),
+      replace: true,
+    });
 
   const handleGenderToggle = () => {
-    if (genderMode === "All") setGenderMode("Male");
-    else if (genderMode === "Male") setGenderMode("Female");
-    else setGenderMode("All");
+    if (genderMode === "All") setParam({ gender: "Male" });
+    else if (genderMode === "Male") setParam({ gender: "Female" });
+    else setParam({ gender: "All" });
   };
 
   const statuses = useMemo(() => uniq(players.map(statusOf)), [players]);
@@ -121,14 +166,11 @@ function Directory() {
     });
   }, [players, search, status, club, nation, sort, genderMode]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, status, club, nation, sort, genderMode]);
-
   const totalPages = Math.max(1, Math.ceil(sortedPlayers.length / PLAYERS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
   const shownPlayers = sortedPlayers.slice(
-    (currentPage - 1) * PLAYERS_PER_PAGE,
-    currentPage * PLAYERS_PER_PAGE,
+    (safePage - 1) * PLAYERS_PER_PAGE,
+    safePage * PLAYERS_PER_PAGE,
   );
 
   return (
@@ -157,17 +199,32 @@ function Directory() {
           <div className="mt-5 grid gap-3 lg:grid-cols-[2fr_repeat(4,1fr)]">
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setParam({ search: e.target.value })}
               placeholder="Search player or club…"
               aria-label="Search players"
               className="h-10 rounded-md border border-border bg-input px-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
             />
-            <Select value={status} onChange={setStatus} label="All Statuses" options={statuses} />
-            <Select value={club} onChange={setClub} label="All Clubs" options={clubs} />
-            <Select value={nation} onChange={setNation} label="All Nations" options={nations} />
+            <Select
+              value={status}
+              onChange={(v) => setParam({ status: v })}
+              label="All Statuses"
+              options={statuses}
+            />
+            <Select
+              value={club}
+              onChange={(v) => setParam({ club: v })}
+              label="All Clubs"
+              options={clubs}
+            />
+            <Select
+              value={nation}
+              onChange={(v) => setParam({ nation: v })}
+              label="All Nations"
+              options={nations}
+            />
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
+              onChange={(e) => setParam({ sort: e.target.value as SortKey })}
               aria-label="Sort players"
               className="h-10 rounded-md border border-border bg-input px-2 text-sm outline-none focus:border-primary"
             >
@@ -197,19 +254,19 @@ function Directory() {
               <div className="mt-6 flex items-center justify-center gap-3">
                 <button
                   type="button"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((page) => page - 1)}
+                  disabled={safePage === 1}
+                  onClick={() => setParam({ page: safePage - 1 }, false)}
                   className="h-10 rounded-md border border-border bg-input px-5 text-sm font-semibold uppercase tracking-wide transition-colors enabled:hover:border-primary enabled:hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Previous
                 </button>
                 <span className="text-sm font-medium text-muted-foreground">
-                  Page {currentPage} of {totalPages}
+                  Page {safePage} of {totalPages}
                 </span>
                 <button
                   type="button"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((page) => page + 1)}
+                  disabled={safePage === totalPages}
+                  onClick={() => setParam({ page: safePage + 1 }, false)}
                   className="h-10 rounded-md border border-border bg-input px-5 text-sm font-semibold uppercase tracking-wide transition-colors enabled:hover:border-primary enabled:hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Next

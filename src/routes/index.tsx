@@ -79,8 +79,8 @@ function Directory() {
   const [nation, setNation] = useState("");
   const [sort, setSort] = useState<SortKey>("trophies");
   const [genderMode, setGenderMode] = useState<"All" | "Male" | "Female">("All");
-  const PAGE_SIZE = 24;
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const PLAYERS_PER_PAGE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleGenderToggle = () => {
     if (genderMode === "All") setGenderMode("Male");
@@ -122,10 +122,14 @@ function Directory() {
   }, [players, search, status, club, nation, sort, genderMode]);
 
   useEffect(() => {
-    setVisible(PAGE_SIZE);
+    setCurrentPage(1);
   }, [search, status, club, nation, sort, genderMode]);
 
-  const shownPlayers = sortedPlayers.slice(0, visible);
+  const totalPages = Math.max(1, Math.ceil(sortedPlayers.length / PLAYERS_PER_PAGE));
+  const shownPlayers = sortedPlayers.slice(
+    (currentPage - 1) * PLAYERS_PER_PAGE,
+    currentPage * PLAYERS_PER_PAGE,
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -184,22 +188,34 @@ function Directory() {
           </p>
         ) : (
           <>
-            <div className="mt-3 grid grid-cols-2 gap-3 [content-visibility:auto] md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {shownPlayers.map((p) => (
                 <PlayerCard key={p.id} player={p} />
               ))}
             </div>
-            {visible < sortedPlayers.length ? (
-              <div className="mt-6 flex justify-center">
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                  className="h-10 rounded-md border border-border bg-input px-6 text-sm font-semibold uppercase tracking-wide transition-colors hover:border-primary hover:text-primary"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((page) => page - 1)}
+                  className="h-10 rounded-md border border-border bg-input px-5 text-sm font-semibold uppercase tracking-wide transition-colors enabled:hover:border-primary enabled:hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Load more ({sortedPlayers.length - visible} left)
+                  Previous
+                </button>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((page) => page + 1)}
+                  className="h-10 rounded-md border border-border bg-input px-5 text-sm font-semibold uppercase tracking-wide transition-colors enabled:hover:border-primary enabled:hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
                 </button>
               </div>
-            ) : null}
+            )}
           </>
         )}
       </main>

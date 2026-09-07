@@ -1,10 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import type { HonourCounts, Player } from "@/lib/fm";
 
-function cacheBust(url: string) {
+// Request compressed WebP thumbnails from Supabase Image Transformations
+// instead of the full-resolution PNG originals.
+function thumb(url: string, width: number) {
   if (!url) return url;
-  const sep = url.includes("?") ? "&" : "?";
-  return `${url}${sep}t=${Date.now()}`;
+  const [base, existing] = url.split("?");
+  const rendered = base.includes("/storage/v1/object/public/")
+    ? base.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")
+    : base.replace("/object/public/", "/render/image/public/");
+  const params = new URLSearchParams(existing ?? "");
+  params.set("width", String(width));
+  params.set("format", "webp");
+  params.set("quality", "70");
+  return `${rendered}?${params.toString()}`;
 }
 
 export function Avatar({
@@ -20,8 +29,9 @@ export function Avatar({
     return (
       <span className={`inline-block overflow-hidden bg-black/20 ${className}`}>
         <img
-          src={cacheBust(src)}
+          src={thumb(src, 300)}
           alt={name}
+          decoding="async"
           loading="lazy"
           className="h-full w-full object-contain object-top"
         />
@@ -49,7 +59,7 @@ export function Flag({ src, nationality }: { src: string; nationality: string })
   return (
     <span className="inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full">
       <img
-        src={cacheBust(src)}
+        src={thumb(src, 64)}
         alt={nationality ? `${nationality} flag` : "Flag"}
         loading="lazy"
         className="h-full w-full object-cover"

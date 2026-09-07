@@ -5,7 +5,7 @@ import type { HonourCounts, Player } from "@/lib/fm";
 // instead of the full-resolution PNG originals.
 function thumb(url: string, width: number) {
   if (!url) return url;
-  const [base, existing] = url.split("?");
+  const [base = url, existing] = url.split("?");
   const rendered = base.includes("/storage/v1/object/public/")
     ? base.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")
     : base.replace("/object/public/", "/render/image/public/");

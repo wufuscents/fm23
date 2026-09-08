@@ -15,13 +15,13 @@ type SortKey = "trophies" | "awards" | "caps" | "goals" | "name";
 type GenderMode = "All" | "Male" | "Female";
 
 type DirectorySearch = {
-  search: string;
-  status: string;
-  club: string;
-  nation: string;
-  sort: SortKey;
-  gender: GenderMode;
-  page: number;
+  search?: string;
+  status?: string;
+  club?: string;
+  nation?: string;
+  sort?: SortKey;
+  gender?: GenderMode;
+  page?: number;
 };
 
 const SORT_KEYS: SortKey[] = ["trophies", "awards", "caps", "goals", "name"];
@@ -40,13 +40,13 @@ function validateSearch(search: Record<string, unknown>): DirectorySearch {
       ? Math.floor(search.page)
       : 1;
   return {
-    search: str(search.search),
-    status: str(search.status),
-    club: str(search.club),
-    nation: str(search.nation),
+    search: str(search.search) || undefined,
+    status: str(search.status) || undefined,
+    club: str(search.club) || undefined,
+    nation: str(search.nation) || undefined,
     sort,
     gender,
-    page,
+    page: page > 1 ? page : undefined,
   };
 }
 
@@ -113,8 +113,15 @@ function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { players, error } = data;
 
-  const { search, status, club, nation, sort, gender: genderMode, page: currentPage } =
-    Route.useSearch();
+  const {
+    search = "",
+    status = "",
+    club = "",
+    nation = "",
+    sort = "trophies",
+    gender: genderMode = "All",
+    page: currentPage = 1,
+  } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const setParam = (patch: Partial<DirectorySearch>, resetPage = true) =>

@@ -131,6 +131,8 @@ export interface Player {
   teamMilestones: { first: number; second: number; third: number };
   gender?: string;
   conceded?: number;
+  internationalApps: number;
+  internationalGoals: number;
   raw: Row;
 }
 
@@ -157,6 +159,8 @@ export const toPlayer = (row: Row): Player => ({
   biography: str(row, ["biography", "bio", "description", "about"]),
   gender: str(row, ["gender", "sex"]),
   conceded: Number(row["conceded"] || 0),
+  internationalApps: num(row, ["international_apps", "caps", "international_caps"]),
+  internationalGoals: num(row, ["international_goals", "nt_goals"]),
   milestones: {
     first: num(row, ["personal_1st"]),
     second: num(row, ["personal_2nd"]),

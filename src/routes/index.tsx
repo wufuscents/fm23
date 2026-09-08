@@ -134,6 +134,28 @@ function Directory() {
     page: currentPage = 1,
   } = Route.useSearch();
   const navigate = Route.useNavigate();
+  const urlSearch = Route.useSearch();
+
+  // Restore the saved view from localStorage once on mount when the URL
+  // carries no explicit filters, then persist every change.
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    if (window.location.search.length > 1) return;
+    const saved = readSavedView();
+    if (saved && Object.values(saved).some((v) => v !== undefined)) {
+      navigate({ search: saved, replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(urlSearch));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [urlSearch]);
 
   const setParam = (patch: Partial<DirectorySearch>, resetPage = true) =>
     navigate({

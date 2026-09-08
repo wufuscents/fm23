@@ -108,6 +108,18 @@ function statusOf(p: Player): string {
   return "Retired";
 }
 
+const STORAGE_KEY = "fm_directory_view";
+
+function readSavedView(): DirectorySearch | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return validateSearch(JSON.parse(raw) as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
 function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { players, error } = data;

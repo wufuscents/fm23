@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { SiteHeader } from "@/components/fm/SiteHeader";
 import { PlayerCard } from "@/components/fm/PlayerCard";
 import { fetchDirectory, type Player } from "@/lib/fm";
@@ -108,6 +108,18 @@ function statusOf(p: Player): string {
   return "Retired";
 }
 
+const STORAGE_KEY = "fm_directory_view";
+
+function readSavedView(): DirectorySearch | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return validateSearch(JSON.parse(raw) as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
 function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { players, error } = data;
@@ -122,6 +134,28 @@ function Directory() {
     page: currentPage = 1,
   } = Route.useSearch();
   const navigate = Route.useNavigate();
+  const urlSearch = Route.useSearch();
+
+  // Restore the saved view from localStorage once on mount when the URL
+  // carries no explicit filters, then persist every change.
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    if (window.location.search.length > 1) return;
+    const saved = readSavedView();
+    if (saved && Object.values(saved).some((v) => v !== undefined)) {
+      navigate({ search: saved, replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(urlSearch));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [urlSearch]);
 
   const setParam = (patch: Partial<DirectorySearch>, resetPage = true) =>
     navigate({

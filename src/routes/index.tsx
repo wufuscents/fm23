@@ -273,6 +273,13 @@ function Directory() {
           </div>
         </div>
 
+        {(clubStats || countryStats) && (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {clubStats && <SummaryPanel stats={clubStats} />}
+            {countryStats && <SummaryPanel stats={countryStats} />}
+          </div>
+        )}
+
         <p className="fm-label mt-6">{sortedPlayers.length} results</p>
 
         {sortedPlayers.length === 0 ? (

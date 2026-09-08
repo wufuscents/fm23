@@ -172,6 +172,36 @@ function Directory() {
     });
   }, [players, search, status, club, nation, sort, genderMode]);
 
+  const clubStats = useMemo(() => {
+    if (!club) return null;
+    const matching = players.filter(
+      (p) => p.legendClubs?.includes(club) || p.iconClubs?.includes(club)
+    );
+    return {
+      name: club,
+      type: "Club Legacy",
+      count: matching.length,
+      totalApps: matching.reduce((sum, p) => sum + Number(p.apps || 0), 0),
+      totalGoals: matching.reduce((sum, p) => sum + Number(p.goals || 0), 0),
+      totalTrophies: matching.reduce((sum, p) => sum + Number(p.trophies || 0), 0),
+      totalAwards: matching.reduce((sum, p) => sum + Number(p.awards || 0), 0),
+    };
+  }, [players, club]);
+
+  const countryStats = useMemo(() => {
+    if (!nation) return null;
+    const matching = players.filter((p) => p.nationality === nation);
+    return {
+      name: nation,
+      type: "National Team Legacy",
+      count: matching.length,
+      totalApps: matching.reduce((sum, p) => sum + Number(p.apps || 0), 0),
+      totalGoals: matching.reduce((sum, p) => sum + Number(p.goals || 0), 0),
+      totalTrophies: matching.reduce((sum, p) => sum + Number(p.trophies || 0), 0),
+      totalAwards: matching.reduce((sum, p) => sum + Number(p.awards || 0), 0),
+    };
+  }, [players, nation]);
+
   const totalPages = Math.max(1, Math.ceil(sortedPlayers.length / PLAYERS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
   const shownPlayers = sortedPlayers.slice(

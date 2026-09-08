@@ -15,38 +15,37 @@ type SortKey = "trophies" | "awards" | "caps" | "goals" | "name";
 type GenderMode = "All" | "Male" | "Female";
 
 type DirectorySearch = {
-  search: string;
-  status: string;
-  club: string;
-  nation: string;
-  sort: SortKey;
-  gender: GenderMode;
-  page: number;
+  search?: string | undefined;
+  status?: string | undefined;
+  club?: string | undefined;
+  nation?: string | undefined;
+  sort?: SortKey | undefined;
+  gender?: GenderMode | undefined;
+  page?: number | undefined;
 };
 
 const SORT_KEYS: SortKey[] = ["trophies", "awards", "caps", "goals", "name"];
 const GENDER_MODES: GenderMode[] = ["All", "Male", "Female"];
 
-function validateSearch(search: Record<string, unknown>): DirectorySearch {
+function validateSearch(raw: Record<string, unknown>): DirectorySearch {
   const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const sort = SORT_KEYS.includes(search.sort as SortKey)
-    ? (search.sort as SortKey)
-    : "trophies";
-  const gender = GENDER_MODES.includes(search.gender as GenderMode)
-    ? (search.gender as GenderMode)
-    : "All";
+  const rawSort = raw["sort"] as SortKey;
+  const rawGender = raw["gender"] as GenderMode;
+  const rawPage = raw["page"];
+  const sort = SORT_KEYS.includes(rawSort) ? rawSort : "trophies";
+  const gender = GENDER_MODES.includes(rawGender) ? rawGender : "All";
   const page =
-    typeof search.page === "number" && Number.isFinite(search.page) && search.page >= 1
-      ? Math.floor(search.page)
+    typeof rawPage === "number" && Number.isFinite(rawPage) && rawPage >= 1
+      ? Math.floor(rawPage)
       : 1;
   return {
-    search: str(search.search),
-    status: str(search.status),
-    club: str(search.club),
-    nation: str(search.nation),
+    search: str(raw["search"]) || undefined,
+    status: str(raw["status"]) || undefined,
+    club: str(raw["club"]) || undefined,
+    nation: str(raw["nation"]) || undefined,
     sort,
     gender,
-    page,
+    page: page > 1 ? page : undefined,
   };
 }
 
@@ -113,8 +112,15 @@ function Directory() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { players, error } = data;
 
-  const { search, status, club, nation, sort, gender: genderMode, page: currentPage } =
-    Route.useSearch();
+  const {
+    search = "",
+    status = "",
+    club = "",
+    nation = "",
+    sort = "trophies",
+    gender: genderMode = "All",
+    page: currentPage = 1,
+  } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const setParam = (patch: Partial<DirectorySearch>, resetPage = true) =>

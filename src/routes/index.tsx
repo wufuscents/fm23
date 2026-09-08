@@ -172,7 +172,7 @@ function Directory() {
     });
   }, [players, search, status, club, nation, sort, genderMode]);
 
-  const clubStats = useMemo(() => {
+  const clubStats = useMemo<LegacyStats | null>(() => {
     if (!club) return null;
     const matching = players.filter(
       (p) => p.legendClubs?.includes(club) || p.iconClubs?.includes(club)
@@ -188,7 +188,7 @@ function Directory() {
     };
   }, [players, club]);
 
-  const countryStats = useMemo(() => {
+  const countryStats = useMemo<LegacyStats | null>(() => {
     if (!nation) return null;
     const matching = players.filter((p) => p.nationality === nation);
     return {

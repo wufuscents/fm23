@@ -15,13 +15,13 @@ type SortKey = "trophies" | "awards" | "caps" | "goals" | "name";
 type GenderMode = "All" | "Male" | "Female";
 
 type DirectorySearch = {
-  search?: string;
-  status?: string;
-  club?: string;
-  nation?: string;
-  sort?: SortKey;
-  gender?: GenderMode;
-  page?: number;
+  search?: string | undefined;
+  status?: string | undefined;
+  club?: string | undefined;
+  nation?: string | undefined;
+  sort?: SortKey | undefined;
+  gender?: GenderMode | undefined;
+  page?: number | undefined;
 };
 
 const SORT_KEYS: SortKey[] = ["trophies", "awards", "caps", "goals", "name"];

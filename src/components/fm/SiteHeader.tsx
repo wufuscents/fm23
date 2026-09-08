@@ -28,6 +28,13 @@ export function SiteHeader() {
           >
             Hall of Fame
           </Link>
+          <Link
+            to="/compare"
+            activeProps={{ className: "bg-panel text-foreground" }}
+            className="rounded-md px-3 py-1.5 font-display uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Compare
+          </Link>
         </nav>
       </div>
     </header>

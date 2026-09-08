@@ -172,6 +172,36 @@ function Directory() {
     });
   }, [players, search, status, club, nation, sort, genderMode]);
 
+  const clubStats = useMemo<LegacyStats | null>(() => {
+    if (!club) return null;
+    const matching = players.filter(
+      (p) => p.legendClubs?.includes(club) || p.iconClubs?.includes(club)
+    );
+    return {
+      name: club,
+      type: "Club Legacy",
+      count: matching.length,
+      totalApps: matching.reduce((sum, p) => sum + Number(p.apps || 0), 0),
+      totalGoals: matching.reduce((sum, p) => sum + Number(p.goals || 0), 0),
+      totalTrophies: matching.reduce((sum, p) => sum + Number(p.trophies || 0), 0),
+      totalAwards: matching.reduce((sum, p) => sum + Number(p.awards || 0), 0),
+    };
+  }, [players, club]);
+
+  const countryStats = useMemo<LegacyStats | null>(() => {
+    if (!nation) return null;
+    const matching = players.filter((p) => p.nationality === nation);
+    return {
+      name: nation,
+      type: "National Team Legacy",
+      count: matching.length,
+      totalApps: matching.reduce((sum, p) => sum + Number(p.apps || 0), 0),
+      totalGoals: matching.reduce((sum, p) => sum + Number(p.goals || 0), 0),
+      totalTrophies: matching.reduce((sum, p) => sum + Number(p.trophies || 0), 0),
+      totalAwards: matching.reduce((sum, p) => sum + Number(p.awards || 0), 0),
+    };
+  }, [players, nation]);
+
   const totalPages = Math.max(1, Math.ceil(sortedPlayers.length / PLAYERS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
   const shownPlayers = sortedPlayers.slice(
@@ -243,6 +273,13 @@ function Directory() {
           </div>
         </div>
 
+        {(clubStats || countryStats) && (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {clubStats && <SummaryPanel stats={clubStats} />}
+            {countryStats && <SummaryPanel stats={countryStats} />}
+          </div>
+        )}
+
         <p className="fm-label mt-6">{sortedPlayers.length} results</p>
 
         {sortedPlayers.length === 0 ? (
@@ -282,6 +319,43 @@ function Directory() {
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+type LegacyStats = {
+  name: string;
+  type: "Club Legacy" | "National Team Legacy";
+  count: number;
+  totalApps: number;
+  totalGoals: number;
+  totalTrophies: number;
+  totalAwards: number;
+};
+
+function SummaryPanel({ stats }: { stats: LegacyStats }) {
+  return (
+    <div className="fm-panel p-5">
+      <p className="fm-label">{stats.type}</p>
+      <h2 className="mt-1 text-2xl font-bold uppercase">{stats.name}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {stats.count} profile{stats.count === 1 ? "" : "s"} in this archive
+      </p>
+      <div className="mt-4 grid grid-cols-4 gap-3">
+        <SummaryStat value={stats.totalApps} label="Apps" />
+        <SummaryStat value={stats.totalGoals} label="Gls" />
+        <SummaryStat value={stats.totalTrophies} label="Trph" />
+        <SummaryStat value={stats.totalAwards} label="Awd" />
+      </div>
+    </div>
+  );
+}
+
+function SummaryStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="rounded-md border border-border bg-input px-3 py-3 text-center">
+      <p className="fm-stat text-2xl">{value.toLocaleString()}</p>
+      <p className="fm-label mt-1 text-[0.65rem]">{label}</p>
     </div>
   );
 }

@@ -323,6 +323,43 @@ function Directory() {
   );
 }
 
+type LegacyStats = {
+  name: string;
+  type: "Club Legacy" | "National Team Legacy";
+  count: number;
+  totalApps: number;
+  totalGoals: number;
+  totalTrophies: number;
+  totalAwards: number;
+};
+
+function SummaryPanel({ stats }: { stats: LegacyStats }) {
+  return (
+    <div className="fm-panel p-5">
+      <p className="fm-label">{stats.type}</p>
+      <h2 className="mt-1 text-2xl font-bold uppercase">{stats.name}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {stats.count} profile{stats.count === 1 ? "" : "s"} in this archive
+      </p>
+      <div className="mt-4 grid grid-cols-4 gap-3">
+        <SummaryStat value={stats.totalApps} label="Apps" />
+        <SummaryStat value={stats.totalGoals} label="Gls" />
+        <SummaryStat value={stats.totalTrophies} label="Trph" />
+        <SummaryStat value={stats.totalAwards} label="Awd" />
+      </div>
+    </div>
+  );
+}
+
+function SummaryStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="rounded-md border border-border bg-input px-3 py-3 text-center">
+      <p className="fm-stat text-2xl">{value.toLocaleString()}</p>
+      <p className="fm-label mt-1 text-[0.65rem]">{label}</p>
+    </div>
+  );
+}
+
 function Select({
   value,
   onChange,

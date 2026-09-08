@@ -27,23 +27,22 @@ type DirectorySearch = {
 const SORT_KEYS: SortKey[] = ["trophies", "awards", "caps", "goals", "name"];
 const GENDER_MODES: GenderMode[] = ["All", "Male", "Female"];
 
-function validateSearch(search: Record<string, unknown>): DirectorySearch {
+function validateSearch(raw: Record<string, unknown>): DirectorySearch {
   const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const sort = SORT_KEYS.includes(search.sort as SortKey)
-    ? (search.sort as SortKey)
-    : "trophies";
-  const gender = GENDER_MODES.includes(search.gender as GenderMode)
-    ? (search.gender as GenderMode)
-    : "All";
+  const rawSort = raw["sort"] as SortKey;
+  const rawGender = raw["gender"] as GenderMode;
+  const rawPage = raw["page"];
+  const sort = SORT_KEYS.includes(rawSort) ? rawSort : "trophies";
+  const gender = GENDER_MODES.includes(rawGender) ? rawGender : "All";
   const page =
-    typeof search.page === "number" && Number.isFinite(search.page) && search.page >= 1
-      ? Math.floor(search.page)
+    typeof rawPage === "number" && Number.isFinite(rawPage) && rawPage >= 1
+      ? Math.floor(rawPage)
       : 1;
   return {
-    search: str(search.search) || undefined,
-    status: str(search.status) || undefined,
-    club: str(search.club) || undefined,
-    nation: str(search.nation) || undefined,
+    search: str(raw["search"]) || undefined,
+    status: str(raw["status"]) || undefined,
+    club: str(raw["club"]) || undefined,
+    nation: str(raw["nation"]) || undefined,
     sort,
     gender,
     page: page > 1 ? page : undefined,

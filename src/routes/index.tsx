@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { SiteHeader } from "@/components/fm/SiteHeader";
 import { PlayerCard } from "@/components/fm/PlayerCard";
 import { fetchDirectory, type Player } from "@/lib/fm";

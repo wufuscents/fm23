@@ -7,18 +7,28 @@ export const Route = createFileRoute('/player/$id')({
   loader: async ({ params }) => {
     const { id } = params
 
-    const [playerRes, playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
-      supabase.from('players').select('*').eq('id', id).single(),
-      supabase.from('player_career_history').select('*').eq('player_id', id),
-      supabase.from('coach_career_history').select('*').eq('player_id', id),
-      supabase.from('awards_and_trophies').select('*').eq('player_id', id),
-    ])
+    try {
+      const [playerRes, playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
+        supabase.from('players').select('*').eq('id', id).maybeSingle(),
+        supabase.from('player_career_history').select('*').eq('player_id', id),
+        supabase.from('coach_career_history').select('*').eq('player_id', id),
+        supabase.from('awards_and_trophies').select('*').eq('player_id', id),
+      ])
 
-    return {
-      player: playerRes.data as Player | null,
-      playerCareer: sortCareerByYears((playerCareerRes.data || []) as CareerEntry[]),
-      coachCareer: sortCareerByYears((coachCareerRes.data || []) as CareerEntry[]),
-      awards: (awardsRes.data || []) as AwardEntry[],
+      return {
+        player: (playerRes.data || null) as Player | null,
+        playerCareer: sortCareerByYears((playerCareerRes.data || []) as CareerEntry[]),
+        coachCareer: sortCareerByYears((coachCareerRes.data || []) as CareerEntry[]),
+        awards: (awardsRes.data || []) as AwardEntry[],
+      }
+    } catch (err) {
+      console.error('Error fetching player profile:', err)
+      return {
+        player: null,
+        playerCareer: [],
+        coachCareer: [],
+        awards: [],
+      }
     }
   },
   component: PlayerProfilePage,
@@ -29,15 +39,18 @@ function PlayerProfilePage() {
 
   if (!player) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono">
-        Player profile not found.
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4">
+        <div>Player profile not found.</div>
+        <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs">
+          ← BACK TO DIRECTORY
+        </Link>
       </div>
     )
   }
 
-  const statusLower = player.status?.toLowerCase() || ''
-  const isLegend = statusLower === 'legend'
-  const isIcon = statusLower === 'icon'
+  const statusLower = (player.status || '').toLowerCase()
+  const isLegend = statusLower.includes('legend')
+  const isIcon = statusLower.includes('icon')
 
   const themeGlow = isLegend
     ? 'bg-radial from-amber-500/15 via-slate-950 to-slate-950'
@@ -57,6 +70,10 @@ function PlayerProfilePage() {
     ? 'bg-slate-300/20 text-slate-200 border-slate-300/40'
     : 'bg-slate-800 text-slate-400 border-slate-700'
 
+  const playerImage = player.image_url || player.photo_url || ''
+  const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
+  const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
+
   return (
     <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>
       <div className="max-w-6xl mx-auto space-y-6">
@@ -69,20 +86,24 @@ function PlayerProfilePage() {
 
         <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl">
-              <img
-                src={storageUrl(player.photo_url)}
-                alt={player.name}
-                className="w-full h-full object-cover object-top"
-              />
+            <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl flex items-center justify-center p-2">
+              {playerImage ? (
+                <img
+                  src={storageUrl(playerImage)}
+                  alt={player.name}
+                  className="w-full h-full object-contain max-h-full"
+                />
+              ) : (
+                <span className="text-slate-500 font-mono text-xs">NO IMAGE</span>
+              )}
             </div>
 
             <div className="flex-1 text-center md:text-left space-y-2">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                {player.nation_flag && (
-                  <img src={player.nation_flag} alt={player.nation} className="w-6 h-4 object-cover rounded-sm" />
+                {playerFlag && (
+                  <img src={playerFlag} alt={playerNation} className="w-6 h-4 object-cover rounded-sm" />
                 )}
-                <span className="text-xs font-mono uppercase text-slate-400">{player.nation}</span>
+                <span className="text-xs font-mono uppercase text-slate-400">{playerNation}</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${badgeTheme}`}>
                   {player.status || 'Squad Member'}
                 </span>
@@ -93,7 +114,7 @@ function PlayerProfilePage() {
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-300 font-mono">
-                {player.position || 'N/A'}
+                {player.positions_short || player.positions_full || player.position || 'N/A'}
               </p>
 
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">

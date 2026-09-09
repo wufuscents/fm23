@@ -3,10 +3,11 @@ import { Player } from '../../lib/types'
 import { storageUrl } from '../../lib/fm'
 
 export function Flag({ url, name }: { url?: string | null; name?: string | null }) {
-  if (!url) return null
+  const flagSrc = url || ''
+  if (!flagSrc) return null
   return (
     <img
-      src={url}
+      src={flagSrc}
       alt={name || 'Flag'}
       className="w-5 h-3.5 object-cover rounded-sm flex-shrink-0 shadow-sm"
     />
@@ -24,16 +25,16 @@ export function Avatar({
 }) {
   const photoPath = url || ''
   return (
-    <div className={`relative flex-shrink-0 rounded-lg overflow-hidden bg-slate-800/80 border border-slate-700/60 shadow-inner ${className}`}>
+    <div className={`relative flex-shrink-0 rounded-lg overflow-hidden bg-slate-900/90 border border-slate-700/60 shadow-inner flex items-center justify-center ${className}`}>
       {photoPath ? (
         <img
           src={storageUrl(photoPath)}
           alt={name || 'Player'}
-          className="w-full h-full object-cover object-top"
+          className="w-full h-full object-contain max-h-full p-1"
           loading="lazy"
         />
       ) : (
-        <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500 font-mono text-xs">
+        <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500 font-mono text-[10px]">
           NO IMAGE
         </div>
       )}
@@ -42,12 +43,14 @@ export function Avatar({
 }
 
 export function PlayerCard({ player }: { player: Player }) {
-  const statusLower = player.status?.toLowerCase() || ''
-  const isLegend = statusLower === 'legend'
-  const isIcon = statusLower === 'icon'
-  const isFemale = player.gender?.toLowerCase() === 'female' || player.gender?.toLowerCase() === 'f'
+  const statusLower = (player.status || player.legacy_status || '').toLowerCase()
+  const isLegend = statusLower.includes('legend')
+  const isIcon = statusLower.includes('icon')
 
-  // 5. Gender + Status dynamic visual styling
+  const genderVal = (player.gender || '').toLowerCase()
+  const isFemale = genderVal === 'female' || genderVal === 'f'
+
+  // Dynamic Theme according to Gender + Status
   let cardBorder = 'border-slate-800 bg-slate-900/70'
   let statusBadge = 'bg-slate-800 text-slate-400 border-slate-700'
   let roleText = 'text-amber-400'
@@ -74,11 +77,17 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  // Database key normalizations
+  // Column Field Normalization
   const playerImage = player.image_url || player.photo_url || ''
+  const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
+  const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
   const playerClub = player.club_name || player.current_club || player.club || ''
   const playerPos = player.positions_short || player.positions_full || player.position || 'N/A'
-  const displayDescription = player.club_description || (playerClub ? `${player.status || 'Squad'} • ${playerClub}` : (player.status || 'Squad Member'))
+
+  const displayDescription =
+    player.club_description ||
+    player.status_club ||
+    (playerClub ? `${player.status || 'Squad'} • ${playerClub}` : player.status || 'Squad Member')
 
   return (
     <Link
@@ -89,7 +98,7 @@ export function PlayerCard({ player }: { player: Player }) {
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
-            <Flag url={player.nation_flag} name={player.nation} />
+            <Flag url={playerFlag} name={playerNation} />
             <h3 className="font-heading font-bold text-base sm:text-lg text-white truncate uppercase tracking-wider">
               {player.name}
             </h3>
@@ -111,7 +120,7 @@ export function PlayerCard({ player }: { player: Player }) {
             </p>
 
             <p className="text-xs text-slate-400 truncate mt-0.5">
-              {player.nation || 'Unknown Nation'}
+              {playerNation}
             </p>
 
             <div className="mt-2">

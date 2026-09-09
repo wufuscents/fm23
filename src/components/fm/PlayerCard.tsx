@@ -54,7 +54,6 @@ export function PlayerCard({ player }: { player: Player }) {
   const genderVal = (player.gender || '').toLowerCase()
   const isFemale = genderVal === 'female' || genderVal === 'f'
 
-  // Dynamic Theme according to Gender + Status
   let cardBorder = 'border-slate-800 bg-slate-900/70'
   let statusBadge = 'bg-slate-800 text-slate-400 border-slate-700'
   let roleText = 'text-amber-400'
@@ -144,11 +143,11 @@ export function PlayerCard({ player }: { player: Player }) {
 
       <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
-          <div className="text-sm font-bold text-white">{player.apps ?? 0}</div>
-          <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+          <div className="text-sm font-bold text-white">{player.international_apps ?? 0}</div>
+          <div className="text-[9px] text-slate-500 uppercase">Caps</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.goals ?? 0}</div>
+          <div className="text-sm font-bold text-white">{player.international_goals ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Gls</div>
         </div>
         <div>

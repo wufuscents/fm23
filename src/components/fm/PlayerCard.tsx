@@ -143,11 +143,11 @@ export function PlayerCard({ player }: { player: Player }) {
 
       <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
-          <div className="text-sm font-bold text-white">{player.international_apps ?? 0}</div>
-          <div className="text-[9px] text-slate-500 uppercase">Caps</div>
+          <div className="text-sm font-bold text-white">{player.apps ?? 0}</div>
+          <div className="text-[9px] text-slate-500 uppercase">Apps</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.international_goals ?? 0}</div>
+          <div className="text-sm font-bold text-white">{player.goals ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Gls</div>
         </div>
         <div>

@@ -16,18 +16,18 @@ export function Flag({ url, name }: { url?: string | null; name?: string | null 
 
 export function Avatar({
   url,
-  photo_url,
   image_url,
+  photo_url,
   name,
   className = 'w-24 h-24',
 }: {
   url?: string | null
-  photo_url?: string | null
   image_url?: string | null
+  photo_url?: string | null
   name?: string | null
   className?: string
 }) {
-  const photoPath = url || photo_url || image_url || ''
+  const photoPath = url || image_url || photo_url || ''
   return (
     <div className={`relative flex-shrink-0 rounded-lg overflow-hidden bg-slate-900/90 border border-slate-700/60 shadow-inner flex items-center justify-center ${className}`}>
       {photoPath ? (
@@ -47,14 +47,14 @@ export function Avatar({
 }
 
 export function PlayerCard({ player }: { player: Player }) {
-  const statusLower = (player.status || player.legacy_status || '').toLowerCase()
-  const isLegend = statusLower.includes('legend')
-  const isIcon = statusLower.includes('icon')
+  const statusLower = (player.status || '').toLowerCase()
+  const isLegend = statusLower.includes('legend') || (player.legend_at_clubs && player.legend_at_clubs.length > 0)
+  const isIcon = statusLower.includes('icon') || (player.icon_at_clubs && player.icon_at_clubs.length > 0)
 
   const genderVal = (player.gender || '').toLowerCase()
   const isFemale = genderVal === 'female' || genderVal === 'f'
 
-  // Dynamic Visual Styling based on Gender + Status
+  // Dynamic Theme according to Gender + Status
   let cardBorder = 'border-slate-800 bg-slate-900/70'
   let statusBadge = 'bg-slate-800 text-slate-400 border-slate-700'
   let roleText = 'text-amber-400'
@@ -81,27 +81,21 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  // Database Key Normalizations
-  const playerImage = player.image_url || player.photo_url || ''
-  const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
-  const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
-  const playerClub = player.club_name || player.current_club || player.club || ''
+  // Exact Table Mappings
+  const playerImage = player.image_url || ''
+  const playerNation = player.nationality || 'Global'
+  const playerFlag = player.nationality_flag_url || null
 
-  // Tactical Playing Position Resolution (DL, DC, DR, MC, ST, etc.)
-  const playerPos =
-    player.positions_short ||
-    player.position ||
-    player.positions_full ||
-    player.primary_position ||
-    '-'
+  // 4. Tactical Playing Position (role column: DL, DC, DR, MC, ST, etc.)
+  const playerPos = player.role || '-'
 
-  // Legend / Icon Club Description Resolution
-  const rawStatusClub = player.status_club || player.club_description || player.legacy_status_club
-  const statusClubText = rawStatusClub
-    ? rawStatusClub
-    : playerClub
-    ? `${player.status || 'Squad Member'} • ${playerClub}`
-    : player.status || 'Squad Member'
+  // 1. Legend / Icon Club Format (legend_at_clubs / icon_at_clubs text arrays)
+  let statusClubText = player.status || 'Squad Member'
+  if (player.legend_at_clubs && player.legend_at_clubs.length > 0) {
+    statusClubText = `Legend • ${player.legend_at_clubs.join(', ')}`
+  } else if (player.icon_at_clubs && player.icon_at_clubs.length > 0) {
+    statusClubText = `Icon • ${player.icon_at_clubs.join(', ')}`
+  }
 
   return (
     <Link
@@ -137,7 +131,7 @@ export function PlayerCard({ player }: { player: Player }) {
               {playerNation}
             </p>
 
-            {/* Tactical Playing Position Badge */}
+            {/* Playing Position Badge (DL, DC, DR, MC, ST, etc.) */}
             <div className="mt-2">
               <span className="text-[11px] font-mono text-slate-300 bg-slate-800/90 px-2 py-1 rounded border border-slate-700/50 block truncate max-w-full">
                 {playerPos}
@@ -149,11 +143,11 @@ export function PlayerCard({ player }: { player: Player }) {
 
       <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
-          <div className="text-sm font-bold text-white">{player.apps ?? 0}</div>
-          <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+          <div className="text-sm font-bold text-white">{player.international_apps ?? 0}</div>
+          <div className="text-[9px] text-slate-500 uppercase">Caps</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.goals ?? 0}</div>
+          <div className="text-sm font-bold text-white">{player.international_goals ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Gls</div>
         </div>
         <div>

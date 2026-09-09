@@ -27,12 +27,15 @@ function DirectoryPage() {
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
+  const [gender, setGender] = useState('all')
   const [club, setClub] = useState('all')
   const [nation, setNation] = useState('all')
   const [sortBy, setSortBy] = useState('trophies')
 
   const clubs = useMemo(() => {
-    const unique = new Set(players.map((p) => p.current_club).filter(Boolean))
+    const unique = new Set(
+      players.map((p) => p.club_name || p.current_club || p.club).filter(Boolean)
+    )
     return Array.from(unique).sort()
   }, [players])
 
@@ -44,20 +47,27 @@ function DirectoryPage() {
   const filteredPlayers = useMemo(() => {
     return players
       .filter((player) => {
+        const playerClub = player.club_name || player.current_club || player.club || ''
         const matchesSearch =
           !search ||
           player.name.toLowerCase().includes(search.toLowerCase()) ||
-          player.current_club?.toLowerCase().includes(search.toLowerCase()) ||
+          playerClub.toLowerCase().includes(search.toLowerCase()) ||
           player.nation?.toLowerCase().includes(search.toLowerCase())
 
         const matchesStatus =
           status === 'all' ||
           player.status?.toLowerCase() === status.toLowerCase()
 
-        const matchesClub = club === 'all' || player.current_club === club
+        const matchesGender =
+          gender === 'all' ||
+          player.gender?.toLowerCase() === gender.toLowerCase() ||
+          (gender === 'female' && player.gender?.toLowerCase() === 'f') ||
+          (gender === 'male' && player.gender?.toLowerCase() === 'm')
+
+        const matchesClub = club === 'all' || playerClub === club
         const matchesNation = nation === 'all' || player.nation === nation
 
-        return matchesSearch && matchesStatus && matchesClub && matchesNation
+        return matchesSearch && matchesStatus && matchesGender && matchesClub && matchesNation
       })
       .sort((a, b) => {
         if (sortBy === 'trophies') return (b.trophies || 0) - (a.trophies || 0)
@@ -67,7 +77,7 @@ function DirectoryPage() {
         if (sortBy === 'name') return a.name.localeCompare(b.name)
         return 0
       })
-  }, [players, search, status, club, nation, sortBy])
+  }, [players, search, status, gender, club, nation, sortBy])
 
   const leftColor = club !== 'all' && TEAM_COLORS[club] ? TEAM_COLORS[club] : 'transparent'
   const rightColor = nation !== 'all' && TEAM_COLORS[nation] ? TEAM_COLORS[nation] : 'transparent'
@@ -83,7 +93,6 @@ function DirectoryPage() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-xl">
           <div className="text-xs font-mono font-semibold tracking-widest text-emerald-400 uppercase mb-1">
             Database Archive
@@ -92,11 +101,10 @@ function DirectoryPage() {
             SQUAD DIRECTORY
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            {players.length} profiles recorded across legends, icons, retired greats, and head coaches.
+            {players.length} profiles recorded across legends, icons, and squad members.
           </p>
 
-          {/* Filter Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mt-6">
             <input
               type="text"
               placeholder="Search player or club..."
@@ -105,6 +113,7 @@ function DirectoryPage() {
               className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
             />
 
+            {/* Status Filter (No Head Coach) */}
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
@@ -113,7 +122,17 @@ function DirectoryPage() {
               <option value="all">All Statuses</option>
               <option value="legend">Legend</option>
               <option value="icon">Icon</option>
-              <option value="head coach">Head Coach</option>
+            </select>
+
+            {/* Gender Filter */}
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+            >
+              <option value="all">All Genders</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
             </select>
 
             <select
@@ -156,14 +175,12 @@ function DirectoryPage() {
           </div>
         </div>
 
-        {/* Results Counter */}
         <div className="flex items-center justify-between mb-4 px-1">
           <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
             Showing <span className="text-white font-bold">{filteredPlayers.length}</span> Results
           </div>
         </div>
 
-        {/* Squad Grid */}
         {filteredPlayers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPlayers.map((player) => (

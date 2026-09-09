@@ -203,7 +203,7 @@ function PlayerProfilePage() {
                   <div className="text-[10px] text-slate-500 uppercase">Trophies</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{totalAwardsCount}</div>
+                  <div className="text-xl font-bold text-emerald-400">{totalAwardsCount}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Awards</div>
                 </div>
               </div>

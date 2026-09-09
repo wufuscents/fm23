@@ -89,12 +89,6 @@ export function PlayerCard({ player }: { player: Player }) {
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
 
-  // Stat Fallbacks
-  const capsVal = player.international_apps ?? player.caps ?? 0
-  const goalsVal = player.international_goals ?? player.goals ?? 0
-  const trophiesVal = player.trophies ?? 0
-  const awardsVal = player.awards ?? 0
-
   return (
     <Link
       to="/player/$id"
@@ -150,19 +144,19 @@ export function PlayerCard({ player }: { player: Player }) {
 
       <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
-          <div className="text-sm font-bold text-white">{capsVal}</div>
-          <div className="text-[9px] text-slate-500 uppercase">Caps</div>
+          <div className="text-sm font-bold text-white">{player.apps ?? 0}</div>
+          <div className="text-[9px] text-slate-500 uppercase">Apps</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{goalsVal}</div>
+          <div className="text-sm font-bold text-white">{player.goals ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Gls</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{trophiesVal}</div>
+          <div className="text-sm font-bold text-white">{player.trophies ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Trph</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{awardsVal}</div>
+          <div className="text-sm font-bold text-white">{player.awards ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Awd</div>
         </div>
       </div>

@@ -87,7 +87,7 @@ export function PlayerCard({ player }: { player: Player }) {
   const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
   const playerClub = player.club_name || player.current_club || player.club || ''
 
-  // 4. Playing Positions Resolution (e.g., DL, DC, DR, MC, ST)
+  // Tactical Playing Position Resolution (DL, DC, DR, MC, ST, etc.)
   const playerPos =
     player.positions_short ||
     player.position ||
@@ -95,12 +95,12 @@ export function PlayerCard({ player }: { player: Player }) {
     player.primary_position ||
     '-'
 
-  // 1. Legend / Icon Club Description Resolution
+  // Legend / Icon Club Description Resolution
   const rawStatusClub = player.status_club || player.club_description || player.legacy_status_club
   const statusClubText = rawStatusClub
     ? rawStatusClub
     : playerClub
-    ? `${player.status \vert{}\vert{} 'Squad Member'} •${playerClub}`
+    ? `${player.status || 'Squad Member'} • ${playerClub}`
     : player.status || 'Squad Member'
 
   return (

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { FastAverageColor } from "fast-average-color";
 import type { HonourCounts, Player } from "@/lib/fm";
 
 export function Avatar({
@@ -64,6 +66,26 @@ export function PlayerCard({
   const awards = player.awards;
   const isGK =
     player.role?.toLowerCase().includes("goalkeeper") || player.role === "GK";
+
+  const [dominantColor, setDominantColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!player.imageUrl) return;
+    let cancelled = false;
+    const fac = new FastAverageColor();
+    fac
+      .getColorAsync(player.imageUrl, { silent: true })
+      .then((color) => {
+        if (!cancelled) setDominantColor(color.hex);
+      })
+      .catch(() => {
+        // ignore extraction failures
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [player.imageUrl]);
+
   return (
 
 
@@ -72,6 +94,14 @@ export function PlayerCard({
       params={{ id: player.id }}
       className="fm-panel group flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:border-primary/60"
     >
+      <div
+        className="h-1 w-full transition-opacity group-hover:opacity-100"
+        style={{
+          backgroundColor: dominantColor ?? undefined,
+          opacity: dominantColor ? 0.9 : 0,
+        }}
+        aria-hidden="true"
+      />
       <div className="relative aspect-[4/3] overflow-hidden bg-panel">
         <Avatar
           src={player.imageUrl}

@@ -1,6 +1,38 @@
 import { Player } from '../../lib/types'
 import { storageUrl } from '../../lib/fm'
 
+export function Flag({ url, name }: { url?: string | null; name?: string | null }) {
+  if (!url) return null
+  return (
+    <img
+      src={url}
+      alt={name || 'Flag'}
+      className="w-5 h-3.5 object-cover rounded-sm flex-shrink-0 shadow-sm"
+    />
+  )
+}
+
+export function Avatar({
+  url,
+  name,
+  className = 'w-24 h-24',
+}: {
+  url?: string | null
+  name?: string | null
+  className?: string
+}) {
+  return (
+    <div className={`relative flex-shrink-0 rounded-lg overflow-hidden bg-slate-800/80 border border-slate-700/60 shadow-inner ${className}`}>
+      <img
+        src={storageUrl(url)}
+        alt={name || 'Player'}
+        className="w-full h-full object-cover object-top"
+        loading="lazy"
+      />
+    </div>
+  )
+}
+
 export function PlayerCard({ player }: { player: Player }) {
   const statusLower = player.status?.toLowerCase() || ''
   const isLegend = statusLower === 'legend'
@@ -25,13 +57,7 @@ export function PlayerCard({ player }: { player: Player }) {
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
-            {player.nation_flag && (
-              <img
-                src={player.nation_flag}
-                alt={player.nation}
-                className="w-5 h-3.5 object-cover rounded-sm flex-shrink-0 shadow-sm"
-              />
-            )}
+            <Flag url={player.nation_flag} name={player.nation} />
             <h3 className="font-heading font-bold text-base sm:text-lg text-white truncate uppercase tracking-wider">
               {player.name}
             </h3>
@@ -45,14 +71,7 @@ export function PlayerCard({ player }: { player: Player }) {
         </div>
 
         <div className="flex items-center gap-3 my-2">
-          <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800/80 border border-slate-700/60 shadow-inner">
-            <img
-              src={storageUrl(player.photo_url)}
-              alt={player.name}
-              className="w-full h-full object-cover object-top"
-              loading="lazy"
-            />
-          </div>
+          <Avatar url={player.photo_url} name={player.name} className="w-24 h-24" />
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
             <p className="text-xs font-semibold text-amber-400 truncate">

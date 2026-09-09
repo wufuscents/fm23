@@ -16,14 +16,18 @@ export function Flag({ url, name }: { url?: string | null; name?: string | null 
 
 export function Avatar({
   url,
+  photo_url,
+  image_url,
   name,
   className = 'w-24 h-24',
 }: {
   url?: string | null
+  photo_url?: string | null
+  image_url?: string | null
   name?: string | null
   className?: string
 }) {
-  const photoPath = url || ''
+  const photoPath = url || photo_url || image_url || ''
   return (
     <div className={`relative flex-shrink-0 rounded-lg overflow-hidden bg-slate-900/90 border border-slate-700/60 shadow-inner flex items-center justify-center ${className}`}>
       {photoPath ? (
@@ -77,17 +81,25 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  // Database Key Normalization
+  // 1 & 4. Complete Database Key Normalization
   const playerImage = player.image_url || player.photo_url || ''
   const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
   const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
   const playerClub = player.club_name || player.current_club || player.club || ''
-  const playerPos = player.positions_short || player.positions_full || player.position || 'N/A'
 
-  // Dynamic Legend/Icon Club Description Resolution
+  // Position fallback chain
+  const playerPos =
+    player.positions_short ||
+    player.position ||
+    player.positions_full ||
+    player.primary_position ||
+    'Squad Member'
+
+  // Legend/Icon Club Description fallback chain
   const statusClubText =
     player.status_club ||
     player.club_description ||
+    player.legacy_status_club ||
     (playerClub ? `${player.status || 'Squad'} • ${playerClub}` : player.status || 'Squad Member')
 
   return (

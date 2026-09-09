@@ -8,7 +8,7 @@ export const COLOR_FALLBACK = "#1e293b";
 
 export async function getDominantColor(
   imageUrl?: string | null,
-  fallback = COLOR_FALLBACK,
+  fallback = COLOR_FALLBACK
 ): Promise<string> {
   if (!imageUrl) return fallback;
   const cached = colorCache.get(imageUrl);
@@ -30,7 +30,6 @@ export async function getDominantColor(
   }
 }
 
-/** Extracts a dominant hex from a club logo or national flag URL. */
 export function useDominantColor(imageUrl?: string | null, fallback = COLOR_FALLBACK): string {
   const [color, setColor] = useState(fallback);
 
@@ -54,15 +53,15 @@ export function useClubAndNationColors(clubLogoUrl?: string | null, nationFlagUr
   return { clubColor, nationColor };
 }
 
-/** Ambient split gradient: Left side = Club, Right side = Nation. Handles fallback if only one is present. */
+/** Ambient split gradient: Left = Club, Right = Nation */
 export function ambientSplitGradient(clubColor?: string, nationColor?: string): string {
   const left = clubColor && clubColor !== COLOR_FALLBACK ? clubColor : "#0f172a";
   const right = nationColor && nationColor !== COLOR_FALLBACK ? nationColor : "#0f172a";
   
-  return `linear-gradient(90deg, ${left}22 0%, ${left}11 40%, ${right}11 60%, ${right}22 100%)`;
+  return `linear-gradient(90deg, ${left}33 0%, ${left}15 45%, ${right}15 55%, ${right}33 100%)`;
 }
 
-/** Legend = Gold/Amber glow, Icon = Silver glow. */
+/** Legend = Gold/Amber glow, Icon = Silver glow */
 export function getStatusBorderClass(status?: string | null): string {
   const normalized = status?.toLowerCase() ?? "";
   if (normalized.startsWith("legend")) {
@@ -74,19 +73,19 @@ export function getStatusBorderClass(status?: string | null): string {
   return "border-t-2 border-t-slate-800";
 }
 
-/** Profile view background themes by status */
+/** Profile background theme by status */
 export function getStatusProfileTheme(status?: string | null): string {
   const normalized = status?.toLowerCase() ?? "";
   if (normalized.startsWith("legend")) {
-    return "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.15) 0%, rgba(2, 6, 23, 0.98) 75%)";
+    return "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.2) 0%, rgba(2, 6, 23, 0.98) 75%)";
   }
   if (normalized.startsWith("icon")) {
-    return "radial-gradient(circle at 50% 0%, rgba(203, 213, 225, 0.15) 0%, rgba(2, 6, 23, 0.98) 75%)";
+    return "radial-gradient(circle at 50% 0%, rgba(203, 213, 225, 0.2) 0%, rgba(2, 6, 23, 0.98) 75%)";
   }
-  return "radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.15) 0%, rgba(2, 6, 23, 0.98) 75%)";
+  return "radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.2) 0%, rgba(2, 6, 23, 0.98) 75%)";
 }
 
-/** Female = magenta glow, Male = blue glow. */
+/** Female = magenta glow, Male = blue glow */
 export function getGenderBorderClass(gender?: string | null): string {
   const normalized = gender?.toLowerCase() ?? "";
   if (normalized === "female") {

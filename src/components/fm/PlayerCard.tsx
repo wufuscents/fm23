@@ -81,14 +81,19 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  const playerImage = player.image_url || ''
-  const playerNation = player.nationality || 'Global'
-  const playerFlag = player.nationality_flag_url || null
-  const playerPos = player.role || '-'
+  const playerImage = player.image_url || player.photo_url || ''
+  const playerNation = player.nationality || player.nation || 'Global'
+  const playerFlag = player.nationality_flag_url || player.nation_flag || null
+  const playerPos = player.role || player.positions_short || player.position || '-'
 
-  // Legend & Icon Clubs Lists
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
+
+  // Stat Fallbacks
+  const capsVal = player.international_apps ?? player.caps ?? 0
+  const goalsVal = player.international_goals ?? player.goals ?? 0
+  const trophiesVal = player.trophies ?? 0
+  const awardsVal = player.awards ?? 0
 
   return (
     <Link
@@ -116,7 +121,6 @@ export function PlayerCard({ player }: { player: Player }) {
           <Avatar url={playerImage} name={player.name} className="w-24 h-24" />
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
-            {/* Wrapped Legend / Icon Clubs Badges */}
             {legendClubs.length > 0 ? (
               <p className={`text-xs font-semibold truncate ${roleText}`}>
                 Legend • {legendClubs.join(', ')}
@@ -146,19 +150,19 @@ export function PlayerCard({ player }: { player: Player }) {
 
       <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
-          <div className="text-sm font-bold text-white">{player.international_apps ?? 0}</div>
+          <div className="text-sm font-bold text-white">{capsVal}</div>
           <div className="text-[9px] text-slate-500 uppercase">Caps</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.international_goals ?? 0}</div>
+          <div className="text-sm font-bold text-white">{goalsVal}</div>
           <div className="text-[9px] text-slate-500 uppercase">Gls</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.trophies ?? 0}</div>
+          <div className="text-sm font-bold text-white">{trophiesVal}</div>
           <div className="text-[9px] text-slate-500 uppercase">Trph</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.awards ?? 0}</div>
+          <div className="text-sm font-bold text-white">{awardsVal}</div>
           <div className="text-[9px] text-slate-500 uppercase">Awd</div>
         </div>
       </div>

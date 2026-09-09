@@ -156,7 +156,7 @@ function PlayerProfilePage() {
             <div className="flex-1 text-center md:text-left space-y-3">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 {playerFlag && (
-                  <img src={playerFlag} alt={playerNation} className="w-5 h-3.5 object-cover rounded-sm" />
+                  <img src={playerFlag} alt={playerNation} className="w-5 h-5 rounded-full object-cover shadow-sm" />
                 )}
                 <span className="text-xs font-mono uppercase text-slate-400">{playerNation}</span>
               </div>

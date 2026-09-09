@@ -1,150 +1,151 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { SiteHeader } from "@/components/fm/SiteHeader";
-import { Avatar, Flag } from "@/components/fm/PlayerCard";
-import { fetchDirectory, type Player } from "@/lib/fm";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useMemo } from 'react'
+import { supabase } from '../lib/supabase'
+import { Player } from '../lib/types'
+import { storageUrl } from '../lib/fm'
+import { Flag } from '../components/fm/PlayerCard'
 
-const directoryQuery = queryOptions({
-  queryKey: ["directory"],
-  queryFn: fetchDirectory,
-  staleTime: 60_000,
-});
+export const Route = createFileRoute('/leaderboards')({
+  loader: async () => {
+    let { data, error } = await supabase
+      .from('player_directory_view')
+      .select('*')
 
-export const Route = createFileRoute("/leaderboards")({
-  head: () => ({
-    meta: [
-      { title: "Hall of Fame — Goals, Apps, Trophies & Awards Leaderboards" },
-      {
-        name: "description",
-        content:
-          "Live rankings of the greatest careers: top goalscorers, most appearances, most decorated and most individual awards.",
-      },
-      { property: "og:title", content: "Hall of Fame — Career Leaderboards" },
-      {
-        property: "og:description",
-        content: "Ranked leaderboards for goals, appearances, trophies and individual awards.",
-      },
-    ],
-  }),
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(directoryQuery);
+    if (error || !data || data.length === 0) {
+      const fallback = await supabase.from('players').select('*')
+      data = fallback.data || []
+    }
+
+    return { players: (data || []) as Player[] }
   },
-  component: Leaderboards,
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <p className="px-4 py-24 text-center text-sm text-muted-foreground" role="alert">
-        {error.message}
-      </p>
-    </div>
-  ),
-  notFoundComponent: () => (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <p className="px-4 py-24 text-center text-sm text-muted-foreground">No records found.</p>
-    </div>
-  ),
-});
+  component: LeaderboardsPage,
+})
 
-function Leaderboards() {
-  const { data } = useSuspenseQuery(directoryQuery);
-  const { players, counts, error } = data;
-  const c = (id: string) => counts.get(id) ?? { trophies: 0, awards: 0 };
+function LeaderboardsPage() {
+  const { players } = Route.useLoaderData()
+  const [metric, setMetric] = useState<'trophies' | 'apps' | 'goals' | 'awards'>('trophies')
 
-  const boards: { title: string; unit: string; rows: { p: Player; v: number }[] }[] = [
-    {
-      title: "Top Goalscorers",
-      unit: "Goals",
-      rows: players.map((p) => ({ p, v: Number(p.goals) || 0 })),
-    },
-    {
-      title: "Most Appearances",
-      unit: "Apps",
-      rows: players.map((p) => ({ p, v: Number(p.apps) || 0 })),
-    },
-    {
-      title: "Most Decorated",
-      unit: "Trophies",
-      rows: players.map((p) => ({ p, v: Number(p.trophies) || c(p.id).trophies })),
-    },
-    {
-      title: "Most Individual Awards",
-      unit: "Awards",
-      rows: players.map((p) => ({ p, v: Number(p.awards) || c(p.id).awards })),
-    },
-  ].map((b) => ({
-    ...b,
-    rows: [...b.rows].sort((a, z) => Number(z.v) - Number(a.v)),
-  }));
+  const topPlayers = useMemo(() => {
+    return [...players]
+      .sort((a, b) => (b[metric] || 0) - (a[metric] || 0))
+      .slice(0, 50)
+  }, [players, metric])
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        {error && (
-          <div
-            role="alert"
-            className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive-foreground"
-          >
-            Database read blocked: {error}.
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Navigation */}
+        <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-heading font-extrabold tracking-wider text-xl text-white">FM SQUAD ARCHIVE</span>
           </div>
-        )}
-        <p className="fm-label">Records</p>
-        <h1 className="mt-1 text-3xl font-bold uppercase sm:text-4xl">Hall of Fame</h1>
+          <nav className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-slate-400">
+            <Link to="/" className="hover:text-white transition-colors">
+              DIRECTORY
+            </Link>
+            <Link to="/leaderboards" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">
+              HALL OF FAME
+            </Link>
+            <Link to="/compare" className="hover:text-white transition-colors">
+              COMPARE
+            </Link>
+          </nav>
+        </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          {boards.map((b) => (
-            <section key={b.title} className="fm-panel overflow-hidden">
-              <header className="flex items-baseline justify-between border-b border-border px-4 py-3">
-                <h2 className="text-lg font-semibold uppercase">{b.title}</h2>
-                <span className="fm-label">{b.unit}</span>
-              </header>
-              <div className="max-h-[580px] overflow-y-auto fm-scrollbar">
-                {b.rows.length === 0 ? (
-                  <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    No data recorded.
-                  </p>
-                ) : (
-                  <ol>
-                    {b.rows.map((r, i) => (
-                      <li key={r.p.id}>
+        {/* Header */}
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+          <h1 className="font-heading text-3xl font-extrabold text-white tracking-wide uppercase">
+            HALL OF FAME
+          </h1>
+          <p className="text-slate-400 text-xs font-mono mt-1">
+            All-time record holders across appearances, goals, trophies, and individual honors.
+          </p>
+
+          <div className="flex flex-wrap gap-2 mt-4 font-mono text-xs">
+            {(['trophies', 'apps', 'goals', 'awards'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMetric(m)}
+                className={`px-4 py-2 rounded-lg font-bold uppercase transition-colors ${
+                  metric === m
+                    ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                    : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Leaderboard Table */}
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-mono text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                  <th className="py-3 px-3">#</th>
+                  <th className="py-3 px-3">Player</th>
+                  <th className="py-3 px-3">Nation</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3 text-right uppercase">{metric}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {topPlayers.map((player, idx) => {
+                  const playerImage = player.image_url || player.photo_url || ''
+                  const playerNation = player.nationality || player.nation || 'Global'
+                  const playerFlag = player.nationality_flag_url || player.nation_flag || null
+
+                  return (
+                    <tr key={player.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-3 font-bold text-slate-500">{idx + 1}</td>
+                      <td className="py-3 px-3">
                         <Link
                           to="/player/$id"
-                          params={{ id: r.p.id }}
-                          className="flex items-center gap-3 border-b border-border/60 px-4 py-2.5 transition-colors last:border-0 hover:bg-panel"
+                          params={{ id: String(player.id) }}
+                          className="flex items-center gap-3 group"
                         >
-                          <span
-                            className={`fm-stat w-7 text-right text-lg ${
-                              i === 0
-                                ? "text-gold"
-                                : i === 1
-                                  ? "text-silver"
-                                  : i === 2
-                                    ? "text-bronze"
-                                    : "text-muted-foreground"
-                            }`}
-                          >
-                            {i + 1}
-                          </span>
-                          <Avatar
-                            src={r.p.imageUrl}
-                            name={r.p.name}
-                            className="h-9 w-9 shrink-0 rounded-full text-xs"
-                          />
-                          <Flag src={r.p.flagUrl} nationality={r.p.nationality} />
-                          <span className="truncate text-sm font-medium">{r.p.name}</span>
-                          <span className="fm-stat ml-auto text-lg text-primary">{r.v}</span>
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 flex items-center justify-center p-0.5">
+                            {playerImage ? (
+                              <img
+                                src={storageUrl(playerImage)}
+                                alt={player.name}
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-[8px] text-slate-500">NO IMG</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white group-hover:text-emerald-400 transition-colors uppercase">
+                              {player.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              {player.role || player.positions_short || '-'}
+                            </div>
+                          </div>
                         </Link>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-
-            </section>
-          ))}
+                      </td>
+                      <td className="py-3 px-3 text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <Flag url={playerFlag} name={playerNation} />
+                          <span>{playerNation}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-slate-400">{player.status || 'Squad Member'}</td>
+                      <td className="py-3 px-3 text-right font-extrabold text-amber-400 text-base">
+                        {player[metric] ?? 0}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
-  );
+  )
 }

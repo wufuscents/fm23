@@ -91,7 +91,7 @@ function PlayerProfilePage() {
     player.position ||
     player.positions_full ||
     player.primary_position ||
-    'Squad Member'
+    '-'
 
   return (
     <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>

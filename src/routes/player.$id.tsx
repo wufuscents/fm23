@@ -8,8 +8,22 @@ export const Route = createFileRoute('/player/$id')({
     const playerId = params.id
 
     try {
-      const [playerRes, playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
-        supabase.from('players').select('*').eq('id', playerId).single(),
+      // Query player details from view or players table
+      let playerRes = await supabase
+        .from('player_directory_view')
+        .select('*')
+        .eq('id', playerId)
+        .maybeSingle()
+
+      if (!playerRes.data) {
+        playerRes = await supabase
+          .from('players')
+          .select('*')
+          .eq('id', playerId)
+          .maybeSingle()
+      }
+
+      const [playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
         supabase.from('player_career_history').select('*').eq('player_id', playerId),
         supabase.from('coach_career_history').select('*').eq('player_id', playerId),
         supabase.from('awards_and_trophies').select('*').eq('player_id', playerId),
@@ -22,7 +36,7 @@ export const Route = createFileRoute('/player/$id')({
         awards: (awardsRes.data || []) as AwardEntry[],
       }
     } catch (err) {
-      console.error('Error fetching player profile:', err)
+      console.error('Error loading player profile:', err)
       return {
         player: null,
         playerCareer: [],
@@ -39,9 +53,9 @@ function PlayerProfilePage() {
 
   if (!player) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4">
-        <div>Player profile not found.</div>
-        <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4 p-4">
+        <div className="text-base text-white">Player profile could not be loaded.</div>
+        <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs hover:border-slate-600 transition-colors">
           ← BACK TO DIRECTORY
         </Link>
       </div>
@@ -73,6 +87,7 @@ function PlayerProfilePage() {
   const playerImage = player.image_url || player.photo_url || ''
   const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
   const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
+  const playerPos = player.positions_short || player.positions_full || player.position || 'N/A'
 
   return (
     <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>
@@ -84,6 +99,7 @@ function PlayerProfilePage() {
           ← BACK TO DIRECTORY
         </Link>
 
+        {/* Profile Card Header */}
         <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl flex items-center justify-center p-2">
@@ -114,7 +130,7 @@ function PlayerProfilePage() {
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-300 font-mono">
-                {player.positions_short || player.positions_full || player.position || 'N/A'}
+                {playerPos}
               </p>
 
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
@@ -139,6 +155,7 @@ function PlayerProfilePage() {
           </div>
         </div>
 
+        {/* Player Career */}
         {playerCareer.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
@@ -171,6 +188,7 @@ function PlayerProfilePage() {
           </div>
         )}
 
+        {/* Coach Stints */}
         {coachCareer.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
@@ -199,6 +217,7 @@ function PlayerProfilePage() {
           </div>
         )}
 
+        {/* Honours */}
         {awards.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">

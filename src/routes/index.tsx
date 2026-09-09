@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useMemo, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
@@ -35,7 +35,7 @@ function DirectoryPage() {
   const [sortBy, setSortBy] = useState('trophies')
   const [page, setPage] = useState(1)
 
-  // Toggle gender mode when pressing header button
+  // Subtle Header Gender Filter Toggle
   const toggleGenderMode = () => {
     setPage(1)
     if (genderMode === 'both') setGenderMode('male')
@@ -57,6 +57,7 @@ function DirectoryPage() {
     return Array.from(unique).sort()
   }, [players])
 
+  // Filtered List
   const filteredPlayers = useMemo(() => {
     return players
       .filter((player) => {
@@ -94,7 +95,38 @@ function DirectoryPage() {
       })
   }, [players, search, status, genderMode, club, nation, sortBy])
 
-  // Reset pagination on filter change
+  // Club Legacy Summaries
+  const clubLegacyStats = useMemo(() => {
+    if (club === 'all') return null
+    const clubPlayers = players.filter(
+      (p) => (p.club_name || p.current_club || p.club) === club
+    )
+    return {
+      name: club,
+      count: clubPlayers.length,
+      apps: clubPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
+      goals: clubPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
+      trophies: clubPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
+      awards: clubPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
+    }
+  }, [players, club])
+
+  // National Team Legacy Summaries
+  const nationLegacyStats = useMemo(() => {
+    if (nation === 'all') return null
+    const nationPlayers = players.filter(
+      (p) => (p.nation || p.nationality || p.nationality_name) === nation
+    )
+    return {
+      name: nation,
+      count: nationPlayers.length,
+      apps: nationPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
+      goals: nationPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
+      trophies: nationPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
+      awards: nationPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
+    }
+  }, [players, nation])
+
   useEffect(() => {
     setPage(1)
   }, [search, status, genderMode, club, nation, sortBy])
@@ -118,34 +150,58 @@ function DirectoryPage() {
         `,
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header Card */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between pb-6 mb-6 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-heading font-extrabold tracking-wider text-xl text-white">FM SQUAD ARCHIVE</span>
+          </div>
+          <nav className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-slate-400">
+            <Link to="/" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">
+              DIRECTORY
+            </Link>
+            <Link to="/leaderboards" className="hover:text-white transition-colors">
+              HALL OF FAME
+            </Link>
+            <Link to="/compare" className="hover:text-white transition-colors">
+              COMPARE
+            </Link>
+          </nav>
+        </div>
+
+        {/* Directory Search Panel */}
         <div className="mb-8 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-xl">
           <div className="text-xs font-mono font-semibold tracking-widest text-emerald-400 uppercase mb-1">
             Database Archive
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Interactive Header Button */}
+          <div className="flex items-center justify-between">
             <button
               onClick={toggleGenderMode}
               type="button"
-              className="text-left group focus:outline-none"
+              className="text-left group focus:outline-none flex items-center gap-3"
             >
-              <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-wide group-hover:text-emerald-400 transition-colors flex items-center gap-3">
+              <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-wide">
                 SQUAD DIRECTORY
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-normal">
-                  {genderMode === 'both' ? 'MALE & FEMALE' : genderMode === 'male' ? 'MALE ONLY' : 'FEMALE ONLY'}
-                </span>
               </h1>
+              {genderMode === 'male' && (
+                <span className="text-xs font-mono px-2 py-0.5 rounded border border-emerald-500/50 bg-emerald-500/20 text-emerald-300 font-bold">
+                  M
+                </span>
+              )}
+              {genderMode === 'female' && (
+                <span className="text-xs font-mono px-2 py-0.5 rounded border border-pink-500/50 bg-pink-500/20 text-pink-300 font-bold">
+                  F
+                </span>
+              )}
             </button>
           </div>
 
           <p className="text-slate-400 text-sm mt-1">
-            {players.length} profiles recorded across legends, icons, and squad members. Click header to toggle gender view.
+            {players.length} profiles recorded across legends, icons, and squad members.
           </p>
 
-          {/* Filter Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
             <input
               type="text"
@@ -204,6 +260,75 @@ function DirectoryPage() {
             </select>
           </div>
         </div>
+
+        {/* Legacy Cards Panel */}
+        {(clubLegacyStats || nationLegacyStats) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {clubLegacyStats && (
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-1">
+                  CLUB LEGACY
+                </div>
+                <h3 className="font-heading text-2xl font-bold text-white uppercase mb-1">
+                  {clubLegacyStats.name}
+                </h3>
+                <p className="text-xs text-slate-400 mb-4 font-mono">
+                  {clubLegacyStats.count} profiles in this archive
+                </p>
+                <div className="grid grid-cols-4 gap-2 font-mono text-center">
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{clubLegacyStats.apps.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{clubLegacyStats.goals.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Gls</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{clubLegacyStats.trophies.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Trph</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{clubLegacyStats.awards.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Awd</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {nationLegacyStats && (
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-1">
+                  NATIONAL TEAM LEGACY
+                </div>
+                <h3 className="font-heading text-2xl font-bold text-white uppercase mb-1">
+                  {nationLegacyStats.name}
+                </h3>
+                <p className="text-xs text-slate-400 mb-4 font-mono">
+                  {nationLegacyStats.count} profiles in this archive
+                </p>
+                <div className="grid grid-cols-4 gap-2 font-mono text-center">
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{nationLegacyStats.apps.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{nationLegacyStats.goals.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Gls</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{nationLegacyStats.trophies.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Trph</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{nationLegacyStats.awards.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Awd</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Results Counter */}
         <div className="flex items-center justify-between mb-4 px-1 font-mono text-xs text-slate-400">

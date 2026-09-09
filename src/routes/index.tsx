@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
-import { PlayerCard } from '../components/PlayerCard'
+import { PlayerCard } from '../components/fm/PlayerCard'
 import { TEAM_COLORS } from '../lib/team-colors'
 
 export const Route = createFileRoute('/')({

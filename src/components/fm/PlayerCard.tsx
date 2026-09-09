@@ -1,5 +1,5 @@
-import { Player } from '../lib/types'
-import { storageUrl } from '../lib/fm'
+import { Player } from '../../lib/types'
+import { storageUrl } from '../../lib/fm'
 
 export function PlayerCard({ player }: { player: Player }) {
   const statusLower = player.status?.toLowerCase() || ''

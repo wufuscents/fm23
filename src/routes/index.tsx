@@ -10,7 +10,7 @@ const PAGE_SIZE = 12
 export const Route = createFileRoute('/')({
   loader: async () => {
     const { data, error } = await supabase
-      .from('player_directory_view')
+      .from('players')
       .select('*')
       .order('trophies', { ascending: false })
 
@@ -35,7 +35,6 @@ function DirectoryPage() {
   const [sortBy, setSortBy] = useState('trophies')
   const [page, setPage] = useState(1)
 
-  // Subtle Header Gender Filter Toggle
   const toggleGenderMode = () => {
     setPage(1)
     if (genderMode === 'both') setGenderMode('male')
@@ -43,85 +42,92 @@ function DirectoryPage() {
     else setGenderMode('both')
   }
 
+  // Aggregate all unique clubs from legend_at_clubs and icon_at_clubs arrays
   const clubs = useMemo(() => {
-    const unique = new Set(
-      players.map((p) => p.club_name || p.current_club || p.club).filter(Boolean)
-    )
-    return Array.from(unique).sort()
+    const clubSet = new Set<string>()
+    players.forEach((p) => {
+      if (Array.isArray(p.legend_at_clubs)) {
+        p.legend_at_clubs.forEach((c) => c && clubSet.add(c))
+      }
+      if (Array.isArray(p.icon_at_clubs)) {
+        p.icon_at_clubs.forEach((c) => c && clubSet.add(c))
+      }
+    })
+    return Array.from(clubSet).sort()
   }, [players])
 
   const nations = useMemo(() => {
-    const unique = new Set(
-      players.map((p) => p.nation || p.nationality || p.nationality_name).filter(Boolean)
-    )
+    const unique = new Set(players.map((p) => p.nationality).filter(Boolean))
     return Array.from(unique).sort()
   }, [players])
 
-  // Filtered List
   const filteredPlayers = useMemo(() => {
     return players
       .filter((player) => {
-        const playerClub = player.club_name || player.current_club || player.club || ''
-        const playerNation = player.nation || player.nationality || player.nationality_name || ''
+        const playerNation = player.nationality || ''
         const playerGender = (player.gender || '').toLowerCase()
+
+        const playerClubs = [
+          ...(player.legend_at_clubs || []),
+          ...(player.icon_at_clubs || []),
+        ]
 
         const matchesSearch =
           !search ||
           player.name.toLowerCase().includes(search.toLowerCase()) ||
-          playerClub.toLowerCase().includes(search.toLowerCase()) ||
-          playerNation.toLowerCase().includes(search.toLowerCase())
+          playerNation.toLowerCase().includes(search.toLowerCase()) ||
+          playerClubs.some((c) => c.toLowerCase().includes(search.toLowerCase()))
 
         const matchesStatus =
           status === 'all' ||
-          (player.status || player.legacy_status || '').toLowerCase().includes(status.toLowerCase())
+          (player.status || '').toLowerCase().includes(status.toLowerCase())
 
         const matchesGender =
           genderMode === 'both' ||
           (genderMode === 'female' && (playerGender === 'female' || playerGender === 'f')) ||
           (genderMode === 'male' && (playerGender === 'male' || playerGender === 'm'))
 
-        const matchesClub = club === 'all' || playerClub === club
+        const matchesClub = club === 'all' || playerClubs.includes(club)
         const matchesNation = nation === 'all' || playerNation === nation
 
         return matchesSearch && matchesStatus && matchesGender && matchesClub && matchesNation
       })
       .sort((a, b) => {
         if (sortBy === 'trophies') return (b.trophies || 0) - (a.trophies || 0)
-        if (sortBy === 'apps') return (b.apps || 0) - (a.apps || 0)
-        if (sortBy === 'goals') return (b.goals || 0) - (a.goals || 0)
+        if (sortBy === 'apps') return (b.international_apps || 0) - (a.international_apps || 0)
+        if (sortBy === 'goals') return (b.international_goals || 0) - (a.international_goals || 0)
         if (sortBy === 'awards') return (b.awards || 0) - (a.awards || 0)
         if (sortBy === 'name') return a.name.localeCompare(b.name)
         return 0
       })
   }, [players, search, status, genderMode, club, nation, sortBy])
 
-  // Club Legacy Summaries
+  // Club Legacy Summary
   const clubLegacyStats = useMemo(() => {
     if (club === 'all') return null
-    const clubPlayers = players.filter(
-      (p) => (p.club_name || p.current_club || p.club) === club
-    )
+    const clubPlayers = players.filter((p) => {
+      const pClubs = [...(p.legend_at_clubs || []), ...(p.icon_at_clubs || [])]
+      return pClubs.includes(club)
+    })
     return {
       name: club,
       count: clubPlayers.length,
-      apps: clubPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
-      goals: clubPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
+      apps: clubPlayers.reduce((sum, p) => sum + (p.international_apps || 0), 0),
+      goals: clubPlayers.reduce((sum, p) => sum + (p.international_goals || 0), 0),
       trophies: clubPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
       awards: clubPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
     }
   }, [players, club])
 
-  // National Team Legacy Summaries
+  // National Team Legacy Summary
   const nationLegacyStats = useMemo(() => {
     if (nation === 'all') return null
-    const nationPlayers = players.filter(
-      (p) => (p.nation || p.nationality || p.nationality_name) === nation
-    )
+    const nationPlayers = players.filter((p) => p.nationality === nation)
     return {
       name: nation,
       count: nationPlayers.length,
-      apps: nationPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
-      goals: nationPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
+      apps: nationPlayers.reduce((sum, p) => sum + (p.international_apps || 0), 0),
+      goals: nationPlayers.reduce((sum, p) => sum + (p.international_goals || 0), 0),
       trophies: nationPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
       awards: nationPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
     }
@@ -151,7 +157,7 @@ function DirectoryPage() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Navigation Bar */}
+        {/* Navigation Header */}
         <div className="flex items-center justify-between pb-6 mb-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
@@ -170,7 +176,7 @@ function DirectoryPage() {
           </nav>
         </div>
 
-        {/* Directory Search Panel */}
+        {/* Directory Card & Filters */}
         <div className="mb-8 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-xl">
           <div className="text-xs font-mono font-semibold tracking-widest text-emerald-400 uppercase mb-1">
             Database Archive
@@ -261,7 +267,7 @@ function DirectoryPage() {
           </div>
         </div>
 
-        {/* Legacy Cards Panel */}
+        {/* Legacy Summary Banner */}
         {(clubLegacyStats || nationLegacyStats) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             {clubLegacyStats && (
@@ -278,7 +284,7 @@ function DirectoryPage() {
                 <div className="grid grid-cols-4 gap-2 font-mono text-center">
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{clubLegacyStats.apps.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Caps</div>
                   </div>
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{clubLegacyStats.goals.toLocaleString()}</div>
@@ -310,7 +316,7 @@ function DirectoryPage() {
                 <div className="grid grid-cols-4 gap-2 font-mono text-center">
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{nationLegacyStats.apps.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Caps</div>
                   </div>
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{nationLegacyStats.goals.toLocaleString()}</div>
@@ -355,7 +361,7 @@ function DirectoryPage() {
           </div>
         )}
 
-        {/* Pagination Controls */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-4 mt-8 font-mono text-xs">
             <button

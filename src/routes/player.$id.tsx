@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
@@ -36,6 +37,7 @@ export const Route = createFileRoute('/player/$id')({
 
 function PlayerProfilePage() {
   const { player, playerCareer, coachCareer, awards } = Route.useLoaderData()
+  const [awardTab, setAwardTab] = useState<'team' | 'individual'>('team')
 
   if (!player) {
     return (
@@ -52,32 +54,57 @@ function PlayerProfilePage() {
   const isLegend = statusLower.includes('legend') || (player.legend_at_clubs && player.legend_at_clubs.length > 0)
   const isIcon = statusLower.includes('icon') || (player.icon_at_clubs && player.icon_at_clubs.length > 0)
 
-  const themeGlow = isLegend
-    ? 'bg-radial from-amber-500/15 via-slate-950 to-slate-950'
-    : isIcon
-    ? 'bg-radial from-slate-300/15 via-slate-950 to-slate-950'
-    : 'bg-slate-950'
-
   const cardBorder = isLegend
     ? 'border-amber-500/30 shadow-[0_0_30px_rgba(251,191,36,0.1)]'
     : isIcon
     ? 'border-slate-300/30 shadow-[0_0_30px_rgba(203,213,225,0.1)]'
     : 'border-slate-800'
 
-  const badgeTheme = isLegend
-    ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
-    : isIcon
-    ? 'bg-slate-300/20 text-slate-200 border-slate-300/40'
-    : 'bg-slate-800 text-slate-400 border-slate-700'
-
   const playerImage = player.image_url || ''
   const playerNation = player.nationality || 'Global'
   const playerFlag = player.nationality_flag_url || null
   const playerPos = player.role || '-'
 
+  const legendClubs = player.legend_at_clubs || []
+  const iconClubs = player.icon_at_clubs || []
+
+  // Calculated totals across Career History (matching ex1.png)
+  const totalCareerApps = useMemo(() => {
+    return playerCareer.reduce((sum: number, c: any) => sum + (c.apps || 0), 0)
+  }, [playerCareer])
+
+  const totalCareerGoals = useMemo(() => {
+    return playerCareer.reduce((sum: number, c: any) => sum + (c.goals || 0), 0)
+  }, [playerCareer])
+
+  // Separate Team Trophies & Individual Awards (matching ex2.png)
+  const teamTrophies = useMemo(() => {
+    return awards.filter((a: any) => {
+      const cat = (a.category || '').toLowerCase()
+      return cat.includes('team') || cat.includes('trophy') || !cat
+    })
+  }, [awards])
+
+  const individualAwards = useMemo(() => {
+    return awards.filter((a: any) => {
+      const cat = (a.category || '').toLowerCase()
+      return cat.includes('indiv') || cat.includes('award') || cat.includes('personal')
+    })
+  }, [awards])
+
+  const totalTrophiesCount = useMemo(() => {
+    if (player.trophies && player.trophies > 0) return player.trophies
+    return teamTrophies.reduce((sum: number, a: any) => sum + (a.amount || 1), 0)
+  }, [player, teamTrophies])
+
+  const totalAwardsCount = useMemo(() => {
+    if (player.awards && player.awards > 0) return player.awards
+    return individualAwards.reduce((sum: number, a: any) => sum + (a.amount || 1), 0)
+  }, [player, individualAwards])
+
   return (
-    <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         <Link
           to="/"
           className="inline-flex items-center text-xs font-mono text-slate-400 hover:text-white transition-colors"
@@ -85,7 +112,7 @@ function PlayerProfilePage() {
           ← BACK TO DIRECTORY
         </Link>
 
-        {/* Profile Card Header */}
+        {/* 1. Header Profile Card (Matching ex1.png Layout) */}
         <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl flex items-center justify-center p-2">
@@ -100,92 +127,144 @@ function PlayerProfilePage() {
               )}
             </div>
 
-            <div className="flex-1 text-center md:text-left space-y-2">
+            <div className="flex-1 text-center md:text-left space-y-3">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 {playerFlag && (
-                  <img src={playerFlag} alt={playerNation} className="w-6 h-4 object-cover rounded-sm" />
+                  <img src={playerFlag} alt={playerNation} className="w-5 h-3.5 object-cover rounded-sm" />
                 )}
                 <span className="text-xs font-mono uppercase text-slate-400">{playerNation}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${badgeTheme}`}>
-                  {player.status || 'Squad Member'}
-                </span>
               </div>
 
-              <h1 className="font-heading text-3xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
+              <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
                 {player.name}
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-300 font-mono">
-                Position: <span className="text-emerald-400 font-bold">{playerPos}</span>
+                {playerPos}
               </p>
 
-              {player.biography && (
-                <p className="text-xs text-slate-400 mt-2 line-clamp-3">
-                  {player.biography}
-                </p>
-              )}
+              {/* Wrapped Legend / Icon Clubs Badges (ex1.png layout) */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                {legendClubs.map((clubName: string) => (
+                  <span
+                    key={clubName}
+                    className="text-xs font-semibold px-2.5 py-1 rounded border border-amber-400/50 bg-amber-400/10 text-amber-300"
+                  >
+                    Legend • {clubName}
+                  </span>
+                ))}
+                {iconClubs.map((clubName: string) => (
+                  <span
+                    key={clubName}
+                    className="text-xs font-semibold px-2.5 py-1 rounded border border-slate-300/50 bg-slate-300/10 text-slate-200"
+                  >
+                    Icon • {clubName}
+                  </span>
+                ))}
+              </div>
 
+              {/* Header Stat Boxes (CAPS, APPS, GLS, TROPHIES) */}
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <div className="text-lg font-bold text-white">{player.international_apps ?? 0}</div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{player.international_apps ?? 0}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Caps</div>
                 </div>
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <div className="text-lg font-bold text-white">{player.international_goals ?? 0}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Goals</div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{totalCareerApps}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Apps</div>
                 </div>
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <div className="text-lg font-bold text-white">{player.trophies ?? 0}</div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{totalCareerGoals}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Gls</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-amber-400">{totalTrophiesCount}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Trophies</div>
-                </div>
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <div className="text-lg font-bold text-white">{player.awards ?? 0}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Awards</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Player Career History */}
-        {playerCareer.length > 0 && (
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-            <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
-              Player Career History
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs sm:text-sm">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
-                    <th className="py-2 px-3">Team</th>
-                    <th className="py-2 px-3">Country</th>
-                    <th className="py-2 px-3">Years</th>
-                    <th className="py-2 px-3 text-right">Apps</th>
-                    <th className="py-2 px-3 text-right">Gls</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {playerCareer.map((entry: any) => (
-                    <tr key={entry.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
-                        {entry.club_logo_url && (
-                          <img src={storageUrl(entry.club_logo_url)} alt="" className="w-4 h-4 object-contain" />
-                        )}
-                        {entry.team_name}
-                      </td>
-                      <td className="py-3 px-3 text-slate-400">{entry.country || '-'}</td>
-                      <td className="py-3 px-3 text-slate-300">{entry.years || '-'}</td>
-                      <td className="py-3 px-3 text-right font-bold text-white">{entry.apps ?? '-'}</td>
-                      <td className="py-3 px-3 text-right font-bold text-emerald-400">{entry.goals ?? '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* 2. Milestones Grid Section (Matching ex1.png Layout) */}
+        <div>
+          <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-3">
+            MILESTONES
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-2xl font-bold text-amber-400">{player.personal_1st ?? 0}</div>
+              <div className="text-[10px] text-slate-500 uppercase mt-1">Personal 1st</div>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-2xl font-bold text-white">{player.personal_2nd ?? 0}</div>
+              <div className="text-[10px] text-slate-500 uppercase mt-1">Personal 2nd</div>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-2xl font-bold text-white">{player.personal_3rd ?? 0}</div>
+              <div className="text-[10px] text-slate-500 uppercase mt-1">Personal 3rd</div>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-2xl font-bold text-emerald-400">{player.team_1st ?? 0}</div>
+              <div className="text-[10px] text-slate-500 uppercase mt-1">Team 1st</div>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-2xl font-bold text-white">{player.team_2nd ?? 0}</div>
+              <div className="text-[10px] text-slate-500 uppercase mt-1">Team 2nd</div>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-2xl font-bold text-white">{player.team_3rd ?? 0}</div>
+              <div className="text-[10px] text-slate-500 uppercase mt-1">Team 3rd</div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Managerial / Coaching History */}
+        {/* 3. Player Career History Table with TOTAL row (Matching ex1.png / ex2.png Layout) */}
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+          <h2 className="font-heading text-2xl font-extrabold text-white uppercase tracking-wider mb-4">
+            PLAYER CAREER
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-mono text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                  <th className="py-2.5 px-3">Club</th>
+                  <th className="py-2.5 px-3">Country</th>
+                  <th className="py-2.5 px-3">Years</th>
+                  <th className="py-2.5 px-3 text-right">Apps</th>
+                  <th className="py-2.5 px-3 text-right">Gls</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {playerCareer.map((entry: any) => (
+                  <tr key={entry.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
+                      {entry.club_logo_url && (
+                        <img src={storageUrl(entry.club_logo_url)} alt="" className="w-4 h-4 object-contain" />
+                      )}
+                      {entry.team_name}
+                    </td>
+                    <td className="py-3 px-3 text-slate-400">{entry.country || '-'}</td>
+                    <td className="py-3 px-3 text-slate-300">{entry.years || '-'}</td>
+                    <td className="py-3 px-3 text-right font-bold text-white">{entry.apps ?? '-'}</td>
+                    <td className="py-3 px-3 text-right font-bold text-emerald-400">{entry.goals ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-slate-700 bg-slate-950/80 font-bold">
+                  <td className="py-3 px-3 text-white uppercase">TOTAL</td>
+                  <td className="py-3 px-3"></td>
+                  <td className="py-3 px-3"></td>
+                  <td className="py-3 px-3 text-right text-white">{totalCareerApps}</td>
+                  <td className="py-3 px-3 text-right text-emerald-400">{totalCareerGoals}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        {/* 4. Managerial / Coaching History */}
         {coachCareer.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
@@ -195,11 +274,11 @@ function PlayerProfilePage() {
               <table className="w-full text-left font-mono text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
-                    <th className="py-2 px-3">Team</th>
-                    <th className="py-2 px-3">Country</th>
-                    <th className="py-2 px-3">Years</th>
-                    <th className="py-2 px-3 text-right">Matches</th>
-                    <th className="py-2 px-3 text-right">Win %</th>
+                    <th className="py-2.5 px-3">Team</th>
+                    <th className="py-2.5 px-3">Country</th>
+                    <th className="py-2.5 px-3">Years</th>
+                    <th className="py-2.5 px-3 text-right">Matches</th>
+                    <th className="py-2.5 px-3 text-right">Win %</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -225,23 +304,62 @@ function PlayerProfilePage() {
           </div>
         )}
 
-        {/* Honours & Awards */}
-        {awards.length > 0 && (
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-            <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
-              Awards & Trophies
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs">
-              {awards.map((award: any) => (
-                <div key={award.id} className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 flex justify-between items-center">
-                  <div>
-                    <span className="text-slate-200 font-semibold block">{award.name}</span>
-                    {award.years_or_details && (
-                      <span className="text-[10px] text-slate-500 block">{award.years_or_details}</span>
-                    )}
-                  </div>
-                  <span className="text-amber-400 font-bold ml-2">x{award.amount || 1}</span>
+        {/* 5. Awards & Trophies with Tabs (Matching ex2.png Layout) */}
+        <div>
+          <div className="flex items-center gap-3 mb-4 font-mono text-xs">
+            <button
+              onClick={() => setAwardTab('team')}
+              className={`px-4 py-2.5 rounded-lg font-bold uppercase transition-colors ${
+                awardTab === 'team'
+                  ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              TEAM TROPHIES ({totalTrophiesCount})
+            </button>
+            <button
+              onClick={() => setAwardTab('individual')}
+              className={`px-4 py-2.5 rounded-lg font-bold uppercase transition-colors ${
+                awardTab === 'individual'
+                  ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              INDIVIDUAL AWARDS ({totalAwardsCount})
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs">
+            {(awardTab === 'team' ? teamTrophies : individualAwards).map((item: any) => (
+              <div
+                key={item.id}
+                className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-center gap-4"
+              >
+                <div className="text-xl font-bold text-amber-400 px-3 py-1 bg-slate-950/80 rounded border border-slate-800 flex-shrink-0">
+                  {item.amount || 1}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-white font-bold text-sm truncate">{item.name}</div>
+                  {item.years_or_details && (
+                    <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                      {item.years_or_details}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 6. Biography Dedicated Section at the Bottom (Matching ex3.png Layout) */}
+        {player.biography && (
+          <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+            <h2 className="font-heading text-2xl font-extrabold text-white uppercase tracking-wider mb-4">
+              BIOGRAPHY
+            </h2>
+            <div className="text-slate-300 text-xs sm:text-sm leading-relaxed space-y-4 font-mono">
+              {player.biography.split('\n\n').map((paragraph: string, idx: number) => (
+                <p key={idx}>{paragraph}</p>
               ))}
             </div>
           </div>

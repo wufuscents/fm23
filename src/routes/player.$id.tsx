@@ -87,14 +87,12 @@ function PlayerProfilePage() {
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
 
-  // Reverse-chronological sort for Career History (most recent stint at top)
   const sortedPlayerCareer = useMemo(() => {
     return [...playerCareer].sort((a: any, b: any) => {
       return getStartYear(b.years) - getStartYear(a.years)
     })
   }, [playerCareer])
 
-  // Calculated totals across Career History
   const totalCareerApps = useMemo(() => {
     return sortedPlayerCareer.reduce((sum: number, c: any) => sum + (c.apps || 0), 0)
   }, [sortedPlayerCareer])
@@ -103,7 +101,6 @@ function PlayerProfilePage() {
     return sortedPlayerCareer.reduce((sum: number, c: any) => sum + (c.goals || 0), 0)
   }, [sortedPlayerCareer])
 
-  // Separate Team Trophies & Individual Awards
   const teamTrophies = useMemo(() => {
     return awards.filter((a: any) => {
       const cat = (a.category || '').toLowerCase()
@@ -127,9 +124,6 @@ function PlayerProfilePage() {
     if (player.awards && player.awards > 0) return player.awards
     return individualAwards.reduce((sum: number, a: any) => sum + (a.amount || 1), 0)
   }, [player, individualAwards])
-
-  const displayApps = player.apps ?? totalCareerApps ?? 0
-  const displayGoals = player.goals ?? totalCareerGoals ?? 0
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
@@ -172,7 +166,6 @@ function PlayerProfilePage() {
                 {playerPos}
               </p>
 
-              {/* Wrapped Legend / Icon Clubs Badges */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
                 {legendClubs.map((clubName: string) => (
                   <span
@@ -192,18 +185,18 @@ function PlayerProfilePage() {
                 ))}
               </div>
 
-              {/* Header Stat Boxes (CAPS, APPS, GLS, TROPHIES) */}
+              {/* Header Stat Boxes (CAPS, APPS, GLS, TROPHIES) matching ex1.png */}
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                   <div className="text-xl font-bold text-white">{player.international_apps ?? 0}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Caps</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{displayApps}</div>
+                  <div className="text-xl font-bold text-white">{totalCareerApps}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Apps</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{displayGoals}</div>
+                  <div className="text-xl font-bold text-white">{totalCareerGoals}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Gls</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
@@ -380,7 +373,7 @@ function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* 6. Biography Dedicated Section at the Bottom */}
+        {/* 6. Biography Dedicated Section at Bottom */}
         {player.biography && (
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-2xl font-extrabold text-white uppercase tracking-wider mb-4">

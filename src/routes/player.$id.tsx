@@ -5,14 +5,14 @@ import { storageUrl, sortCareerByYears } from '../lib/fm'
 
 export const Route = createFileRoute('/player/$id')({
   loader: async ({ params }) => {
-    const { id } = params
+    const playerId = params.id
 
     try {
       const [playerRes, playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
-        supabase.from('players').select('*').eq('id', id).maybeSingle(),
-        supabase.from('player_career_history').select('*').eq('player_id', id),
-        supabase.from('coach_career_history').select('*').eq('player_id', id),
-        supabase.from('awards_and_trophies').select('*').eq('player_id', id),
+        supabase.from('players').select('*').eq('id', playerId).single(),
+        supabase.from('player_career_history').select('*').eq('player_id', playerId),
+        supabase.from('coach_career_history').select('*').eq('player_id', playerId),
+        supabase.from('awards_and_trophies').select('*').eq('player_id', playerId),
       ])
 
       return {

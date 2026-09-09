@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Player } from '@/lib/types'
-import { PlayerCard } from '@/components/PlayerCard'
-import { TEAM_COLORS } from '@/lib/team-colors'
+import { supabase } from '../lib/supabase'
+import { Player } from '../lib/types'
+import { PlayerCard } from '../components/PlayerCard'
+import { TEAM_COLORS } from '../lib/team-colors'
 
 export const Route = createFileRoute('/')({
   loader: async () => {
@@ -31,7 +31,6 @@ function DirectoryPage() {
   const [nation, setNation] = useState('all')
   const [sortBy, setSortBy] = useState('trophies')
 
-  // Extract filter dropdown options
   const clubs = useMemo(() => {
     const unique = new Set(players.map((p) => p.current_club).filter(Boolean))
     return Array.from(unique).sort()
@@ -42,7 +41,6 @@ function DirectoryPage() {
     return Array.from(unique).sort()
   }, [players])
 
-  // 5. Optimized multi-filtering with useMemo to remove lag
   const filteredPlayers = useMemo(() => {
     return players
       .filter((player) => {
@@ -71,7 +69,6 @@ function DirectoryPage() {
       })
   }, [players, search, status, club, nation, sortBy])
 
-  // 8. Dynamic background color determination (Club on Left, Nation on Right)
   const leftColor = club !== 'all' && TEAM_COLORS[club] ? TEAM_COLORS[club] : 'transparent'
   const rightColor = nation !== 'all' && TEAM_COLORS[nation] ? TEAM_COLORS[nation] : 'transparent'
 

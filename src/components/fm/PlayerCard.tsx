@@ -50,7 +50,7 @@ export function PlayerCard({ player }: { player: Player }) {
   const genderVal = (player.gender || '').toLowerCase()
   const isFemale = genderVal === 'female' || genderVal === 'f'
 
-  // Dynamic Visual Styling
+  // Dynamic Visual Styling based on Gender + Status
   let cardBorder = 'border-slate-800 bg-slate-900/70'
   let statusBadge = 'bg-slate-800 text-slate-400 border-slate-700'
   let roleText = 'text-amber-400'
@@ -77,15 +77,18 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  // Data Normalization
+  // Database Key Normalization
   const playerImage = player.image_url || player.photo_url || ''
   const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
   const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
   const playerClub = player.club_name || player.current_club || player.club || ''
   const playerPos = player.positions_short || player.positions_full || player.position || 'N/A'
 
-  // Club Status Description
-  const clubDesc = player.club_description || player.status_club || (playerClub ? `${player.status || 'Squad'} • ${playerClub}` : (player.status || 'Squad Member'))
+  // Dynamic Legend/Icon Club Description Resolution
+  const statusClubText =
+    player.status_club ||
+    player.club_description ||
+    (playerClub ? `${player.status || 'Squad'} • ${playerClub}` : player.status || 'Squad Member')
 
   return (
     <Link
@@ -114,7 +117,7 @@ export function PlayerCard({ player }: { player: Player }) {
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
             <p className={`text-xs font-semibold truncate ${roleText}`}>
-              {clubDesc}
+              {statusClubText}
             </p>
 
             <p className="text-xs text-slate-400 truncate mt-0.5">

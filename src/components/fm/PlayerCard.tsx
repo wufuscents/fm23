@@ -81,21 +81,14 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  // Exact Table Mappings
   const playerImage = player.image_url || ''
   const playerNation = player.nationality || 'Global'
   const playerFlag = player.nationality_flag_url || null
-
-  // 4. Tactical Playing Position (role column: DL, DC, DR, MC, ST, etc.)
   const playerPos = player.role || '-'
 
-  // 1. Legend / Icon Club Format (legend_at_clubs / icon_at_clubs text arrays)
-  let statusClubText = player.status || 'Squad Member'
-  if (player.legend_at_clubs && player.legend_at_clubs.length > 0) {
-    statusClubText = `Legend • ${player.legend_at_clubs.join(', ')}`
-  } else if (player.icon_at_clubs && player.icon_at_clubs.length > 0) {
-    statusClubText = `Icon • ${player.icon_at_clubs.join(', ')}`
-  }
+  // Legend & Icon Clubs Lists
+  const legendClubs = player.legend_at_clubs || []
+  const iconClubs = player.icon_at_clubs || []
 
   return (
     <Link
@@ -119,19 +112,29 @@ export function PlayerCard({ player }: { player: Player }) {
           </span>
         </div>
 
-        <div className="flex items-center gap-3 my-2">
+        <div className="flex items-start gap-3 my-2">
           <Avatar url={playerImage} name={player.name} className="w-24 h-24" />
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
-            <p className={`text-xs font-semibold truncate ${roleText}`}>
-              {statusClubText}
-            </p>
+            {/* Wrapped Legend / Icon Clubs Badges */}
+            {legendClubs.length > 0 ? (
+              <p className={`text-xs font-semibold truncate ${roleText}`}>
+                Legend • {legendClubs.join(', ')}
+              </p>
+            ) : iconClubs.length > 0 ? (
+              <p className={`text-xs font-semibold truncate ${roleText}`}>
+                Icon • {iconClubs.join(', ')}
+              </p>
+            ) : (
+              <p className={`text-xs font-semibold truncate ${roleText}`}>
+                {player.status || 'Squad Member'}
+              </p>
+            )}
 
             <p className="text-xs text-slate-400 truncate mt-0.5">
               {playerNation}
             </p>
 
-            {/* Playing Position Badge (DL, DC, DR, MC, ST, etc.) */}
             <div className="mt-2">
               <span className="text-[11px] font-mono text-slate-300 bg-slate-800/90 px-2 py-1 rounded border border-slate-700/50 block truncate max-w-full">
                 {playerPos}

@@ -23,7 +23,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     Promise.all([
       getDominantColor(player.club_logo_url, '#1e293b'),
       getDominantColor(player.nation_flag_url, '#0f172a'),

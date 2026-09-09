@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { supabase } from '@/lib/supabase'
-import { Player, CareerEntry, AwardEntry } from '@/lib/types'
-import { storageUrl, sortCareerByYears } from '@/lib/fm'
+import { supabase } from '../lib/supabase'
+import { Player, CareerEntry, AwardEntry } from '../lib/types'
+import { storageUrl, sortCareerByYears } from '../lib/fm'
 
 export const Route = createFileRoute('/player/$id')({
   loader: async ({ params }) => {
@@ -35,7 +35,6 @@ function PlayerProfilePage() {
     )
   }
 
-  // 9. Background dynamic theme based on status (Legend, Icon, None)
   const statusLower = player.status?.toLowerCase() || ''
   const isLegend = statusLower === 'legend'
   const isIcon = statusLower === 'icon'
@@ -61,7 +60,6 @@ function PlayerProfilePage() {
   return (
     <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Back Link */}
         <Link
           to="/"
           className="inline-flex items-center text-xs font-mono text-slate-400 hover:text-white transition-colors"
@@ -69,10 +67,8 @@ function PlayerProfilePage() {
           ← BACK TO DIRECTORY
         </Link>
 
-        {/* Profile Banner */}
         <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-            {/* Player Avatar */}
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl">
               <img
                 src={storageUrl(player.photo_url)}
@@ -81,7 +77,6 @@ function PlayerProfilePage() {
               />
             </div>
 
-            {/* Info */}
             <div className="flex-1 text-center md:text-left space-y-2">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 {player.nation_flag && (
@@ -101,7 +96,6 @@ function PlayerProfilePage() {
                 {player.position || 'N/A'}
               </p>
 
-              {/* Career Totals */}
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
                 <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                   <div className="text-lg font-bold text-white">{player.caps ?? 0}</div>
@@ -124,7 +118,6 @@ function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* Player Career History */}
         {playerCareer.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
@@ -157,7 +150,6 @@ function PlayerProfilePage() {
           </div>
         )}
 
-        {/* Coach Career History */}
         {coachCareer.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
@@ -186,7 +178,6 @@ function PlayerProfilePage() {
           </div>
         )}
 
-        {/* Honours & Awards */}
         {awards.length > 0 && (
           <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">

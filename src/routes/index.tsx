@@ -100,14 +100,15 @@ function DirectoryPage() {
       })
       .sort((a, b) => {
         if (sortBy === 'trophies') return (b.trophies || 0) - (a.trophies || 0)
-        if (sortBy === 'apps') return (b.international_apps || b.apps || 0) - (a.international_apps || a.apps || 0)
-        if (sortBy === 'goals') return (b.international_goals || b.goals || 0) - (a.international_goals || a.goals || 0)
+        if (sortBy === 'apps') return (b.apps || 0) - (a.apps || 0)
+        if (sortBy === 'goals') return (b.goals || 0) - (a.goals || 0)
         if (sortBy === 'awards') return (b.awards || 0) - (a.awards || 0)
         if (sortBy === 'name') return a.name.localeCompare(b.name)
         return 0
       })
   }, [players, search, status, genderMode, club, nation, sortBy])
 
+  // Club Dynasty Stat Calculations (Total Apps & Goals)
   const clubLegacyStats = useMemo(() => {
     if (club === 'all') return null
     const clubPlayers = players.filter((p) => {
@@ -122,21 +123,22 @@ function DirectoryPage() {
     return {
       name: club,
       count: clubPlayers.length,
-      apps: clubPlayers.reduce((sum, p) => sum + (p.international_apps || p.apps || 0), 0),
-      goals: clubPlayers.reduce((sum, p) => sum + (p.international_goals || p.goals || 0), 0),
+      apps: clubPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
+      goals: clubPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
       trophies: clubPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
       awards: clubPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
     }
   }, [players, club])
 
+  // Country Dynasty Stat Calculations (Total Apps & Goals)
   const nationLegacyStats = useMemo(() => {
     if (nation === 'all') return null
     const nationPlayers = players.filter((p) => (p.nationality || p.nation) === nation)
     return {
       name: nation,
       count: nationPlayers.length,
-      apps: nationPlayers.reduce((sum, p) => sum + (p.international_apps || p.apps || 0), 0),
-      goals: nationPlayers.reduce((sum, p) => sum + (p.international_goals || p.goals || 0), 0),
+      apps: nationPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
+      goals: nationPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
       trophies: nationPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
       awards: nationPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
     }
@@ -293,7 +295,7 @@ function DirectoryPage() {
                 <div className="grid grid-cols-4 gap-2 font-mono text-center">
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{clubLegacyStats.apps.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Caps</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
                   </div>
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{clubLegacyStats.goals.toLocaleString()}</div>
@@ -325,7 +327,7 @@ function DirectoryPage() {
                 <div className="grid grid-cols-4 gap-2 font-mono text-center">
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{nationLegacyStats.apps.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Caps</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
                   </div>
                   <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
                     <div className="text-base font-bold text-white">{nationLegacyStats.goals.toLocaleString()}</div>

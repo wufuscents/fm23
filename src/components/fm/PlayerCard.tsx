@@ -81,26 +81,27 @@ export function PlayerCard({ player }: { player: Player }) {
     }
   }
 
-  // 1 & 4. Complete Database Key Normalization
+  // Database Key Normalizations
   const playerImage = player.image_url || player.photo_url || ''
   const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
   const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
   const playerClub = player.club_name || player.current_club || player.club || ''
 
-  // Position fallback chain
+  // 4. Playing Positions Resolution (e.g., DL, DC, DR, MC, ST)
   const playerPos =
     player.positions_short ||
     player.position ||
     player.positions_full ||
     player.primary_position ||
-    'Squad Member'
+    '-'
 
-  // Legend/Icon Club Description fallback chain
-  const statusClubText =
-    player.status_club ||
-    player.club_description ||
-    player.legacy_status_club ||
-    (playerClub ? `${player.status || 'Squad'} • ${playerClub}` : player.status || 'Squad Member')
+  // 1. Legend / Icon Club Description Resolution
+  const rawStatusClub = player.status_club || player.club_description || player.legacy_status_club
+  const statusClubText = rawStatusClub
+    ? rawStatusClub
+    : playerClub
+    ? `${player.status \vert{}\vert{} 'Squad Member'} •${playerClub}`
+    : player.status || 'Squad Member'
 
   return (
     <Link
@@ -136,6 +137,7 @@ export function PlayerCard({ player }: { player: Player }) {
               {playerNation}
             </p>
 
+            {/* Tactical Playing Position Badge */}
             <div className="mt-2">
               <span className="text-[11px] font-mono text-slate-300 bg-slate-800/90 px-2 py-1 rounded border border-slate-700/50 block truncate max-w-full">
                 {playerPos}

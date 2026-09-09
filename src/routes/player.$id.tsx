@@ -9,8 +9,21 @@ export const Route = createFileRoute('/player/$id')({
     const playerId = params.id
 
     try {
-      const [playerRes, playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
-        supabase.from('players').select('*').eq('id', playerId).single(),
+      let playerRes = await supabase
+        .from('player_directory_view')
+        .select('*')
+        .eq('id', playerId)
+        .maybeSingle()
+
+      if (!playerRes.data) {
+        playerRes = await supabase
+          .from('players')
+          .select('*')
+          .eq('id', playerId)
+          .maybeSingle()
+      }
+
+      const [playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
         supabase.from('player_career_history').select('*').eq('player_id', playerId),
         supabase.from('coach_career_history').select('*').eq('player_id', playerId),
         supabase.from('awards_and_trophies').select('*').eq('player_id', playerId),
@@ -34,6 +47,12 @@ export const Route = createFileRoute('/player/$id')({
   },
   component: PlayerProfilePage,
 })
+
+function getStartYear(yearsStr?: string | null): number {
+  if (!yearsStr) return 0
+  const match = yearsStr.match(/\d{4}/)
+  return match ? parseInt(match[0], 10) : 0
+}
 
 function PlayerProfilePage() {
   const { player, playerCareer, coachCareer, awards } = Route.useLoaderData()
@@ -60,24 +79,31 @@ function PlayerProfilePage() {
     ? 'border-slate-300/30 shadow-[0_0_30px_rgba(203,213,225,0.1)]'
     : 'border-slate-800'
 
-  const playerImage = player.image_url || ''
-  const playerNation = player.nationality || 'Global'
-  const playerFlag = player.nationality_flag_url || null
-  const playerPos = player.role || '-'
+  const playerImage = player.image_url || player.photo_url || ''
+  const playerNation = player.nationality || player.nation || 'Global'
+  const playerFlag = player.nationality_flag_url || player.nation_flag || null
+  const playerPos = player.role || player.positions_short || player.position || '-'
 
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
 
-  // Calculated totals across Career History (matching ex1.png)
-  const totalCareerApps = useMemo(() => {
-    return playerCareer.reduce((sum: number, c: any) => sum + (c.apps || 0), 0)
+  // Reverse-chronological sort for Career History (most recent stint at top)
+  const sortedPlayerCareer = useMemo(() => {
+    return [...playerCareer].sort((a: any, b: any) => {
+      return getStartYear(b.years) - getStartYear(a.years)
+    })
   }, [playerCareer])
+
+  // Calculated totals across Career History
+  const totalCareerApps = useMemo(() => {
+    return sortedPlayerCareer.reduce((sum: number, c: any) => sum + (c.apps || 0), 0)
+  }, [sortedPlayerCareer])
 
   const totalCareerGoals = useMemo(() => {
-    return playerCareer.reduce((sum: number, c: any) => sum + (c.goals || 0), 0)
-  }, [playerCareer])
+    return sortedPlayerCareer.reduce((sum: number, c: any) => sum + (c.goals || 0), 0)
+  }, [sortedPlayerCareer])
 
-  // Separate Team Trophies & Individual Awards (matching ex2.png)
+  // Separate Team Trophies & Individual Awards
   const teamTrophies = useMemo(() => {
     return awards.filter((a: any) => {
       const cat = (a.category || '').toLowerCase()
@@ -112,7 +138,7 @@ function PlayerProfilePage() {
           ← BACK TO DIRECTORY
         </Link>
 
-        {/* 1. Header Profile Card (Matching ex1.png Layout) */}
+        {/* 1. Header Profile Card */}
         <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl flex items-center justify-center p-2">
@@ -143,7 +169,7 @@ function PlayerProfilePage() {
                 {playerPos}
               </p>
 
-              {/* Wrapped Legend / Icon Clubs Badges (ex1.png layout) */}
+              {/* Wrapped Legend / Icon Clubs Badges */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
                 {legendClubs.map((clubName: string) => (
                   <span
@@ -163,7 +189,7 @@ function PlayerProfilePage() {
                 ))}
               </div>
 
-              {/* Header Stat Boxes (CAPS, APPS, GLS, TROPHIES) */}
+              {/* Header Stat Boxes */}
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                   <div className="text-xl font-bold text-white">{player.international_apps ?? 0}</div>
@@ -186,7 +212,7 @@ function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* 2. Milestones Grid Section (Matching ex1.png Layout) */}
+        {/* 2. Milestones Grid Section */}
         <div>
           <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-3">
             MILESTONES
@@ -219,7 +245,7 @@ function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* 3. Player Career History Table with TOTAL row (Matching ex1.png / ex2.png Layout) */}
+        {/* 3. Player Career History Table */}
         <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
           <h2 className="font-heading text-2xl font-extrabold text-white uppercase tracking-wider mb-4">
             PLAYER CAREER
@@ -236,7 +262,7 @@ function PlayerProfilePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {playerCareer.map((entry: any) => (
+                {sortedPlayerCareer.map((entry: any) => (
                   <tr key={entry.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
                       {entry.club_logo_url && (
@@ -304,7 +330,7 @@ function PlayerProfilePage() {
           </div>
         )}
 
-        {/* 5. Awards & Trophies with Tabs (Matching ex2.png Layout) */}
+        {/* 5. Awards & Trophies with Tabs */}
         <div>
           <div className="flex items-center gap-3 mb-4 font-mono text-xs">
             <button
@@ -351,7 +377,7 @@ function PlayerProfilePage() {
           </div>
         </div>
 
-        {/* 6. Biography Dedicated Section at the Bottom (Matching ex3.png Layout) */}
+        {/* 6. Biography Dedicated Section at the Bottom */}
         {player.biography && (
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
             <h2 className="font-heading text-2xl font-extrabold text-white uppercase tracking-wider mb-4">

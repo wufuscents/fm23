@@ -114,22 +114,22 @@ export function PlayerCard({ player }: { player: Player }) {
           <Avatar url={playerImage} name={player.name} className="w-24 h-24" />
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
-            {/* Allow text wrapping for long club names across up to 2 lines */}
+            {/* Fully responsive multi-line club text wrapping */}
             {legendClubs.length > 0 ? (
-              <p className={`text-xs font-semibold leading-snug line-clamp-2 ${roleText}`}>
+              <p className={`text-[11px] font-semibold leading-tight break-words ${roleText}`}>
                 Legend • {legendClubs.join(', ')}
               </p>
             ) : iconClubs.length > 0 ? (
-              <p className={`text-xs font-semibold leading-snug line-clamp-2 ${roleText}`}>
+              <p className={`text-[11px] font-semibold leading-tight break-words ${roleText}`}>
                 Icon • {iconClubs.join(', ')}
               </p>
             ) : (
-              <p className={`text-xs font-semibold leading-snug line-clamp-2 ${roleText}`}>
+              <p className={`text-[11px] font-semibold leading-tight break-words ${roleText}`}>
                 {player.status || 'Squad Member'}
               </p>
             )}
 
-            <p className="text-xs text-slate-400 truncate mt-0.5">
+            <p className="text-xs text-slate-400 truncate mt-1">
               {playerNation}
             </p>
 

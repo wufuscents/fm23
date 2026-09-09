@@ -9,7 +9,7 @@ export function Flag({ url, name }: { url?: string | null; name?: string | null 
     <img
       src={flagSrc}
       alt={name || 'Flag'}
-      className="w-5 h-3.5 object-cover rounded-sm flex-shrink-0 shadow-sm"
+      className="w-5 h-5 rounded-full object-cover flex-shrink-0 shadow-sm"
     />
   )
 }

@@ -94,6 +94,14 @@ export function PlayerCard({
       params={{ id: player.id }}
       className="fm-panel group flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:border-primary/60"
     >
+      <div
+        className="h-1 w-full transition-opacity group-hover:opacity-100"
+        style={{
+          backgroundColor: dominantColor ?? undefined,
+          opacity: dominantColor ? 0.9 : 0,
+        }}
+        aria-hidden="true"
+      />
       <div className="relative aspect-[4/3] overflow-hidden bg-panel">
         <Avatar
           src={player.imageUrl}

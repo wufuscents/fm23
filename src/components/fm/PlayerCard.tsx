@@ -1,170 +1,101 @@
-import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { FastAverageColor } from "fast-average-color";
-import type { HonourCounts, Player } from "@/lib/fm";
+import React, { useEffect, useState } from 'react';
+import { getDominantColor, getStatusBorderClass, getGenderBorderClass } from '@/lib/color-extract';
+import { cn } from '@/lib/utils';
 
-export function Avatar({
-  src,
-  name,
-  className = "",
-}: {
-  src: string;
-  name: string;
-  className?: string;
-}) {
-  if (src) {
-    return (
-      <span className={`inline-block overflow-hidden bg-black/20 ${className}`}>
-        <img
-          src={src}
-          alt={name}
-          decoding="async"
-          loading="lazy"
-          className="h-full w-full object-contain object-top"
-        />
-      </span>
-    );
-  }
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toUpperCase();
-  return (
-    <span
-      className={`grid place-items-center bg-panel font-display font-bold text-muted-foreground ${className}`}
-      aria-label={name}
-    >
-      {initials || "?"}
-    </span>
-  );
+interface PlayerCardProps {
+  player: {
+    id: string;
+    name: string;
+    display_name?: string;
+    status?: 'Legend' | 'Icon' | string;
+    gender?: 'Male' | 'Female' | string;
+    photo_url?: string;
+    club_logo_url?: string;
+    nation_flag_url?: string;
+    position?: string;
+    rating?: number;
+  };
 }
 
-export function Flag({ src, nationality }: { src: string; nationality: string }) {
-  if (!src) return null;
-  return (
-    <span className="inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full">
-      <img
-        src={src}
-        alt={nationality ? `${nationality} flag` : "Flag"}
-        loading="lazy"
-        className="h-full w-full object-cover"
-      />
-    </span>
-  );
-}
-
-export function PlayerCard({
-  player,
-  counts,
-}: {
-  player: Player;
-  counts?: HonourCounts;
-}) {
-  const trophies = player.trophies;
-  const awards = player.awards;
-  const isGK =
-    player.role?.toLowerCase().includes("goalkeeper") || player.role === "GK";
-
-  const [dominantColor, setDominantColor] = useState<string | null>(null);
+export function PlayerCard({ player }: PlayerCardProps) {
+  const [clubColor, setClubColor] = useState('#1e293b');
+  const [nationColor, setNationColor] = useState('#0f172a');
 
   useEffect(() => {
-    if (!player.imageUrl) return;
-    let cancelled = false;
-    const fac = new FastAverageColor();
-    fac
-      .getColorAsync(player.imageUrl, { silent: true })
-      .then((color) => {
-        if (!cancelled) setDominantColor(color.hex);
-      })
-      .catch(() => {
-        // ignore extraction failures
-      });
+    let isMounted = true;
+    
+    Promise.all([
+      getDominantColor(player.club_logo_url, '#1e293b'),
+      getDominantColor(player.nation_flag_url, '#0f172a'),
+    ]).then(([clubHex, nationHex]) => {
+      if (isMounted) {
+        setClubColor(clubHex);
+        setNationColor(nationHex);
+      }
+    });
+
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
-  }, [player.imageUrl]);
+  }, [player.club_logo_url, player.nation_flag_url]);
 
   return (
-
-
-    <Link
-      to="/player/$id"
-      params={{ id: player.id }}
-      className="fm-panel group flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:border-primary/60"
+    <div
+      className={cn(
+        'relative overflow-hidden rounded-xl bg-slate-900/90 p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl',
+        getStatusBorderClass(player.status),
+        getGenderBorderClass(player.gender)
+      )}
     >
+      {/* Ambient Gradient Background */}
       <div
-        className="h-1 w-full transition-opacity group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 opacity-25 transition-opacity duration-500 group-hover:opacity-40"
         style={{
-          backgroundColor: dominantColor ?? undefined,
-          opacity: dominantColor ? 0.9 : 0,
+          background: `radial-gradient(circle at 10% 20%, ${clubColor} 0%, transparent 60%), radial-gradient(circle at 90% 80%, ${nationColor} 0%, transparent 60%)`,
         }}
-        aria-hidden="true"
       />
-      <div className="relative aspect-[4/3] overflow-hidden bg-panel">
-        <Avatar
-          src={player.imageUrl}
-          name={player.name}
-          className="h-full w-full text-3xl transition-transform duration-300 group-hover:scale-105"
-        />
+
+      {/* Card Content Header */}
+      <div className="relative z-10 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {player.nation_flag_url && (
+            <img src={player.nation_flag_url} alt="Nation" className="h-4 w-6 rounded-sm object-cover shadow-sm" />
+          )}
+          {player.club_logo_url && (
+            <img src={player.club_logo_url} alt="Club" className="h-6 w-6 object-contain filter drop-shadow" />
+          )}
+        </div>
+        <span className="rounded bg-slate-800/80 px-2 py-0.5 text-xs font-mono font-bold text-amber-400 border border-slate-700">
+          {player.position || 'ST'}
+        </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Flag src={player.flagUrl} nationality={player.nationality} />
-            <h3 className="truncate text-base font-semibold">{player.name}</h3>
-          </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {[player.role, player.club].filter(Boolean).join(" · ") || "—"}
-          </p>
+      {/* Portrait & Player Details */}
+      <div className="relative z-10 mt-3 flex items-center gap-4">
+        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-slate-800 border border-slate-700/60">
+          <img
+            src={player.photo_url || '/placeholder-player.png'}
+            alt={player.name}
+            className="h-full w-full object-cover"
+          />
         </div>
 
-        <div className="grid grid-cols-4 gap-1 rounded-md bg-panel/70 p-2 text-center">
-          <Stat label="Apps" value={player.apps} />
-          <Stat label={isGK ? "Conc" : "Gls"} value={isGK ? player.conceded ?? 0 : player.goals} />
-          <Stat label="Trph" value={trophies} tone="gold" />
-          <Stat label="Awd" value={awards} tone="primary" />
-        </div>
-
-
-        {player.status === "Legend" || player.status === "Icon" ? (
-          <div className="flex flex-wrap gap-1">
-            {player.legendClubs.slice(0, 3).map((c) => (
-              <span
-                key={c}
-                className={`rounded-sm border px-1.5 py-0.5 text-[0.65rem] ${
-                  player.status === "Legend"
-                    ? "border-gold/40 text-gold"
-                    : "border-silver/40 text-silver"
-                }`}
-              >
-                {player.status} · {c}
-              </span>
-            ))}
+        <div className="flex flex-col min-w-0">
+          <h3 className="truncate text-base font-bold text-slate-100">
+            {player.display_name || player.name}
+          </h3>
+          <div className="mt-1 flex items-center gap-2">
+            <span className={cn(
+              'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+              player.status?.toLowerCase() === 'legend' 
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+            )}>
+              {player.status || 'Squad'}
+            </span>
           </div>
-        ) : null}
+        </div>
       </div>
-    </Link>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone?: "gold" | "primary";
-}) {
-  const color =
-    tone === "gold" ? "text-gold" : tone === "primary" ? "text-primary" : "text-foreground";
-  return (
-    <div>
-      <div className={`fm-stat text-lg ${color}`}>{value}</div>
-      <div className="fm-label text-[0.6rem]">{label}</div>
     </div>
   );
 }

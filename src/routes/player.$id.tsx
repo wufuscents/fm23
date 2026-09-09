@@ -8,7 +8,6 @@ export const Route = createFileRoute('/player/$id')({
     const playerId = params.id
 
     try {
-      // Query player details from view or players table
       let playerRes = await supabase
         .from('player_directory_view')
         .select('*')
@@ -87,7 +86,12 @@ function PlayerProfilePage() {
   const playerImage = player.image_url || player.photo_url || ''
   const playerNation = player.nation || player.nationality || player.nationality_name || 'Global'
   const playerFlag = player.nation_flag || player.nationality_flag || player.flag_url || null
-  const playerPos = player.positions_short || player.positions_full || player.position || 'N/A'
+  const playerPos =
+    player.positions_short ||
+    player.position ||
+    player.positions_full ||
+    player.primary_position ||
+    'Squad Member'
 
   return (
     <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>

@@ -1,12 +1,11 @@
-import { Player } from '@/lib/types'
-import { storageUrl } from '@/lib/fm'
+import { Player } from '../lib/types'
+import { storageUrl } from '../lib/fm'
 
 export function PlayerCard({ player }: { player: Player }) {
   const statusLower = player.status?.toLowerCase() || ''
   const isLegend = statusLower === 'legend'
   const isIcon = statusLower === 'icon'
 
-  // Card theme styling according to status
   const cardTheme = isLegend
     ? 'border-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.15)] bg-slate-900/90'
     : isIcon
@@ -23,7 +22,6 @@ export function PlayerCard({ player }: { player: Player }) {
     <div
       className={`relative flex flex-col justify-between p-4 rounded-xl border backdrop-blur-md transition-all duration-200 hover:scale-[1.02] ${cardTheme}`}
     >
-      {/* 7. Name & Flag at the top */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -34,13 +32,11 @@ export function PlayerCard({ player }: { player: Player }) {
                 className="w-5 h-3.5 object-cover rounded-sm flex-shrink-0 shadow-sm"
               />
             )}
-            {/* 1. Name fits without breaking layout */}
             <h3 className="font-heading font-bold text-base sm:text-lg text-white truncate uppercase tracking-wider">
               {player.name}
             </h3>
           </div>
 
-          {/* 4. Silver badge for Icons */}
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider flex-shrink-0 ${statusBadge}`}
           >
@@ -48,7 +44,6 @@ export function PlayerCard({ player }: { player: Player }) {
           </span>
         </div>
 
-        {/* 2. Enlarged Portrait + Details */}
         <div className="flex items-center gap-3 my-2">
           <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-800/80 border border-slate-700/60 shadow-inner">
             <img
@@ -60,7 +55,6 @@ export function PlayerCard({ player }: { player: Player }) {
           </div>
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
-            {/* 3. Reverted Club Description */}
             <p className="text-xs font-semibold text-amber-400 truncate">
               {player.club_description || `${player.status || 'Squad'} • ${player.current_club || player.nation}`}
             </p>
@@ -69,7 +63,6 @@ export function PlayerCard({ player }: { player: Player }) {
               {player.nation}
             </p>
 
-            {/* Roles / Positions at bottom of card header */}
             <div className="mt-2">
               <span className="text-[11px] font-mono text-slate-300 bg-slate-800/90 px-2 py-1 rounded border border-slate-700/50 block truncate max-w-full">
                 {player.position || 'N/A'}
@@ -79,7 +72,6 @@ export function PlayerCard({ player }: { player: Player }) {
         </div>
       </div>
 
-      {/* Stats Section */}
       <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
           <div className="text-sm font-bold text-white">{player.apps ?? 0}</div>

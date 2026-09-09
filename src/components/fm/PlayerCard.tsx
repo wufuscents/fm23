@@ -66,6 +66,26 @@ export function PlayerCard({
   const awards = player.awards;
   const isGK =
     player.role?.toLowerCase().includes("goalkeeper") || player.role === "GK";
+
+  const [dominantColor, setDominantColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!player.imageUrl) return;
+    let cancelled = false;
+    const fac = new FastAverageColor();
+    fac
+      .getColorAsync(player.imageUrl, { silent: true })
+      .then((color) => {
+        if (!cancelled) setDominantColor(color.hex);
+      })
+      .catch(() => {
+        // ignore extraction failures
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [player.imageUrl]);
+
   return (
 
 

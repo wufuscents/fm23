@@ -125,6 +125,9 @@ function PlayerProfilePage() {
     return individualAwards.reduce((sum: number, a: any) => sum + (a.amount || 1), 0)
   }, [player, individualAwards])
 
+  const displayApps = player.apps ?? totalCareerApps ?? 0
+  const displayGoals = player.goals ?? totalCareerGoals ?? 0
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -185,23 +188,23 @@ function PlayerProfilePage() {
                 ))}
               </div>
 
-              {/* Header Stat Boxes (CAPS, APPS, GLS, TROPHIES) matching ex1.png */}
+              {/* Header Stat Boxes: APPS, GOALS, TROPHIES, AWARDS */}
               <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{player.international_apps ?? 0}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Caps</div>
-                </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{totalCareerApps}</div>
+                  <div className="text-xl font-bold text-white">{displayApps}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Apps</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{totalCareerGoals}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Gls</div>
+                  <div className="text-xl font-bold text-white">{displayGoals}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Goals</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                   <div className="text-xl font-bold text-amber-400">{totalTrophiesCount}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Trophies</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{totalAwardsCount}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Awards</div>
                 </div>
               </div>
             </div>

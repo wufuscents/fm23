@@ -1,310 +1,208 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { SiteHeader } from "@/components/fm/SiteHeader";
-import { Avatar, Flag } from "@/components/fm/PlayerCard";
-import { fetchPlayerDetail, type CareerEntry, type Honour } from "@/lib/fm";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { supabase } from '@/lib/supabase'
+import { Player, CareerEntry, AwardEntry } from '@/lib/types'
+import { storageUrl, sortCareerByYears } from '@/lib/fm'
 
-const detailQuery = (id: string) =>
-  queryOptions({
-    queryKey: ["player", id],
-    queryFn: () => fetchPlayerDetail(id),
-    staleTime: 60_000,
-  });
+export const Route = createFileRoute('/player/$id')({
+  loader: async ({ params }) => {
+    const { id } = params
 
-export const Route = createFileRoute("/player/$id")({
-  head: () => ({
-    meta: [
-      { title: "Player Profile — FM Squad Archive" },
-      {
-        name: "description",
-        content:
-          "Full career profile: club and coaching history, trophies, individual awards, milestones and biography.",
-      },
-      { property: "og:title", content: "Player Profile — FM Squad Archive" },
-      {
-        property: "og:description",
-        content: "Career history, honours and milestones for this profile.",
-      },
-    ],
-  }),
-  loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(detailQuery(params.id));
+    const [playerRes, playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
+      supabase.from('players').select('*').eq('id', id).single(),
+      supabase.from('player_career_history').select('*').eq('player_id', id),
+      supabase.from('coach_career_history').select('*').eq('player_id', id),
+      supabase.from('awards_and_trophies').select('*').eq('player_id', id),
+    ])
+
+    return {
+      player: playerRes.data as Player | null,
+      playerCareer: sortCareerByYears((playerCareerRes.data || []) as CareerEntry[]),
+      coachCareer: sortCareerByYears((coachCareerRes.data || []) as CareerEntry[]),
+      awards: (awardsRes.data || []) as AwardEntry[],
+    }
   },
-  component: PlayerDetail,
-  errorComponent: ({ error }) => <Shell>{error.message}</Shell>,
-  notFoundComponent: () => <Shell>Player not found.</Shell>,
-});
+  component: PlayerProfilePage,
+})
 
-function Shell({ children }: { children: React.ReactNode }) {
+function PlayerProfilePage() {
+  const { player, playerCareer, coachCareer, awards } = Route.useLoaderData()
+
+  if (!player) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono">
+        Player profile not found.
+      </div>
+    )
+  }
+
+  // 9. Background dynamic theme based on status (Legend, Icon, None)
+  const statusLower = player.status?.toLowerCase() || ''
+  const isLegend = statusLower === 'legend'
+  const isIcon = statusLower === 'icon'
+
+  const themeGlow = isLegend
+    ? 'bg-radial from-amber-500/15 via-slate-950 to-slate-950'
+    : isIcon
+    ? 'bg-radial from-slate-300/15 via-slate-950 to-slate-950'
+    : 'bg-slate-950'
+
+  const cardBorder = isLegend
+    ? 'border-amber-500/30 shadow-[0_0_30px_rgba(251,191,36,0.1)]'
+    : isIcon
+    ? 'border-slate-300/30 shadow-[0_0_30px_rgba(203,213,225,0.1)]'
+    : 'border-slate-800'
+
+  const badgeTheme = isLegend
+    ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+    : isIcon
+    ? 'bg-slate-300/20 text-slate-200 border-slate-300/40'
+    : 'bg-slate-800 text-slate-400 border-slate-700'
+
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <p className="px-4 py-24 text-center text-sm text-muted-foreground" role="alert">
-        {children}
-      </p>
-    </div>
-  );
-}
-
-function isGoalkeeper(player: { role?: string } | null) {
-  if (!player?.role) return false;
-  const r = player.role.toLowerCase();
-  return r.includes("goalkeeper") || r === "gk";
-}
-
-function PlayerDetail() {
-  const { id } = Route.useParams();
-  const { data } = useSuspenseQuery(detailQuery(id));
-  const { player, playerCareer, coachCareer, honours, totals, error } = data;
-  const [tab, setTab] = useState<"trophies" | "awards">("trophies");
-  const isGK = isGoalkeeper(player);
-
-  if (error) return <Shell>Database read blocked: {error}</Shell>;
-  if (!player) return <Shell>Player not found.</Shell>;
-
-  const trophies = honours.filter((h) => h.kind === "player_trophy");
-  const awards = honours.filter((h) => h.kind === "player_award");
-  const sum = (rows: Honour[]) => rows.reduce((n, h) => n + h.amount, 0);
-  const trophyCount = sum(trophies);
-  const awardCount = sum(awards);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <Link to="/" className="fm-label transition-colors hover:text-primary">
-          ← Back to directory
+    <div className={`min-h-screen text-slate-100 p-4 sm:p-8 transition-colors duration-500 ${themeGlow}`}>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Back Link */}
+        <Link
+          to="/"
+          className="inline-flex items-center text-xs font-mono text-slate-400 hover:text-white transition-colors"
+        >
+          ← BACK TO DIRECTORY
         </Link>
 
-        <section className="fm-panel mt-3 flex flex-col gap-5 p-5 sm:flex-row">
-          <Avatar
-            src={player.imageUrl}
-            name={player.name}
-            className="h-40 w-40 shrink-0 rounded-lg text-4xl"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <Flag src={player.flagUrl} nationality={player.nationality} />
-              <span className="fm-label">{player.nationality || "—"}</span>
+        {/* Profile Banner */}
+        <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+            {/* Player Avatar */}
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl">
+              <img
+                src={storageUrl(player.photo_url)}
+                alt={player.name}
+                className="w-full h-full object-cover object-top"
+              />
             </div>
-            <h1 className="mt-1 text-4xl font-bold uppercase">{player.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {[player.role, player.club].filter(Boolean).join(" · ") || "—"}
-            </p>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {player.status === "Legend" || player.status === "Icon"
-                ? player.legendClubs.map((c) => (
-                    <span
-                      key={`${player.status}-${c}`}
-                      className={`rounded-sm border px-2 py-0.5 text-xs ${
-                        player.status === "Legend"
-                          ? "border-gold/40 text-gold"
-                          : "border-silver/40 text-silver"
-                      }`}
-                    >
-                      {player.status} · {c}
-                    </span>
-                  ))
-                : null}
-              {player.isHeadCoach ? (
-                <span className="rounded-sm border border-accent/40 px-2 py-0.5 text-xs text-accent">
-                  Head Coach
+            {/* Info */}
+            <div className="flex-1 text-center md:text-left space-y-2">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                {player.nation_flag && (
+                  <img src={player.nation_flag} alt={player.nation} className="w-6 h-4 object-cover rounded-sm" />
+                )}
+                <span className="text-xs font-mono uppercase text-slate-400">{player.nation}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${badgeTheme}`}>
+                  {player.status || 'Squad Member'}
                 </span>
-              ) : null}
+              </div>
+
+              <h1 className="font-heading text-3xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
+                {player.name}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-slate-300 font-mono">
+                {player.position || 'N/A'}
+              </p>
+
+              {/* Career Totals */}
+              <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
+                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                  <div className="text-lg font-bold text-white">{player.caps ?? 0}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Caps</div>
+                </div>
+                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                  <div className="text-lg font-bold text-white">{player.apps ?? 0}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Apps</div>
+                </div>
+                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                  <div className="text-lg font-bold text-white">{player.goals ?? 0}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Goals</div>
+                </div>
+                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                  <div className="text-lg font-bold text-white">{player.trophies ?? 0}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Trophies</div>
+                </div>
+              </div>
             </div>
-
-            <div className="mt-4 grid max-w-md grid-cols-4 gap-2 text-center">
-              <Metric label="Caps" value={player.caps} />
-              <Metric label="Apps" value={totals.apps} />
-              <Metric label={isGK ? "Conc" : "Gls"} value={isGK ? totals.conceded : totals.goals} />
-              <Metric label="Trophies" value={trophyCount} tone="gold" />
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-4">
-          <h2 className="fm-label">Milestones</h2>
-          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Medal label="Personal 1st" value={player.milestones.first} tone="text-gold" />
-            <Medal label="Personal 2nd" value={player.milestones.second} tone="text-silver" />
-            <Medal label="Personal 3rd" value={player.milestones.third} tone="text-bronze" />
-            <Medal label="Team 1st" value={player.teamMilestones.first} tone="text-accent" />
-            <Medal label="Team 2nd" value={player.teamMilestones.second} tone="text-silver" />
-            <Medal label="Team 3rd" value={player.teamMilestones.third} tone="text-bronze" />
-          </div>
-        </section>
-
-        <section className="mt-6">
-          <h2 className="text-2xl font-bold uppercase">Player Career</h2>
-          <CareerTable rows={playerCareer} goalsLabel={isGK ? "Conc" : "Gls"} showTotals useConceded={isGK} />
-        </section>
-
-        {player.isHeadCoach || coachCareer.length > 0 ? (
-          <section className="mt-6">
-            <h2 className="text-2xl font-bold uppercase">Coaching Career</h2>
-            <CareerTable rows={coachCareer} goalsLabel="Wins" />
-          </section>
-        ) : null}
-
-        <section className="mt-6">
-          <div className="flex gap-2">
-            {(
-              [
-                ["trophies", `Team Trophies (${trophyCount})`],
-                ["awards", `Individual Awards (${awardCount})`],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`rounded-md px-3 py-1.5 font-display text-sm uppercase tracking-widest transition-colors ${
-                  tab === key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-panel text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <HonourList rows={tab === "trophies" ? trophies : awards} />
-        </section>
-
-        {player.biography ? (
-          <section className="mt-6">
-            <h2 className="text-2xl font-bold uppercase">Biography</h2>
-            <div className="fm-panel mt-2 whitespace-pre-line p-5 text-sm leading-relaxed text-muted-foreground">
-              {player.biography}
-            </div>
-          </section>
-        ) : null}
-      </main>
-    </div>
-  );
-}
-
-function Metric({ label, value, tone }: { label: string; value: number; tone?: "gold" }) {
-  return (
-    <div className="rounded-md bg-panel p-2">
-      <div className={`fm-stat text-2xl ${tone === "gold" ? "text-gold" : "text-foreground"}`}>
-        {value}
-      </div>
-      <div className="fm-label text-[0.6rem]">{label}</div>
-    </div>
-  );
-}
-
-function Medal({ label, value, tone }: { label: string; value: number; tone: string }) {
-  return (
-    <div className="fm-panel p-4">
-      <div className={`fm-stat text-3xl ${tone}`}>{value}</div>
-      <div className="fm-label mt-1">{label}</div>
-    </div>
-  );
-}
-
-function CareerTable({
-  rows,
-  goalsLabel,
-  showTotals = false,
-  useConceded = false,
-}: {
-  rows: CareerEntry[];
-  goalsLabel: string;
-  showTotals?: boolean;
-  useConceded?: boolean;
-}) {
-  const statValue = (r: CareerEntry) => (useConceded ? r.conceded ?? 0 : r.goals);
-  if (rows.length === 0) {
-    return (
-      <p className="fm-panel mt-2 p-5 text-sm text-muted-foreground">No records available.</p>
-    );
-  }
-  return (
-    <div className="fm-panel mt-2 overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="fm-label px-4 py-2 text-left">Club</th>
-            <th className="fm-label px-4 py-2 text-left">Country</th>
-            <th className="fm-label px-4 py-2 text-left">Years</th>
-            <th className="fm-label px-4 py-2 text-right">Apps</th>
-            <th className="fm-label px-4 py-2 text-right">{goalsLabel}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-b border-border/50 last:border-0">
-              <td className="px-4 py-2">
-                <span className="flex items-center gap-2">
-                  {r.logoUrl ? (
-                    <img
-                      src={r.logoUrl}
-                      alt=""
-                      loading="lazy"
-                      className="h-6 w-6 object-contain"
-                    />
-                  ) : null}
-                  <span className="font-medium">{r.team || "—"}</span>
-                </span>
-              </td>
-              <td className="px-4 py-2 text-muted-foreground">{r.country || "—"}</td>
-              <td className="px-4 py-2 text-muted-foreground">{r.years || "—"}</td>
-              <td className="fm-stat px-4 py-2 text-right">{r.apps}</td>
-              <td className="fm-stat px-4 py-2 text-right text-primary">{statValue(r)}</td>
-            </tr>
-          ))}
-        </tbody>
-        {showTotals ? (
-          <tfoot>
-            <tr className="border-t border-border">
-              <td className="fm-label px-4 py-2" colSpan={3}>
-                Total
-              </td>
-              <td className="fm-stat px-4 py-2 text-right">
-                {rows.reduce((n, r) => n + r.apps, 0)}
-              </td>
-              <td className="fm-stat px-4 py-2 text-right text-primary">
-                {rows.reduce((n, r) => n + statValue(r), 0)}
-              </td>
-            </tr>
-          </tfoot>
-        ) : null}
-      </table>
-    </div>
-  );
-}
-
-function HonourList({ rows }: { rows: Honour[] }) {
-  if (rows.length === 0) {
-    return <p className="fm-panel mt-3 p-5 text-sm text-muted-foreground">Nothing recorded.</p>;
-  }
-  const grouped = new Map<string, Honour[]>();
-  for (const h of rows) {
-    const key = h.title || "Untitled";
-    grouped.set(key, [...(grouped.get(key) ?? []), h]);
-  }
-  return (
-    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-      {Array.from(grouped.entries()).map(([title, items]) => (
-        <div key={title} className="fm-panel flex items-center gap-3 p-3">
-          <span className="fm-stat grid h-10 w-10 shrink-0 place-items-center rounded-full bg-panel text-lg text-gold">
-            {items.reduce((n, i) => n + i.amount, 0)}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{title}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {Array.from(
-                new Set(items.map((i) => [i.club, i.season].filter(Boolean).join(" "))),
-              )
-                .filter(Boolean)
-                .join(" · ") || "—"}
-            </p>
           </div>
         </div>
-      ))}
+
+        {/* Player Career History */}
+        {playerCareer.length > 0 && (
+          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+            <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
+              Player Career
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                    <th className="py-2 px-3">Club</th>
+                    <th className="py-2 px-3">Country</th>
+                    <th className="py-2 px-3">Years</th>
+                    <th className="py-2 px-3 text-right">Apps</th>
+                    <th className="py-2 px-3 text-right">Gls</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {playerCareer.map((entry, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-3 font-semibold text-white">{entry.club}</td>
+                      <td className="py-3 px-3 text-slate-400">{entry.country || '-'}</td>
+                      <td className="py-3 px-3 text-slate-300">{entry.years || '-'}</td>
+                      <td className="py-3 px-3 text-right font-bold text-white">{entry.apps ?? '-'}</td>
+                      <td className="py-3 px-3 text-right font-bold text-emerald-400">{entry.goals ?? '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Coach Career History */}
+        {coachCareer.length > 0 && (
+          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+            <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
+              Managerial / Coaching Stints
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                    <th className="py-2 px-3">Club / Team</th>
+                    <th className="py-2 px-3">Role</th>
+                    <th className="py-2 px-3">Years</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {coachCareer.map((entry, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-3 font-semibold text-white">{entry.club}</td>
+                      <td className="py-3 px-3 text-slate-300">{entry.role || 'Head Coach'}</td>
+                      <td className="py-3 px-3 text-slate-400">{entry.years || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Honours & Awards */}
+        {awards.length > 0 && (
+          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+            <h2 className="font-heading text-xl font-bold text-white uppercase tracking-wider mb-4">
+              Honours & Recognitions
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs">
+              {awards.map((award, idx) => (
+                <div key={idx} className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 flex justify-between items-center">
+                  <span className="text-slate-200 font-semibold">{award.award_name}</span>
+                  <span className="text-amber-400 font-bold ml-2">x{award.count || 1}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

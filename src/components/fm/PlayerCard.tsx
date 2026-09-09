@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import FastAverageColor from "fast-average-color";
 import type { HonourCounts, Player } from "@/lib/fm";
 
 export function Avatar({

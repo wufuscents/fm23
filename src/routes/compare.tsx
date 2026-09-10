@@ -191,13 +191,13 @@ function PlayerPicker({
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${open ? 'z-50' : 'z-0'}`}>
       <label className="block mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Player {slot}</label>
 
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className={`w-full min-h-[48px] rounded-lg border bg-slate-950 px-3 py-2.5 text-left transition-colors focus:outline-none ${
+        className={`group w-full min-h-[48px] rounded-lg border bg-slate-950 px-3 py-2.5 text-left transition-colors focus:outline-none ${
           open ? 'border-emerald-500/60' : 'border-slate-800 hover:border-slate-700'
         }`}
       >
@@ -210,7 +210,9 @@ function PlayerPicker({
                 {(selectedPlayer as any).role || (selectedPlayer as any).positions_short ? ` • ${(selectedPlayer as any).role || (selectedPlayer as any).positions_short}` : ''}
               </div>
             </div>
-            <span className="shrink-0 text-xs text-slate-500">⌄</span>
+            <span className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 group-hover:border-emerald-500/40 group-hover:text-emerald-300">
+              CHANGE
+            </span>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
@@ -313,10 +315,9 @@ function ComparePage() {
             </div>
             <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">Head-to-head player dossier</p>
           </div>
-          <nav className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
+          <nav className="flex items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
             <Link to="/" className="hover:text-white transition-colors">DIRECTORY</Link>
             <Link to="/hall-of-fame" className="hover:text-white transition-colors">HALL OF FAME</Link>
-            <Link to="/leaderboards" className="hover:text-white transition-colors">RECORDS</Link>
             <Link to="/compare" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">COMPARE</Link>
           </nav>
         </div>
@@ -390,8 +391,20 @@ function ComparePage() {
                         </div>
                       </div>
                       <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-slate-950">
-                        <div className="bg-emerald-400/80 transition-all duration-500" style={{ width: `${p1Share}%` }} />
-                        <div className="bg-slate-700 transition-all duration-500" style={{ width: `${p2Share}%` }} />
+                        <div
+                          className="bg-emerald-400 transition-all duration-500"
+                          style={{ width: `${p1Share}%` }}
+                          aria-label={`${p1.name} share`}
+                        />
+                        <div
+                          className="bg-blue-400 transition-all duration-500"
+                          style={{ width: `${p2Share}%` }}
+                          aria-label={`${p2.name} share`}
+                        />
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between font-mono text-[8px] uppercase tracking-wider text-slate-600">
+                        <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{p1.name}</span>
+                        <span className="flex items-center gap-1.5">{p2.name}<span className="h-1.5 w-1.5 rounded-full bg-blue-400" /></span>
                       </div>
                     </div>
                   )

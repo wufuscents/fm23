@@ -87,6 +87,10 @@ export function PlayerCard({ player }: { player: Player }) {
 
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
+  const playerGoals = player.goals ?? 0
+  const playerAssists = (player as any).assists ?? 0
+  const goalContributions = playerGoals + playerAssists
+  const goalsPerGame = player.apps && player.apps > 0 ? playerGoals / player.apps : 0
 
   return (
     <Link
@@ -142,14 +146,26 @@ export function PlayerCard({ player }: { player: Player }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono">
         <div>
           <div className="text-sm font-bold text-white">{player.apps ?? 0}</div>
           <div className="text-[9px] text-slate-500 uppercase">Apps</div>
         </div>
         <div>
-          <div className="text-sm font-bold text-white">{player.goals ?? 0}</div>
+          <div className="text-sm font-bold text-white">{playerGoals}</div>
           <div className="text-[9px] text-slate-500 uppercase">Gls</div>
+        </div>
+        <div>
+          <div className="text-sm font-bold text-white">{playerAssists}</div>
+          <div className="text-[9px] text-slate-500 uppercase">Ast</div>
+        </div>
+        <div>
+          <div className="text-sm font-bold text-white">{goalContributions}</div>
+          <div className="text-[9px] text-slate-500 uppercase">G+A</div>
+        </div>
+        <div>
+          <div className="text-sm font-bold text-white">{goalsPerGame.toFixed(2)}</div>
+          <div className="text-[9px] text-slate-500 uppercase">G/GM</div>
         </div>
         <div>
           <div className="text-sm font-bold text-white">{player.trophies ?? 0}</div>

@@ -48,7 +48,58 @@ function canonicalClubKey(value: unknown): string {
 function sameClubName(a: unknown, b: unknown): boolean {
   const left = canonicalClubKey(a)
   const right = canonicalClubKey(b)
-  return Boolean(left && right && left === right)
+  if (!left || !right) return false
+  if (left === right) return true
+
+  // Handle harmless database variants such as "Manchester United U23",
+  // "Manchester United Reserves", etc. without creating broad aliases.
+  if (left.length >= 8 && right.length >= 8) {
+    return left.startsWith(right) || right.startsWith(left)
+  }
+
+  return false
+}
+
+function readClubList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || '').trim()).filter(Boolean)
+  }
+
+  if (typeof value !== 'string') return []
+
+  const raw = value.trim()
+  if (!raw) return []
+
+  // Defensive support for JSON-encoded arrays.
+  if (raw.startsWith('[') && raw.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item || '').trim()).filter(Boolean)
+      }
+    } catch {
+      // Continue with the plain-text fallbacks below.
+    }
+  }
+
+  // Defensive support for PostgreSQL array text such as
+  // {"Manchester United","Real Madrid"}.
+  if (raw.startsWith('{') && raw.endsWith('}')) {
+    return raw
+      .slice(1, -1)
+      .split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+      .map((item) => item.trim().replace(/^"(.*)"$/, '$1'))
+      .filter(Boolean)
+  }
+
+  return raw.split(',').map((item) => item.trim()).filter(Boolean)
+}
+
+function playerLegacyClubs(player: any): string[] {
+  return [
+    ...readClubList(player.legend_at_clubs),
+    ...readClubList(player.icon_at_clubs),
+  ]
 }
 
 async function fetchAllPlayers(): Promise<any[]> {
@@ -69,6 +120,30 @@ async function fetchAllPlayers(): Promise<any[]> {
     const page = data || []
     rows.push(...page)
     if (page.length < pageSize) break
+  }
+
+  try {
+    const { data: directoryRows } = await supabase
+      .from('player_directory_view')
+      .select('*')
+
+    if (directoryRows?.length) {
+      const directoryById = new Map(directoryRows.map((row: any) => [String(row.id), row]))
+      return rows.map((player: any) => {
+        const extra = directoryById.get(String(player.id))
+        if (!extra) return player
+
+        const merged = { ...extra, ...player }
+        for (const key of ['legend_at_clubs', 'icon_at_clubs', 'status', 'trophies', 'awards', 'gender', 'nationality', 'nationality_flag_url', 'image_url']) {
+          if ((merged[key] === null || merged[key] === undefined) && extra[key] !== null && extra[key] !== undefined) {
+            merged[key] = extra[key]
+          }
+        }
+        return merged
+      })
+    }
+  } catch {
+    // Optional view; players remains authoritative.
   }
 
   return rows
@@ -137,7 +212,7 @@ export const Route = createFileRoute('/club/$club')({
     // icon_at_clubs column is intentionally not used because the database
     // currently stores both legacy types in legend_at_clubs.
     const players = (playerRows as Player[]).filter((p: any) => {
-      const legacyClubs = Array.isArray(p.legend_at_clubs) ? p.legend_at_clubs : []
+      const legacyClubs = playerLegacyClubs(p)
       return (
         matchingIds.has(String(p.id)) ||
         legacyClubs.some((name: unknown) => sameClubName(name, decoded))
@@ -159,7 +234,7 @@ function ClubPage() {
   const color = TEAM_COLORS[club] || '#3b82f6'
 
   const legends = useMemo(() => players.filter((p) => {
-    const legacyClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
+    const legacyClubs = playerLegacyClubs(p)
     const status = String((p as any).status || '').trim().toLowerCase()
     return (
       legacyClubs.some((name: unknown) => sameClubName(name, club)) &&
@@ -168,7 +243,7 @@ function ClubPage() {
   }), [players, club])
 
   const icons = useMemo(() => players.filter((p) => {
-    const legacyClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
+    const legacyClubs = playerLegacyClubs(p)
     const status = String((p as any).status || '').trim().toLowerCase()
     return (
       legacyClubs.some((name: unknown) => sameClubName(name, club)) &&

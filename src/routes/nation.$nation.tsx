@@ -44,13 +44,56 @@ export const Route = createFileRoute('/nation/$nation')({
       players[0]?.nationality ?? players[0]?.nation ?? decoded,
     ).trim() || decoded
 
-    return { nation: canonicalNation, players }
+    // Apps and goals are career totals assembled from player_career_history.
+    // The base `players` table does not contain the normalized `apps` / `goals`
+    // columns used by the directory view, so calculating them from career rows
+    // prevents the nation dossier from showing false zeroes.
+    // Prefer the normalized career totals from the directory view when they
+    // are available, then fall back to summing the raw career-history rows.
+    const { data: directoryRows } = await supabase
+      .from('player_directory_view')
+      .select('id, apps, goals')
+
+    const careerTotals: Record<string, { apps: number; goals: number }> = {}
+
+    ;(directoryRows || []).forEach((row: any) => {
+      const id = String(row.id || '')
+      if (!id) return
+      careerTotals[id] = {
+        apps: Number(row.apps || 0),
+        goals: Number(row.goals || 0),
+      }
+    })
+
+    // If the view does not expose a player's normalized totals, calculate them
+    // directly from the source career-history table instead of displaying 0.
+    const missingIds = new Set(
+      players
+        .map((p) => String(p.id))
+        .filter((id) => !careerTotals[id]),
+    )
+
+    if (missingIds.size) {
+      const { data: careerRows } = await supabase
+        .from('player_career_history')
+        .select('player_id, apps, goals')
+
+      ;(careerRows || []).forEach((row: any) => {
+        const id = String(row.player_id || '')
+        if (!id || !missingIds.has(id)) return
+        if (!careerTotals[id]) careerTotals[id] = { apps: 0, goals: 0 }
+        careerTotals[id].apps += Number(row.apps || 0)
+        careerTotals[id].goals += Number(row.goals || 0)
+      })
+    }
+
+    return { nation: canonicalNation, players, careerTotals }
   },
   component: NationPage,
 })
 
 function NationPage() {
-  const { nation, players } = Route.useLoaderData()
+  const { nation, players, careerTotals } = Route.useLoaderData()
   const color = TEAM_COLORS[nation] || '#3b82f6'
 
   const legends = useMemo(
@@ -61,9 +104,12 @@ function NationPage() {
     () => players.filter((p) => String((p as any).status || '').toLowerCase().includes('icon')),
     [players],
   )
+  const getApps = (player: Player) => careerTotals[String(player.id)]?.apps || 0
+  const getGoals = (player: Player) => careerTotals[String(player.id)]?.goals || 0
+
   const sortedGoals = useMemo(
-    () => [...players].sort((a, b) => Number((b as any).goals || 0) - Number((a as any).goals || 0)),
-    [players],
+    () => [...players].sort((a, b) => getGoals(b) - getGoals(a)),
+    [players, careerTotals],
   )
   const sortedTrophies = useMemo(
     () => [...players].sort((a, b) => Number((b as any).trophies || 0) - Number((a as any).trophies || 0)),
@@ -75,8 +121,8 @@ function NationPage() {
 
   const totals = players.reduce(
     (a, p) => ({
-      apps: a.apps + Number((p as any).apps || 0),
-      goals: a.goals + Number((p as any).goals || 0),
+      apps: a.apps + getApps(p),
+      goals: a.goals + getGoals(p),
       assists: a.assists + Number((p as any).assists || 0),
       trophies: a.trophies + Number((p as any).trophies || 0),
     }),
@@ -135,7 +181,7 @@ function NationPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Ranking title="Top Scorers" players={sortedGoals} field="goals" />
+          <Ranking title="Top Scorers" players={sortedGoals} field="goals" getValue={getGoals} />
           <Ranking title="Most Trophies" players={sortedTrophies} field="trophies" />
         </div>
 
@@ -190,7 +236,7 @@ function PlayerRow({ player, rank }: { player: Player; rank: number }) {
   )
 }
 
-function Ranking({ title, players, field }: { title: string; players: Player[]; field: 'goals' | 'trophies' }) {
+function Ranking({ title, players, field, getValue }: { title: string; players: Player[]; field: 'goals' | 'trophies'; getValue?: (player: Player) => number }) {
   return (
     <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
       <h2 className="font-heading text-2xl font-black uppercase text-white">{title}</h2>
@@ -199,7 +245,7 @@ function Ranking({ title, players, field }: { title: string; players: Player[]; 
           <Link key={p.id} to="/player/$id" params={{ id: String(p.id) }} className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3 hover:border-slate-600">
             <span className="w-6 font-mono text-xs text-slate-600">{i + 1}</span>
             <span className="flex-1 truncate font-heading font-bold text-white">{p.name}</span>
-            <span className="font-mono text-sm font-black text-emerald-400">{Number((p as any)[field] || 0).toLocaleString()}</span>
+            <span className="font-mono text-sm font-black text-emerald-400">{Number(getValue ? getValue(p) : (p as any)[field] || 0).toLocaleString()}</span>
           </Link>
         ))}
         {!players.length && <Empty />}

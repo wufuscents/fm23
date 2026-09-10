@@ -67,17 +67,6 @@ export const Route = createFileRoute('/club/$club')({
       .from('club_leaderboard_view')
       .select('club_name, club_logo_url')
 
-    const { data: directoryRows } = await supabase
-      .from('player_directory_view')
-      .select('id, trophies')
-
-    const directoryTrophies = new Map<string, number>()
-    ;(directoryRows || []).forEach((row: any) => {
-      const id = String(row.id || '')
-      if (!id) return
-      directoryTrophies.set(id, Number(row.trophies || 0))
-    })
-
     const playerRows = (data || []) as Player[]
     const matchingCareerRows = (careers || []).filter((c: any) => sameClubName(c.team_name, decoded))
     const matchingIds = new Set(matchingCareerRows.map((c: any) => String(c.player_id)))
@@ -93,19 +82,15 @@ export const Route = createFileRoute('/club/$club')({
     })
 
     const viewMatch = (clubViewRows || []).find((row: any) => sameClubName(row.club_name, decoded))
-    const viewLogo = String(viewMatch?.club_logo_url || '').trim()
-    const careerLogo = String(
-      matchingCareerRows.find((row: any) => String(row.club_logo_url || '').trim())?.club_logo_url || '',
-    ).trim()
-    const logo = viewLogo || careerLogo
+    const logo = String(viewMatch?.club_logo_url || '')
 
-    return { club: decoded, players, matchingCareerRows, logo, directoryTrophies }
+    return { club: decoded, players, matchingCareerRows, logo }
   },
   component: ClubPage,
 })
 
 function ClubPage() {
-  const { club, players, matchingCareerRows, logo, directoryTrophies } = Route.useLoaderData()
+  const { club, players, matchingCareerRows, logo } = Route.useLoaderData()
   const color = TEAM_COLORS[club] || '#3b82f6'
 
   const legends = useMemo(() => players.filter((p) => {
@@ -118,7 +103,7 @@ function ClubPage() {
   }), [players, club])
 
   const icons = useMemo(() => players.filter((p) => {
-    const legacyClubs = Array.isArray((p as any).icon_at_clubs) ? (p as any).icon_at_clubs : []
+    const legacyClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
     const status = String((p as any).status || '').trim().toLowerCase()
     return (
       legacyClubs.some((name: unknown) => sameClubName(name, club)) &&
@@ -142,20 +127,7 @@ function ClubPage() {
 
   const rankedApps = useMemo(() => [...players].sort((a, b) => getClubMetric(b, clubStats, 'apps') - getClubMetric(a, clubStats, 'apps')), [players, clubStats])
   const rankedGoals = useMemo(() => [...players].sort((a, b) => getClubMetric(b, clubStats, 'goals') - getClubMetric(a, clubStats, 'goals')), [players, clubStats])
-  // Trophy data is career-wide; there is no per-club trophy attribution in the database.\n  const getCareerTrophies = (player: Player) => {
-    const id = String(player.id)
-    if (directoryTrophies.has(id)) return directoryTrophies.get(id) || 0
-    return Number((player as any).trophies || 0)
-  }
-
-  const rankedTrophies = useMemo(
-    () => [...players].sort(
-      (a, b) =>
-        getCareerTrophies(b) - getCareerTrophies(a) ||
-        String(a.name).localeCompare(String(b.name)),
-    ),
-    [players, directoryTrophies],
-  )
+  const rankedTrophies = useMemo(() => [...players].sort((a, b) => getCareerTrophies(b) - getCareerTrophies(a) || String(a.name).localeCompare(String(b.name))), [players])
 
   const totals = useMemo(() => ({
     apps: matchingCareerRows.reduce((sum: number, r: any) => sum + Number(r.apps || 0), 0),
@@ -191,7 +163,7 @@ function ClubPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2"><LegacySection title="Legends" color="#fbbf24" players={legends} /><LegacySection title="Icons" color="#cbd5e1" players={icons} /></div>
-        <div className="grid gap-6 lg:grid-cols-3"><Ranking title="Most Appearances" players={rankedApps} field="apps" clubStats={clubStats} /><Ranking title="Most Goals" players={rankedGoals} field="goals" clubStats={clubStats} /><Ranking title="Most Trophies" players={rankedTrophies} field="trophies" clubStats={clubStats} trophyValue={getCareerTrophies} /></div>
+        <div className="grid gap-6 lg:grid-cols-3"><Ranking title="Most Appearances" players={rankedApps} field="apps" clubStats={clubStats} /><Ranking title="Most Goals" players={rankedGoals} field="goals" clubStats={clubStats} /><Ranking title="Most Trophies" players={rankedTrophies} field="trophies" clubStats={clubStats} /></div>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
           <div className="flex items-end justify-between gap-4"><div><div className="font-mono text-[9px] uppercase tracking-[0.22em] text-slate-600">CONNECTED DATABASE</div><h2 className="mt-1 font-heading text-2xl font-black uppercase text-white">Player Nations</h2></div><span className="font-mono text-[10px] uppercase tracking-widest text-slate-600">{nations.length} nations</span></div>
@@ -214,8 +186,8 @@ function PlayerRow({ player, rank }: { player: Player; rank: number }) {
   return <Link to="/player/$id" params={{ id: String(player.id) }} className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3 hover:border-slate-600"><span className="w-6 font-mono text-xs text-slate-600">{rank}</span><div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-900 p-1">{(player as any).image_url && <img src={storageUrl((player as any).image_url)} alt={player.name} className="h-full w-full object-contain" />}</div><span className="flex-1 truncate font-heading font-bold uppercase text-white">{player.name}</span><span className="font-mono text-[9px] uppercase text-slate-500">{(player as any).role || 'PLAYER'}</span></Link>
 }
 
-function Ranking({ title, players, field, clubStats, trophyValue }: { title: string; players: Player[]; field: 'apps' | 'goals' | 'trophies'; clubStats: Map<string, { apps: number; goals: number }>; trophyValue?: (player: Player) => number }) {
-  return <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><h2 className="font-heading text-2xl font-black uppercase text-white">{title}</h2><div className="mt-4 space-y-2">{players.slice(0, 10).map((p, i) => { const value = field === 'trophies' ? (trophyValue ? trophyValue(p) : Number((p as any).trophies || 0)) : getClubMetric(p, clubStats, field); return <Link key={p.id} to="/player/$id" params={{ id: String(p.id) }} className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3 hover:border-slate-600"><span className="w-6 font-mono text-xs text-slate-600">{i + 1}</span><span className="flex-1 truncate font-heading font-bold text-white">{p.name}</span><span className="font-mono text-sm font-black text-emerald-400">{value.toLocaleString()}</span></Link> })}{!players.length && <Empty />}</div></section>
+function Ranking({ title, players, field, clubStats }: { title: string; players: Player[]; field: 'apps' | 'goals' | 'trophies'; clubStats: Map<string, { apps: number; goals: number }> }) {
+  return <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"><h2 className="font-heading text-2xl font-black uppercase text-white">{title}</h2><div className="mt-4 space-y-2">{players.slice(0, 10).map((p, i) => { const value = field === 'trophies' ? getCareerTrophies(p) : getClubMetric(p, clubStats, field); return <Link key={p.id} to="/player/$id" params={{ id: String(p.id) }} className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3 hover:border-slate-600"><span className="w-6 font-mono text-xs text-slate-600">{i + 1}</span><span className="flex-1 truncate font-heading font-bold text-white">{p.name}</span><span className="font-mono text-sm font-black text-emerald-400">{value.toLocaleString()}</span></Link> })}{!players.length && <Empty />}</div></section>
 }
 
 function Empty() { return <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center font-mono text-xs text-slate-600">No records in this archive.</div> }

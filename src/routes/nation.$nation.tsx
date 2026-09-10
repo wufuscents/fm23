@@ -7,15 +7,44 @@ import { TEAM_COLORS } from '../lib/team-colors'
 
 export const Route = createFileRoute('/nation/$nation')({
   loader: async ({ params }) => {
-    let { data, error } = await supabase.from('player_directory_view').select('*')
-    if (error || !data || data.length === 0) data = (await supabase.from('players').select('*')).data || []
+    // Nation identity is stored directly on `players.nationality`, so use the
+    // source-of-truth table here instead of depending on a view's projection.
+    // This also keeps the dossier reliable when the directory view changes.
+    let { data, error } = await supabase.from('players').select('*')
+    if (error || !data || data.length === 0) {
+      const fallback = await supabase.from('player_directory_view').select('*')
+      data = fallback.data || []
+    }
 
-    const decoded = decodeURIComponent(params.nation)
-    const players = (data || []).filter((p: any) =>
-      String(p.nationality || p.nation || '').trim().toLowerCase() === decoded.trim().toLowerCase(),
-    ) as Player[]
+    const rawParam = String(params.nation || '')
+    let decoded = rawParam
+    try {
+      decoded = decodeURIComponent(rawParam)
+    } catch {
+      decoded = rawParam
+    }
 
-    return { nation: decoded, players }
+    const normalizeNation = (value: unknown) =>
+      String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+
+    const targetNation = normalizeNation(decoded)
+    const players = (data || []).filter((p: any) => {
+      const playerNation = p.nationality ?? p.nation ?? p.nationality_name ?? ''
+      return normalizeNation(playerNation) === targetNation
+    }) as Player[]
+
+    // Keep the canonical database spelling in the dossier heading when the URL
+    // arrives with different casing or encoding.
+    const canonicalNation = String(
+      players[0]?.nationality ?? players[0]?.nation ?? decoded,
+    ).trim() || decoded
+
+    return { nation: canonicalNation, players }
   },
   component: NationPage,
 })

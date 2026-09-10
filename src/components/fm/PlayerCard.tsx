@@ -47,37 +47,69 @@ export function Avatar({
 }
 
 export function PlayerCard({ player }: { player: Player }) {
-  const statusLower = (player.status || '').toLowerCase()
-  const isLegend = statusLower.includes('legend') || (player.legend_at_clubs && player.legend_at_clubs.length > 0)
-  const isIcon = statusLower.includes('icon') || (player.icon_at_clubs && player.icon_at_clubs.length > 0)
+  const statusLower = String(player.status || '').trim().toLowerCase()
+  const genderLower = String(player.gender || '').trim().toLowerCase()
 
-  const genderVal = (player.gender || '').toLowerCase()
-  const isFemale = genderVal === 'female' || genderVal === 'f'
+  const legendClubs = player.legend_at_clubs || []
+  const iconClubs = player.icon_at_clubs || []
 
-  let cardBorder = 'border-slate-800 bg-slate-900/70'
-  let statusBadge = 'bg-slate-800 text-slate-400 border-slate-700'
-  let roleText = 'text-amber-400'
+  // Treat the club lists as the source of truth as well as the status field.
+  // This prevents cards with status="NONE" but a populated legend/icon list
+  // from showing the wrong status badge.
+  const isLegend = statusLower.includes('legend') || legendClubs.length > 0
+  const isIcon = !isLegend && (statusLower.includes('icon') || iconClubs.length > 0)
+  const displayStatus = isLegend ? 'LEGEND' : isIcon ? 'ICON' : (player.status || 'PLAYER')
 
-  if (isFemale) {
-    if (isLegend) {
-      cardBorder = 'border-pink-500/60 shadow-[0_0_20px_rgba(236,72,153,0.2)] bg-gradient-to-b from-pink-950/40 via-slate-900 to-slate-900'
-      statusBadge = 'bg-pink-500/20 text-pink-300 border-pink-400/50'
-      roleText = 'text-pink-400'
-    } else if (isIcon) {
-      cardBorder = 'border-fuchsia-300/50 shadow-[0_0_15px_rgba(217,70,239,0.15)] bg-slate-900/90'
-      statusBadge = 'bg-fuchsia-400/20 text-fuchsia-200 border-fuchsia-300/40'
-      roleText = 'text-fuchsia-300'
-    }
-  } else {
-    if (isLegend) {
-      cardBorder = 'border-amber-400/60 shadow-[0_0_20px_rgba(251,191,36,0.2)] bg-gradient-to-b from-amber-950/30 via-slate-900 to-slate-900'
-      statusBadge = 'bg-amber-400/20 text-amber-300 border-amber-400/50'
-      roleText = 'text-amber-400'
-    } else if (isIcon) {
-      cardBorder = 'border-slate-300/60 shadow-[0_0_15px_rgba(203,213,225,0.15)] bg-slate-900/90'
-      statusBadge = 'bg-slate-300/20 text-slate-200 border-slate-300/50'
-      roleText = 'text-slate-300'
-    }
+  const isFemale = genderLower === 'female' || genderLower === 'f'
+  const isMale = genderLower === 'male' || genderLower === 'm'
+
+  // Gender controls the card's overall atmosphere:
+  //   male   = blue
+  //   female = pink
+  // Status controls the metallic accent:
+  //   legend = gold
+  //   icon   = silver
+  // This keeps both pieces of information visible at the same time.
+  let cardBorder = 'border-slate-700/80 bg-slate-900/80'
+  let cardShadow = ''
+  let cardBackground = ''
+  let statusBadge = 'bg-slate-800/90 text-slate-300 border-slate-600/80'
+  let roleText = 'text-slate-300'
+
+  if (isMale) {
+    cardBackground = 'bg-gradient-to-br from-blue-950/70 via-slate-900/90 to-slate-950'
+    cardBorder = 'border-blue-500/50'
+    cardShadow = 'shadow-[0_0_24px_rgba(59,130,246,0.14)]'
+    roleText = 'text-blue-300'
+  } else if (isFemale) {
+    cardBackground = 'bg-gradient-to-br from-pink-950/70 via-slate-900/90 to-slate-950'
+    cardBorder = 'border-pink-500/50'
+    cardShadow = 'shadow-[0_0_24px_rgba(236,72,153,0.14)]'
+    roleText = 'text-pink-300'
+  }
+
+  if (isLegend) {
+    cardBorder = isMale
+      ? 'border-amber-400/90'
+      : isFemale
+        ? 'border-amber-400/90'
+        : 'border-amber-400/70'
+    cardShadow = isFemale
+      ? 'shadow-[0_0_26px_rgba(236,72,153,0.14),0_0_18px_rgba(251,191,36,0.16)]'
+      : isMale
+        ? 'shadow-[0_0_26px_rgba(59,130,246,0.14),0_0_18px_rgba(251,191,36,0.16)]'
+        : 'shadow-[0_0_20px_rgba(251,191,36,0.16)]'
+    statusBadge = 'bg-amber-400/20 text-amber-300 border-amber-400/70'
+    roleText = 'text-amber-300'
+  } else if (isIcon) {
+    cardBorder = 'border-slate-300/80'
+    cardShadow = isFemale
+      ? 'shadow-[0_0_26px_rgba(236,72,153,0.14),0_0_16px_rgba(226,232,240,0.16)]'
+      : isMale
+        ? 'shadow-[0_0_26px_rgba(59,130,246,0.14),0_0_16px_rgba(226,232,240,0.16)]'
+        : 'shadow-[0_0_18px_rgba(226,232,240,0.16)]'
+    statusBadge = 'bg-slate-200/15 text-slate-100 border-slate-300/70'
+    roleText = 'text-slate-200'
   }
 
   const playerImage = player.image_url || player.photo_url || ''
@@ -85,8 +117,6 @@ export function PlayerCard({ player }: { player: Player }) {
   const playerFlag = player.nationality_flag_url || player.nation_flag || null
   const playerPos = player.role || player.positions_short || player.position || '-'
 
-  const legendClubs = player.legend_at_clubs || []
-  const iconClubs = player.icon_at_clubs || []
   const playerGoals = player.goals ?? 0
   const playerAssists = (player as any).assists ?? 0
   const goalContributions = playerGoals + playerAssists
@@ -96,7 +126,7 @@ export function PlayerCard({ player }: { player: Player }) {
     <Link
       to="/player/$id"
       params={{ id: String(player.id) }}
-      className={`relative flex flex-col justify-between p-4 rounded-xl border backdrop-blur-md transition-all duration-200 hover:scale-[1.02] block ${cardBorder}`}
+      className={`relative flex flex-col justify-between p-4 rounded-xl border backdrop-blur-md transition-all duration-200 hover:scale-[1.02] block ${cardBackground} ${cardBorder} ${cardShadow}`}
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -110,7 +140,7 @@ export function PlayerCard({ player }: { player: Player }) {
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider flex-shrink-0 ${statusBadge}`}
           >
-            {player.status || 'Player'}
+            {displayStatus}
           </span>
         </div>
 
@@ -118,18 +148,17 @@ export function PlayerCard({ player }: { player: Player }) {
           <Avatar url={playerImage} name={player.name} className="w-24 h-24" />
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
-            {/* Fully responsive multi-line club text wrapping */}
             {legendClubs.length > 0 ? (
-              <p className={`text-[11px] font-semibold leading-tight break-words ${roleText}`}>
+              <p className="text-[11px] font-semibold leading-tight break-words text-amber-300">
                 Legend • {legendClubs.join(', ')}
               </p>
             ) : iconClubs.length > 0 ? (
-              <p className={`text-[11px] font-semibold leading-tight break-words ${roleText}`}>
+              <p className="text-[11px] font-semibold leading-tight break-words text-slate-200">
                 Icon • {iconClubs.join(', ')}
               </p>
             ) : (
               <p className={`text-[11px] font-semibold leading-tight break-words ${roleText}`}>
-                {player.status || 'Squad Member'}
+                {displayStatus}
               </p>
             )}
 

@@ -1,29 +1,28 @@
 import React from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../lib/fm';
+import { supabase } from '../lib/supabase'; // Adjust path if needed
 
 export const Route = createFileRoute('/player/$id')({
+  loader: async ({ params }) => {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('id', params.id)
+      .single();
+
+    if (error) throw error;
+    return { player: data };
+  },
   component: PlayerProfilePage,
 });
 
 function PlayerProfilePage() {
-  const { id } = Route.useParams();
+  const { player } = Route.useLoaderData();
 
-  // Mock player structure - replace or integrate with your loader / state
-  const player = {
-    id,
-    name: 'Player Name',
-    nationality: 'England',
-    nationality_flag_url: null,
-    image_url: null,
-    role: 'Forward',
-    biography: '',
-    apps: 0,
-    goals: 0,
-    assists: null as number | null,
-    trophies: 0,
-    awards: 0,
-  };
+  if (!player) {
+    return <div className="p-6 text-center text-slate-400">Player not found.</div>;
+  }
 
   const gPlusA = getGoalContributions(player);
   const gpg = getPerGameMetric(player.goals, player.apps);
@@ -41,7 +40,7 @@ function PlayerProfilePage() {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-slate-600">
-                {player.name.charAt(0)}
+                {player.name?.charAt(0)}
               </div>
             )}
           </div>

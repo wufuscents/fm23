@@ -313,9 +313,10 @@ function ComparePage() {
             </div>
             <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">Head-to-head player dossier</p>
           </div>
-          <nav className="flex items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
+          <nav className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
             <Link to="/" className="hover:text-white transition-colors">DIRECTORY</Link>
             <Link to="/hall-of-fame" className="hover:text-white transition-colors">HALL OF FAME</Link>
+            <Link to="/leaderboards" className="hover:text-white transition-colors">RECORDS</Link>
             <Link to="/compare" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">COMPARE</Link>
           </nav>
         </div>

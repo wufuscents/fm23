@@ -191,7 +191,7 @@ function PlayerPicker({
   }
 
   return (
-    <div className={`relative ${open ? 'z-50' : 'z-0'}`}>
+    <div className={`relative ${open ? 'z-[9999]' : 'z-0'}`}>
       <label className="block mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Player {slot}</label>
 
       <button
@@ -223,7 +223,7 @@ function PlayerPicker({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl shadow-black/40">
+        <div className="absolute left-0 right-0 top-full z-[10000] mt-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl shadow-black/40">
           <div className="border-b border-slate-800 p-2.5">
             <div className="relative">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-600">⌕</span>
@@ -318,11 +318,12 @@ function ComparePage() {
           <nav className="flex items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
             <Link to="/" className="hover:text-white transition-colors">DIRECTORY</Link>
             <Link to="/hall-of-fame" className="hover:text-white transition-colors">HALL OF FAME</Link>
+            <Link to="/leaderboards" className="hover:text-white transition-colors">RECORDS</Link>
             <Link to="/compare" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">COMPARE</Link>
           </nav>
         </div>
 
-        <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+        <div className="relative z-[100] p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
           <div className="flex items-end justify-between gap-3 mb-4">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-400">Comparison Lab</p>

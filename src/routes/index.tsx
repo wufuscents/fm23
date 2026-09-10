@@ -365,8 +365,10 @@ function DirectoryPage() {
               const clubLogo = clubLogoMap[clubLegacyStats.name] || null
 
               return (
-                <div
-                  className="group relative overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
+                <Link
+                  to="/club/$club"
+                  params={{ club: clubLegacyStats.name }}
+                  className="group relative block overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white/20"
                   style={{
                     borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
                     boxShadow: `0 0 35px ${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}22`,
@@ -451,11 +453,9 @@ function DirectoryPage() {
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <Link to="/club/$club" params={{ club: clubLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
-                      OPEN CLUB DOSSIER →
-                    </Link>
+                    <span className="font-bold text-slate-400 transition-colors group-hover:text-white">OPEN CLUB DOSSIER →</span>
                   </div>
-                </div>
+                </Link>
               )
             })()}
 
@@ -468,8 +468,10 @@ function DirectoryPage() {
               const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
 
               return (
-                <div
-                  className="group relative overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
+                <Link
+                  to="/nation/$nation"
+                  params={{ nation: nationLegacyStats.name }}
+                  className="group relative block overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white/20"
                   style={{
                     borderColor: `${nationColor}99`,
                     boxShadow: `0 0 35px ${nationColor}22`,
@@ -529,11 +531,9 @@ function DirectoryPage() {
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <Link to="/nation/$nation" params={{ nation: nationLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
-                      OPEN NATION DOSSIER →
-                    </Link>
+                    <span className="font-bold text-slate-400 transition-colors group-hover:text-white">OPEN NATION DOSSIER →</span>
                   </div>
-                </div>
+                </Link>
               )
             })()}
           </div>

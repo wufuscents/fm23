@@ -253,8 +253,11 @@ function DirectoryPage() {
             <Link to="/" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">
               DIRECTORY
             </Link>
-            <Link to="/leaderboards" className="hover:text-white transition-colors">
+            <Link to="/hall-of-fame" className="hover:text-white transition-colors">
               HALL OF FAME
+            </Link>
+            <Link to="/leaderboards" className="hover:text-white transition-colors">
+              RECORDS
             </Link>
             <Link to="/compare" className="hover:text-white transition-colors">
               COMPARE

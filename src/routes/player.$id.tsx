@@ -266,7 +266,7 @@ function PlayerProfilePage() {
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-xs uppercase tracking-wider text-slate-400">
                     <span className="font-bold text-slate-200">{playerPos}</span>
                     <span className="text-slate-700">•</span>
-                    <span>{playerNation}</span>
+                    <Link to="/nation/$nation" params={{ nation: playerNation }} className="hover:text-white transition-colors">{playerNation}</Link>
                   </div>
                 </div>
 
@@ -282,7 +282,7 @@ function PlayerProfilePage() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-[9px] font-mono uppercase tracking-widest text-slate-600">Latest Club</div>
-                      <div className="mt-0.5 truncate text-sm font-bold text-white">{latestClubName}</div>
+                      <Link to="/club/$club" params={{ club: latestClubName }} className="mt-0.5 block truncate text-sm font-bold text-white hover:text-emerald-300 transition-colors">{latestClubName}</Link>
                     </div>
                   </div>
 
@@ -305,20 +305,24 @@ function PlayerProfilePage() {
                 {(isLegend && legendClubs.length > 0) || (isIcon && iconClubs.length > 0) ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {isLegend && legendClubs.map((clubName: string) => (
-                      <span
+                      <Link
                         key={clubName}
-                        className="rounded-lg border border-amber-400/45 bg-amber-400/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300"
+                        to="/club/$club"
+                        params={{ club: clubName }}
+                        className="rounded-lg border border-amber-400/45 bg-amber-400/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-400/20 transition-colors"
                       >
                         ★ LEGEND • {clubName}
-                      </span>
+                      </Link>
                     ))}
                     {isIcon && iconClubs.map((clubName: string) => (
-                      <span
+                      <Link
                         key={clubName}
-                        className="rounded-lg border border-slate-300/35 bg-slate-300/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200"
+                        to="/club/$club"
+                        params={{ club: clubName }}
+                        className="rounded-lg border border-slate-300/35 bg-slate-300/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200 hover:bg-slate-300/15 transition-colors"
                       >
                         ◆ ICON • {clubName}
-                      </span>
+                      </Link>
                     ))}
                   </div>
                 ) : null}

@@ -462,9 +462,12 @@ function DirectoryPage() {
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <Link to="/club/$club" params={{ club: clubLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
+                    <a
+                      href={`/club/${encodeURIComponent(clubLegacyStats.name)}`}
+                      className="font-bold text-slate-400 transition-colors hover:text-white"
+                    >
                       OPEN CLUB DOSSIER →
-                    </Link>
+                    </a>
                   </div>
                 </div>
               )
@@ -540,9 +543,12 @@ function DirectoryPage() {
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <Link to="/nation/$nation" params={{ nation: nationLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
+                    <a
+                      href={`/nation/${encodeURIComponent(nationLegacyStats.name)}`}
+                      className="font-bold text-slate-400 transition-colors hover:text-white"
+                    >
                       OPEN NATION DOSSIER →
-                    </Link>
+                    </a>
                   </div>
                 </div>
               )

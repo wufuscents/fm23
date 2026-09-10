@@ -1,32 +1,35 @@
 import React from 'react';
-import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../../lib/fm';
+import { createFileRoute } from '@tanstack/react-router';
+import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../lib/fm';
 
-export interface PlayerProfileProps {
-  player: {
-    id: string;
-    name: string;
-    nationality?: string | null;
-    nationality_flag_url?: string | null;
-    image_url?: string | null;
-    role?: string | null;
-    biography?: string | null;
-    apps?: number | null;
-    goals?: number | null;
-    assists?: number | null;
-    trophies?: number | null;
-    awards?: number | null;
-    international_apps?: number | null;
-    international_goals?: number | null;
+export const Route = createFileRoute('/player/$id')({
+  component: PlayerProfilePage,
+});
+
+function PlayerProfilePage() {
+  const { id } = Route.useParams();
+
+  // Mock player structure - replace or integrate with your loader / state
+  const player = {
+    id,
+    name: 'Player Name',
+    nationality: 'England',
+    nationality_flag_url: null,
+    image_url: null,
+    role: 'Forward',
+    biography: '',
+    apps: 0,
+    goals: 0,
+    assists: null as number | null,
+    trophies: 0,
+    awards: 0,
   };
-}
 
-export const PlayerProfileRoute: React.FC<PlayerProfileProps> = ({ player }) => {
   const gPlusA = getGoalContributions(player);
   const gpg = getPerGameMetric(player.goals, player.apps);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Hero Header */}
       <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 md:p-8 relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="h-32 w-32 rounded-2xl bg-slate-800 overflow-hidden border-2 border-slate-700 shrink-0">
@@ -58,7 +61,6 @@ export const PlayerProfileRoute: React.FC<PlayerProfileProps> = ({ player }) => 
           </div>
         </div>
 
-        {/* Profile Hero Summary Panel */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800">
           <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
             <div className="text-2xl font-bold text-white font-mono">{player.goals ?? 0}</div>
@@ -83,7 +85,6 @@ export const PlayerProfileRoute: React.FC<PlayerProfileProps> = ({ player }) => 
         </div>
       </div>
 
-      {/* Secondary Information */}
       {player.biography && (
         <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-6">
           <h2 className="text-lg font-bold text-white mb-2">Biography</h2>
@@ -92,6 +93,4 @@ export const PlayerProfileRoute: React.FC<PlayerProfileProps> = ({ player }) => 
       )}
     </div>
   );
-};
-
-export default PlayerProfileRoute;
+}

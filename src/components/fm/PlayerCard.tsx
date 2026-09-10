@@ -1,6 +1,17 @@
 import React from 'react';
 import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../../lib/fm';
 
+export interface FlagProps {
+  url?: string | null;
+  nationality?: string | null;
+  className?: string;
+}
+
+export const Flag: React.FC<FlagProps> = ({ url, nationality, className = 'h-3.5 w-5 object-cover rounded-sm' }) => {
+  if (!url) return null;
+  return <img src={url} alt={nationality || 'Flag'} className={className} />;
+};
+
 export interface PlayerCardProps {
   player: {
     id: string;
@@ -47,13 +58,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
             <h3 className="truncate font-semibold text-white group-hover:text-emerald-400 transition-colors">
               {player.name}
             </h3>
-            {player.nationality_flag_url && (
-              <img
-                src={player.nationality_flag_url}
-                alt={player.nationality || 'Flag'}
-                className="h-3.5 w-5 object-cover rounded-sm"
-              />
-            )}
+            <Flag url={player.nationality_flag_url} nationality={player.nationality} />
           </div>
           <p className="text-xs text-slate-400 truncate mt-0.5">{player.role || 'Unknown Role'}</p>
         </div>

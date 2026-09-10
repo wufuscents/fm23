@@ -16,20 +16,67 @@ export const Route = createFileRoute('/leaderboards')({
       data = fallback.data || []
     }
 
-    return { players: (data || []) as Player[] }
+    const { data: awardRows } = await supabase
+      .from('awards_and_trophies')
+      .select('player_id, name, amount')
+
+    const ballonDorCounts: Record<string, number> = {}
+
+    for (const award of awardRows || []) {
+      const awardName = String(award.name || '').toLowerCase().replace(/[’']/g, '')
+      if (awardName.includes('ballon dor')) {
+        const playerId = String(award.player_id || '')
+        if (playerId) {
+          ballonDorCounts[playerId] =
+            (ballonDorCounts[playerId] || 0) + Number(award.amount || 1)
+        }
+      }
+    }
+
+    return { players: (data || []) as Player[], ballonDorCounts }
   },
   component: LeaderboardsPage,
 })
 
+type Metric = 'trophies' | 'apps' | 'goals' | 'assists' | 'ga' | 'gpg' | 'ballon_dor' | 'awards'
+
+function getStatValue(player: Player, metric: Metric, ballonDorCounts: Record<string, number>): number {
+  const apps = Number((player as any).apps ?? 0)
+  const goals = Number((player as any).goals ?? 0)
+  const assists = Number((player as any).assists ?? 0)
+
+  if (metric === 'ga') return goals + assists
+  if (metric === 'gpg') return apps > 0 ? goals / apps : 0
+  if (metric === 'ballon_dor') return ballonDorCounts[String(player.id)] || 0
+
+  return Number((player as any)[metric] ?? 0)
+}
+
+function getMetricLabel(metric: Metric): string {
+  if (metric === 'apps') return 'Appearances'
+  if (metric === 'gpg') return 'G/GM'
+  if (metric === 'ga') return 'G+A'
+  if (metric === 'ballon_dor') return "Ballon d'Or"
+  return metric
+}
+
+function formatMetricValue(player: Player, metric: Metric, ballonDorCounts: Record<string, number>): string | number {
+  const value = getStatValue(player, metric, ballonDorCounts)
+  return metric === 'gpg' ? value.toFixed(2) : value
+}
+
 function LeaderboardsPage() {
-  const { players } = Route.useLoaderData()
-  const [metric, setMetric] = useState<'trophies' | 'apps' | 'goals' | 'awards'>('trophies')
+  const { players, ballonDorCounts } = Route.useLoaderData()
+  const [metric, setMetric] = useState<Metric>('trophies')
 
   const topPlayers = useMemo(() => {
     return [...players]
-      .sort((a, b) => (b[metric] || 0) - (a[metric] || 0))
+      .filter((player) => metric !== 'ballon_dor' || getStatValue(player, metric, ballonDorCounts) > 0)
+      .sort((a, b) => getStatValue(b, metric, ballonDorCounts) - getStatValue(a, metric, ballonDorCounts))
       .slice(0, 50)
-  }, [players, metric])
+  }, [players, metric, ballonDorCounts])
+
+  const metrics: Metric[] = ['trophies', 'apps', 'goals', 'assists', 'ga', 'gpg', 'ballon_dor', 'awards']
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
@@ -59,11 +106,11 @@ function LeaderboardsPage() {
             HALL OF FAME
           </h1>
           <p className="text-slate-400 text-xs font-mono mt-1">
-            All-time record holders across appearances, goals, trophies, and individual honors.
+            All-time record holders across appearances, goals, assists, goal contributions, trophies, and individual honors.
           </p>
 
           <div className="flex flex-wrap gap-2 mt-4 font-mono text-xs">
-            {(['trophies', 'apps', 'goals', 'awards'] as const).map((m) => (
+            {metrics.map((m) => (
               <button
                 key={m}
                 onClick={() => setMetric(m)}
@@ -73,7 +120,7 @@ function LeaderboardsPage() {
                     : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
-                {m}
+                {getMetricLabel(m)}
               </button>
             ))}
           </div>
@@ -89,14 +136,14 @@ function LeaderboardsPage() {
                   <th className="py-3 px-3">Player</th>
                   <th className="py-3 px-3">Nation</th>
                   <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 text-right uppercase">{metric}</th>
+                  <th className="py-3 px-3 text-right uppercase">{getMetricLabel(metric)}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {topPlayers.map((player, idx) => {
-                  const playerImage = player.image_url || player.photo_url || ''
-                  const playerNation = player.nationality || player.nation || 'Global'
-                  const playerFlag = player.nationality_flag_url || player.nation_flag || null
+                  const playerImage = (player as any).image_url || (player as any).photo_url || ''
+                  const playerNation = (player as any).nationality || (player as any).nation || 'Global'
+                  const playerFlag = (player as any).nationality_flag_url || (player as any).nation_flag || null
 
                   return (
                     <tr key={player.id} className="hover:bg-slate-800/40 transition-colors">
@@ -123,7 +170,7 @@ function LeaderboardsPage() {
                               {player.name}
                             </div>
                             <div className="text-[10px] text-slate-400">
-                              {player.role || player.positions_short || '-'}
+                              {(player as any).role || (player as any).positions_short || '-'}
                             </div>
                           </div>
                         </Link>
@@ -134,9 +181,9 @@ function LeaderboardsPage() {
                           <span>{playerNation}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-slate-400">{player.status || 'Squad Member'}</td>
+                      <td className="py-3 px-3 text-slate-400">{(player as any).status || 'Squad Member'}</td>
                       <td className="py-3 px-3 text-right font-extrabold text-amber-400 text-base">
-                        {player[metric] ?? 0}
+                        {formatMetricValue(player, metric, ballonDorCounts)}
                       </td>
                     </tr>
                   )

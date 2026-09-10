@@ -81,12 +81,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "FM Squad Archive" },
       {
         name: "description",
-        content: "A football manager style archive of legends, icons and head coaches.",
+        content: "A classified football scouting archive of legends, icons, records, clubs and nations.",
       },
       { property: "og:title", content: "FM Squad Archive" },
       {
         property: "og:description",
-        content: "A football manager style archive of legends, icons and head coaches.",
+        content: "A classified football scouting archive of legends, icons, records, clubs and nations.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -118,8 +118,10 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
-        {children}
+      <body className="min-h-screen bg-[#070d18] text-slate-100">
+        <div className="min-h-screen bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.009)_1px,transparent_1px)] bg-[size:48px_48px]">
+          {children}
+        </div>
         <Scripts />
       </body>
     </html>

@@ -174,6 +174,10 @@ function ClubPage() {
   )
 }
 
+function getCareerTrophies(player: Player): number {
+  return Number((player as any).trophies || 0)
+}
+
 function getClubMetric(player: Player, stats: Map<string, { apps: number; goals: number }>, field: 'apps' | 'goals') {
   return stats.get(String(player.id))?.[field] || 0
 }

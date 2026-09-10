@@ -340,70 +340,174 @@ function DirectoryPage() {
 
         {/* Legacy Summary Banner */}
         {(clubLegacyStats || nationLegacyStats) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {clubLegacyStats && (
-              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-1">
-                  CLUB LEGACY
-                </div>
-                <h3 className="font-heading text-2xl font-bold text-white uppercase mb-1">
-                  {clubLegacyStats.name}
-                </h3>
-                <p className="text-xs text-slate-400 mb-4 font-mono">
-                  {clubLegacyStats.count} profiles in this archive
-                </p>
-                <div className="grid grid-cols-4 gap-2 font-mono text-center">
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{clubLegacyStats.apps.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
-                  </div>
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{clubLegacyStats.goals.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Gls</div>
-                  </div>
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{clubLegacyStats.trophies.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Trph</div>
-                  </div>
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{clubLegacyStats.awards.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Awd</div>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-8">
+            {clubLegacyStats && (() => {
+              const values = [clubLegacyStats.apps, clubLegacyStats.goals, clubLegacyStats.trophies, clubLegacyStats.awards]
+              const maxValue = Math.max(...values, 1)
+              const initials = clubLegacyStats.name
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 3)
+                .map((part) => part[0])
+                .join('')
+                .toUpperCase()
 
-            {nationLegacyStats && (
-              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-1">
-                  NATIONAL TEAM LEGACY
+              return (
+                <div
+                  className="group relative overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
+                  style={{
+                    borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
+                    boxShadow: `0 0 35px ${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}22`,
+                    background: `radial-gradient(circle at 92% 8%, ${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}25 0%, transparent 38%), linear-gradient(135deg, rgba(15,23,42,.97), rgba(7,13,28,.98))`,
+                  }}
+                >
+                  <div
+                    className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl opacity-25 transition-all duration-500 group-hover:scale-125 group-hover:opacity-40"
+                    style={{ backgroundColor: TEAM_COLORS[clubLegacyStats.name] || '#3b82f6' }}
+                  />
+
+                  <div className="relative z-10 flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div
+                        className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border bg-slate-950/70 font-heading text-lg font-extrabold tracking-wider text-white shadow-inner"
+                        style={{
+                          borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
+                          color: TEAM_COLORS[clubLegacyStats.name] || '#93c5fd',
+                        }}
+                      >
+                        {initials || 'CL'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.22em] text-slate-400">
+                          <span
+                            className="h-1.5 w-6 rounded-full"
+                            style={{ backgroundColor: TEAM_COLORS[clubLegacyStats.name] || '#3b82f6' }}
+                          />
+                          CLUB LEGACY
+                        </div>
+                        <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-white">
+                          {clubLegacyStats.name}
+                        </h3>
+                        <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                          {clubLegacyStats.count} profiles • legacy in numbers
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="hidden sm:block rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
+                      <div className="text-[9px] uppercase tracking-widest text-slate-500">Archive</div>
+                      <div className="text-xs font-bold text-slate-200">CLUB DOSSIER</div>
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { label: 'APPS', value: clubLegacyStats.apps, accent: 'blue' },
+                      { label: 'GLS', value: clubLegacyStats.goals, accent: 'rose' },
+                      { label: 'TRPH', value: clubLegacyStats.trophies, accent: 'amber' },
+                      { label: 'AWD', value: clubLegacyStats.awards, accent: 'violet' },
+                    ].map(({ label, value, accent }) => {
+                      const accentClass =
+                        accent === 'amber' ? 'text-amber-300' : accent === 'rose' ? 'text-rose-300' : accent === 'violet' ? 'text-violet-300' : 'text-blue-300'
+                      const barColor =
+                        accent === 'amber' ? '#fbbf24' : accent === 'rose' ? '#fb7185' : accent === 'violet' ? '#a78bfa' : TEAM_COLORS[clubLegacyStats.name] || '#60a5fa'
+                      const width = Math.max(8, (Number(value) / maxValue) * 100)
+
+                      return (
+                        <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 p-3 font-mono text-center transition-all duration-300 group-hover:bg-slate-950/70">
+                          <div className={`text-xl font-extrabold ${accentClass}`}>{Number(value).toLocaleString()}</div>
+                          <div className="mt-0.5 text-[9px] uppercase tracking-widest text-slate-500">{label}</div>
+                          <div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-800">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${width}%`, backgroundColor: barColor }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                    <span>MORE THAN A CLUB</span>
+                    <span className="text-slate-600">FM SQUAD ARCHIVE</span>
+                  </div>
                 </div>
-                <h3 className="font-heading text-2xl font-bold text-white uppercase mb-1">
-                  {nationLegacyStats.name}
-                </h3>
-                <p className="text-xs text-slate-400 mb-4 font-mono">
-                  {nationLegacyStats.count} profiles in this archive
-                </p>
-                <div className="grid grid-cols-4 gap-2 font-mono text-center">
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{nationLegacyStats.apps.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+              )
+            })()}
+
+            {nationLegacyStats && (() => {
+              const values = [nationLegacyStats.apps, nationLegacyStats.goals, nationLegacyStats.trophies, nationLegacyStats.awards]
+              const maxValue = Math.max(...values, 1)
+              const nationPlayer = players.find((p) => (p.nationality || p.nation) === nationLegacyStats.name)
+              const flagUrl = nationPlayer?.nationality_flag_url || nationPlayer?.nation_flag || null
+
+              const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
+
+              return (
+                <div
+                  className="group relative overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
+                  style={{
+                    borderColor: `${nationColor}99`,
+                    boxShadow: `0 0 35px ${nationColor}22`,
+                    background: `radial-gradient(circle at 94% 8%, ${nationColor}35 0%, transparent 38%), linear-gradient(135deg, rgba(20,15,24,.97), rgba(10,14,28,.98))`,
+                  }}
+                >
+                  <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl opacity-25 transition-all duration-500 group-hover:scale-125 group-hover:opacity-40" style={{ backgroundColor: nationColor }} />
+
+                  <div className="relative z-10 flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border border-white/15 bg-slate-950/70 p-2 shadow-inner">
+                        {flagUrl ? (
+                          <img src={flagUrl} alt={nationLegacyStats.name} className="h-full w-full rounded-lg object-cover" />
+                        ) : (
+                          <span className="font-heading text-lg font-extrabold text-slate-300">NAT</span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.22em] text-slate-400">
+                          <span className="h-1.5 w-6 rounded-full bg-red-500" />
+                          NATIONAL TEAM LEGACY
+                        </div>
+                        <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-white">
+                          {nationLegacyStats.name}
+                        </h3>
+                        <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                          {nationLegacyStats.count} profiles • national archive
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="hidden sm:block rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
+                      <div className="text-[9px] uppercase tracking-widest text-slate-500">Archive</div>
+                      <div className="text-xs font-bold text-slate-200">NATION DOSSIER</div>
+                    </div>
                   </div>
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{nationLegacyStats.goals.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Gls</div>
+
+                  <div className="relative z-10 mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { label: 'APPS', value: nationLegacyStats.apps, barColor: '#ef4444' },
+                      { label: 'GLS', value: nationLegacyStats.goals, barColor: '#fb7185' },
+                      { label: 'TRPH', value: nationLegacyStats.trophies, barColor: '#fbbf24' },
+                      { label: 'AWD', value: nationLegacyStats.awards, barColor: '#f9a8d4' },
+                    ].map(({ label, value, barColor }) => {
+                      const width = Math.max(8, (Number(value) / maxValue) * 100)
+                      return (
+                        <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 p-3 font-mono text-center transition-all duration-300 group-hover:bg-slate-950/70">
+                          <div className="text-xl font-extrabold text-white">{Number(value).toLocaleString()}</div>
+                          <div className="mt-0.5 text-[9px] uppercase tracking-widest text-slate-500">{label}</div>
+                          <div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-800">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${width}%`, backgroundColor: barColor }} />
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{nationLegacyStats.trophies.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Trph</div>
-                  </div>
-                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                    <div className="text-base font-bold text-white">{nationLegacyStats.awards.toLocaleString()}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">Awd</div>
+
+                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                    <span>ONE NATION • ENDLESS PRIDE</span>
+                    <span className="text-slate-600">FM SQUAD ARCHIVE</span>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         )}
 

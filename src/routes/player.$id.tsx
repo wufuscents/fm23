@@ -253,7 +253,7 @@ function PlayerProfilePage() {
                   </span>
                   {playerFlag && (
                     <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/50 px-2.5 py-1 font-mono text-[10px] text-slate-300">
-                      <img src={playerFlag} alt={playerNation} className="h-5 w-7 rounded-sm object-contain" />
+                      <img src={playerFlag} alt={playerNation} className="h-5 w-7 max-h-5 max-w-7 shrink-0 rounded-sm object-contain" />
                       {playerNation}
                     </span>
                   )}
@@ -287,9 +287,9 @@ function PlayerProfilePage() {
                   </div>
 
                   <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3 flex items-center gap-3">
-                    <div className="h-11 w-11 flex-shrink-0 rounded-full border border-white/10 bg-slate-900/80 flex items-center justify-center p-1.5 overflow-hidden">
+                    <div className="h-11 w-11 flex-shrink-0 rounded-xl border border-white/10 bg-slate-900/80 flex items-center justify-center p-1.5 overflow-hidden">
                       {playerFlag ? (
-                        <img src={playerFlag} alt="" className="max-h-7 max-w-9 rounded-sm object-contain" />
+                        <img src={playerFlag} alt="" className="h-6 w-8 max-h-6 max-w-8 shrink-0 rounded-sm object-contain" />
                       ) : (
                         <span className="text-lg">🌐</span>
                       )}

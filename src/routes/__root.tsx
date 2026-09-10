@@ -126,6 +126,19 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const AUTH_STORAGE_KEY = "fm_auth_expires_at";
+const AUTH_DURATION_MS = 2 * 60 * 60 * 1000;
+
+function hasValidAuthSession() {
+  if (typeof window === "undefined") return false;
+
+  const expiresAt = Number(localStorage.getItem(AUTH_STORAGE_KEY) || 0);
+  if (expiresAt > Date.now()) return true;
+
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  return false;
+}
+
 function AuthGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -136,12 +149,20 @@ function AuthGate({ children }: { children: ReactNode }) {
       setAllowed(true);
       return;
     }
-    if (sessionStorage.getItem("fm_auth") === "true") {
-      setAllowed(true);
-    } else {
-      setAllowed(false);
-      router.navigate({ to: "/login", replace: true });
-    }
+
+    const checkSession = () => {
+      if (hasValidAuthSession()) {
+        setAllowed(true);
+      } else {
+        setAllowed(false);
+        router.navigate({ to: "/login", replace: true });
+      }
+    };
+
+    checkSession();
+
+    const interval = window.setInterval(checkSession, 60 * 1000);
+    return () => window.clearInterval(interval);
   }, [pathname, router]);
 
   if (!allowed) return <div className="min-h-screen bg-background" />;

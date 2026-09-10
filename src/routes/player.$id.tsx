@@ -5,62 +5,6 @@ import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { TEAM_COLORS } from '../lib/team-colors'
 
-function normalizeClubName(value: unknown): string {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/\b(football|futbol|club|fc|cf|afc|ac|sc|calcio|de|del|the)\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, '')
-}
-
-const CLUB_ALIASES: Record<string, string> = {
-  manchesterunited: 'manchesterunited',
-  manchesterutd: 'manchesterunited',
-  manunited: 'manchesterunited',
-  manutd: 'manchesterunited',
-  manu: 'manchesterunited',
-  manchesteru: 'manchesterunited',
-  manchesterunitedfc: 'manchesterunited',
-  manchesterunitedfootballclub: 'manchesterunited',
-  bayernmunich: 'bayernmunich',
-  bayernmunchen: 'bayernmunich',
-  fcbayern: 'bayernmunich',
-  psg: 'parissaintgermain',
-  parissaintgermain: 'parissaintgermain',
-  barcelona: 'barcelona',
-  barca: 'barcelona',
-  realmadrid: 'realmadrid',
-  realmadridcf: 'realmadrid',
-  milan: 'milan',
-  acmilan: 'milan',
-  inter: 'intermilan',
-  intermilan: 'intermilan',
-  internazionale: 'intermilan',
-}
-
-function canonicalClubKey(value: unknown): string {
-  const normalized = normalizeClubName(value)
-  return CLUB_ALIASES[normalized] || normalized
-}
-
-function sameClubName(a: unknown, b: unknown): boolean {
-  const left = canonicalClubKey(a)
-  const right = canonicalClubKey(b)
-  if (!left || !right) return false
-  if (left === right) return true
-  if (left.length >= 8 && right.length >= 8) {
-    return left.startsWith(right) || right.startsWith(left)
-  }
-  return false
-}
-
-function resolveCanonicalClub(clubName: unknown, clubDirectoryRows: any[]): string | null {
-  const match = clubDirectoryRows.find((row: any) => sameClubName(row.club_name, clubName))
-  return match?.club_name ? String(match.club_name).trim() : null
-}
-
 export const Route = createFileRoute('/player/$id')({
   loader: async ({ params }) => {
     const playerId = params.id
@@ -80,26 +24,17 @@ export const Route = createFileRoute('/player/$id')({
           .maybeSingle()
       }
 
-      const [playerCareerRes, coachCareerRes, awardsRes, clubViewRes] = await Promise.all([
+      const [playerCareerRes, coachCareerRes, awardsRes] = await Promise.all([
         supabase.from('player_career_history').select('*').eq('player_id', playerId),
         supabase.from('coach_career_history').select('*').eq('player_id', playerId),
         supabase.from('awards_and_trophies').select('*').eq('player_id', playerId),
-        supabase.from('club_leaderboard_view').select('club_name, club_logo_url'),
       ])
-
-      const clubDirectoryRows = (clubViewRes.data || [])
-        .map((row: any) => ({
-          club_name: String(row.club_name || '').trim(),
-          club_logo_url: String(row.club_logo_url || '').trim(),
-        }))
-        .filter((row: any) => row.club_name)
 
       return {
         player: (playerRes.data || null) as Player | null,
         playerCareer: playerCareerRes.data || [],
         coachCareer: coachCareerRes.data || [],
         awards: awardsRes.data || [],
-        clubDirectoryRows,
       }
     } catch (err) {
       console.error('Error loading player profile:', err)
@@ -121,7 +56,7 @@ function getStartYear(yearsStr?: string | null): number {
 }
 
 function PlayerProfilePage() {
-  const { player, playerCareer, coachCareer, awards, clubDirectoryRows } = Route.useLoaderData()
+  const { player, playerCareer, coachCareer, awards } = Route.useLoaderData()
   const [awardTab, setAwardTab] = useState<'team' | 'individual'>('team')
 
   if (!player) {
@@ -175,9 +110,6 @@ function PlayerProfilePage() {
 
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
-
-  const resolveLegacyClub = (clubName: string) =>
-    resolveCanonicalClub(clubName, clubDirectoryRows)
 
   const sortedPlayerCareer = useMemo(() => {
     return [...playerCareer].sort((a: any, b: any) => {
@@ -321,7 +253,7 @@ function PlayerProfilePage() {
                   </span>
                   {playerFlag && (
                     <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/50 px-2.5 py-1 font-mono text-[10px] text-slate-300">
-                      <img src={playerFlag} alt={playerNation} className="h-4 w-5 rounded-sm object-cover" />
+                      <img src={playerFlag} alt={playerNation} className="h-5 w-7 rounded-sm object-contain" />
                       {playerNation}
                     </span>
                   )}
@@ -334,13 +266,7 @@ function PlayerProfilePage() {
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-xs uppercase tracking-wider text-slate-400">
                     <span className="font-bold text-slate-200">{playerPos}</span>
                     <span className="text-slate-700">•</span>
-                    <Link
-                      to="/nation/$nation"
-                      params={{ nation: playerNation }}
-                      className="hover:text-white transition-colors"
-                    >
-                      {playerNation}
-                    </Link>
+                    <span>{playerNation}</span>
                   </div>
                 </div>
 
@@ -360,68 +286,40 @@ function PlayerProfilePage() {
                     </div>
                   </div>
 
-                  <Link
-                    to="/nation/$nation"
-                    params={{ nation: playerNation }}
-                    className="rounded-xl border border-white/10 bg-slate-950/55 p-3 flex items-center gap-3 transition-colors hover:border-white/25 hover:bg-slate-950/75"
-                  >
-                    <div className="h-11 w-11 flex-shrink-0 rounded-lg border border-white/10 bg-slate-900/80 flex items-center justify-center">
+                  <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3 flex items-center gap-3">
+                    <div className="h-11 w-11 flex-shrink-0 rounded-full border border-white/10 bg-slate-900/80 flex items-center justify-center p-1.5 overflow-hidden">
                       {playerFlag ? (
-                        <img src={playerFlag} alt="" className="h-7 w-9 rounded-sm object-cover" />
+                        <img src={playerFlag} alt="" className="max-h-7 max-w-9 rounded-sm object-contain" />
                       ) : (
                         <span className="text-lg">🌐</span>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[9px] font-mono uppercase tracking-widest text-slate-600">National Identity • OPEN DOSSIER</div>
+                      <div className="text-[9px] font-mono uppercase tracking-widest text-slate-600">National Identity</div>
                       <div className="mt-0.5 truncate text-sm font-bold text-white">{playerNation}</div>
                     </div>
-                  </Link>
+                  </div>
                 </div>
 
                 {/* Status / club recognition */}
                 {(isLegend && legendClubs.length > 0) || (isIcon && iconClubs.length > 0) ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {isLegend && legendClubs.map((clubName: string) => {
-                      const canonicalClub = resolveLegacyClub(clubName)
-                      return canonicalClub ? (
-                        <Link
-                          key={clubName}
-                          to="/club/$club"
-                          params={{ club: canonicalClub }}
-                          className="rounded-lg border border-amber-400/45 bg-amber-400/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300 transition-colors hover:bg-amber-400/20 hover:border-amber-300/70"
-                        >
-                          ★ LEGEND • {clubName}
-                        </Link>
-                      ) : (
-                        <span
-                          key={clubName}
-                          className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300/60"
-                        >
-                          ★ LEGEND • {clubName}
-                        </span>
-                      )
-                    })}
-                    {isIcon && iconClubs.map((clubName: string) => {
-                      const canonicalClub = resolveLegacyClub(clubName)
-                      return canonicalClub ? (
-                        <Link
-                          key={clubName}
-                          to="/club/$club"
-                          params={{ club: canonicalClub }}
-                          className="rounded-lg border border-slate-300/35 bg-slate-300/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200 transition-colors hover:bg-slate-300/20 hover:border-slate-200/70"
-                        >
-                          ◆ ICON • {clubName}
-                        </Link>
-                      ) : (
-                        <span
-                          key={clubName}
-                          className="rounded-lg border border-slate-300/20 bg-slate-300/5 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-300/60"
-                        >
-                          ◆ ICON • {clubName}
-                        </span>
-                      )
-                    })}
+                    {isLegend && legendClubs.map((clubName: string) => (
+                      <span
+                        key={clubName}
+                        className="rounded-lg border border-amber-400/45 bg-amber-400/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300"
+                      >
+                        ★ LEGEND • {clubName}
+                      </span>
+                    ))}
+                    {isIcon && iconClubs.map((clubName: string) => (
+                      <span
+                        key={clubName}
+                        className="rounded-lg border border-slate-300/35 bg-slate-300/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200"
+                      >
+                        ◆ ICON • {clubName}
+                      </span>
+                    ))}
                   </div>
                 ) : null}
 

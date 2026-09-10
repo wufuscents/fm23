@@ -6,7 +6,7 @@ export interface PlayerStats {
 }
 
 /**
- * Storage URL helper used by leaderboards and image loaders
+ * Storage URL helper used across app
  */
 export function storageUrl(path: string | null | undefined): string {
   if (!path) return '';

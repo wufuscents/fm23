@@ -234,7 +234,7 @@ function DirectoryPage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-100 transition-all duration-700 relative"
+      className="min-h-screen bg-[#070d18] text-slate-100 transition-all duration-700 relative overflow-x-hidden"
       style={{
         backgroundImage: `
           radial-gradient(circle at 10% 20%, ${leftColor} 0%, transparent 45%),
@@ -242,14 +242,14 @@ function DirectoryPage() {
         `,
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
         {/* Navigation Header */}
-        <div className="flex items-center justify-between pb-6 mb-6 border-b border-slate-800">
+        <div className="flex flex-col gap-4 pb-5 mb-6 border-b border-slate-800/90 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-heading font-extrabold tracking-wider text-xl text-white">FM SQUAD ARCHIVE</span>
+            <span className="h-2 w-2 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.45)] animate-pulse" />
+            <span className="font-heading font-extrabold tracking-[0.12em] text-xl text-white">FM SQUAD ARCHIVE</span>
           </div>
-          <nav className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-slate-400">
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
             <Link to="/" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">
               DIRECTORY
             </Link>
@@ -266,9 +266,9 @@ function DirectoryPage() {
         </div>
 
         {/* Directory Card & Filters */}
-        <div className="mb-8 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-xl">
-          <div className="text-xs font-mono font-semibold tracking-widest text-emerald-400 uppercase mb-1">
-            Database Archive
+        <div className="mb-8 p-5 sm:p-6 bg-[#0b1424]/90 border border-slate-800/90 backdrop-blur-md shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] relative overflow-hidden">
+          <div className="text-[9px] font-mono font-bold tracking-[0.28em] text-emerald-400 uppercase mb-1">
+            SCOUTING DATABASE
           </div>
 
           <div className="flex items-center justify-between">
@@ -277,7 +277,7 @@ function DirectoryPage() {
               type="button"
               className="text-left group focus:outline-none flex items-center gap-3"
             >
-              <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-wide">
+              <h1 className="font-heading text-3xl sm:text-5xl font-extrabold text-white tracking-[0.04em]">
                 SQUAD DIRECTORY
               </h1>
               {genderMode === 'male' && (
@@ -293,7 +293,7 @@ function DirectoryPage() {
             </button>
           </div>
 
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-500 text-xs mt-2 font-mono">
             {players.length} profiles recorded across legends, icons, and squad members.
           </p>
 
@@ -303,13 +303,13 @@ function DirectoryPage() {
               placeholder="Search player or club..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
             />
 
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
             >
               <option value="all">All Statuses</option>
               <option value="legend">Legend</option>
@@ -319,7 +319,7 @@ function DirectoryPage() {
             <select
               value={club}
               onChange={(e) => setClub(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
             >
               <option value="all">All Clubs</option>
               {clubs.map((c) => (
@@ -332,7 +332,7 @@ function DirectoryPage() {
             <select
               value={nation}
               onChange={(e) => setNation(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
             >
               <option value="all">All Nations</option>
               {nations.map((n) => (
@@ -345,7 +345,7 @@ function DirectoryPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
             >
               <option value="trophies">Most Trophies Won</option>
               <option value="apps">Most Appearances</option>
@@ -365,10 +365,8 @@ function DirectoryPage() {
               const clubLogo = clubLogoMap[clubLegacyStats.name] || null
 
               return (
-                <Link
-                  to="/club/$club"
-                  params={{ club: clubLegacyStats.name }}
-                  className="group relative block overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white/20"
+                <div
+                  className="group relative overflow-hidden rounded-md border p-5 sm:p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/30"
                   style={{
                     borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
                     boxShadow: `0 0 35px ${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}22`,
@@ -383,7 +381,7 @@ function DirectoryPage() {
                   <div className="relative z-10 flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-4">
                       <div
-                        className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border bg-slate-950/70 p-2 shadow-inner"
+                        className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md border bg-slate-950/70 p-2 shadow-inner"
                         style={{
                           borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
                         }}
@@ -420,7 +418,7 @@ function DirectoryPage() {
                       </div>
                     </div>
 
-                    <div className="hidden sm:block rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
+                    <div className="hidden sm:block rounded-sm border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
                       <div className="text-[9px] uppercase tracking-widest text-slate-500">Archive</div>
                       <div className="text-xs font-bold text-slate-200">CLUB DOSSIER</div>
                     </div>
@@ -440,7 +438,7 @@ function DirectoryPage() {
                       const width = Math.max(8, (Number(value) / maxValue) * 100)
 
                       return (
-                        <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 p-3 font-mono text-center transition-all duration-300 group-hover:bg-slate-950/70">
+                        <div key={label} className="rounded-md border border-white/10 bg-slate-950/55 p-3 font-mono text-center transition-all duration-300 group-hover:bg-slate-950/70">
                           <div className={`text-xl font-extrabold ${accentClass}`}>{Number(value).toLocaleString()}</div>
                           <div className="mt-0.5 text-[9px] uppercase tracking-widest text-slate-500">{label}</div>
                           <div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-800">
@@ -451,11 +449,13 @@ function DirectoryPage() {
                     })}
                   </div>
 
-                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <span className="font-bold text-slate-400 transition-colors group-hover:text-white">OPEN CLUB DOSSIER →</span>
+                    <Link to="/club/$club" params={{ club: clubLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
+                      OPEN CLUB DOSSIER →
+                    </Link>
                   </div>
-                </Link>
+                </div>
               )
             })()}
 
@@ -468,10 +468,8 @@ function DirectoryPage() {
               const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
 
               return (
-                <Link
-                  to="/nation/$nation"
-                  params={{ nation: nationLegacyStats.name }}
-                  className="group relative block overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white/20"
+                <div
+                  className="group relative overflow-hidden rounded-md border p-5 sm:p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/30"
                   style={{
                     borderColor: `${nationColor}99`,
                     boxShadow: `0 0 35px ${nationColor}22`,
@@ -482,7 +480,7 @@ function DirectoryPage() {
 
                   <div className="relative z-10 flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border border-white/15 bg-slate-950/70 p-2 shadow-inner">
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md border border-white/15 bg-slate-950/70 p-2 shadow-inner">
                         {flagUrl ? (
                           <img src={flagUrl} alt={nationLegacyStats.name} className="max-h-full max-w-full rounded-md object-contain" />
                         ) : (
@@ -503,7 +501,7 @@ function DirectoryPage() {
                       </div>
                     </div>
 
-                    <div className="hidden sm:block rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
+                    <div className="hidden sm:block rounded-sm border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
                       <div className="text-[9px] uppercase tracking-widest text-slate-500">Archive</div>
                       <div className="text-xs font-bold text-slate-200">NATION DOSSIER</div>
                     </div>
@@ -518,7 +516,7 @@ function DirectoryPage() {
                     ].map(({ label, value, barColor }) => {
                       const width = Math.max(8, (Number(value) / maxValue) * 100)
                       return (
-                        <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 p-3 font-mono text-center transition-all duration-300 group-hover:bg-slate-950/70">
+                        <div key={label} className="rounded-md border border-white/10 bg-slate-950/55 p-3 font-mono text-center transition-all duration-300 group-hover:bg-slate-950/70">
                           <div className="text-xl font-extrabold text-white">{Number(value).toLocaleString()}</div>
                           <div className="mt-0.5 text-[9px] uppercase tracking-widest text-slate-500">{label}</div>
                           <div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-800">
@@ -529,11 +527,13 @@ function DirectoryPage() {
                     })}
                   </div>
 
-                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <span className="font-bold text-slate-400 transition-colors group-hover:text-white">OPEN NATION DOSSIER →</span>
+                    <Link to="/nation/$nation" params={{ nation: nationLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
+                      OPEN NATION DOSSIER →
+                    </Link>
                   </div>
-                </Link>
+                </div>
               )
             })()}
           </div>
@@ -559,7 +559,7 @@ function DirectoryPage() {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center rounded-2xl bg-slate-900/50 border border-slate-800/80">
+          <div className="p-12 text-center rounded-md bg-slate-900/50 border border-slate-800/80">
             <p className="text-slate-400 font-mono text-sm">No profiles found matching selected filters.</p>
           </div>
         )}
@@ -570,7 +570,7 @@ function DirectoryPage() {
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-40 hover:border-slate-600 transition-colors"
+              className="px-4 py-2 rounded-sm bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-40 hover:border-slate-600 transition-colors"
             >
               ← PREVIOUS
             </button>
@@ -580,7 +580,7 @@ function DirectoryPage() {
             <button
               onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
               disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-40 hover:border-slate-600 transition-colors"
+              className="px-4 py-2 rounded-sm bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-40 hover:border-slate-600 transition-colors"
             >
               NEXT →
             </button>

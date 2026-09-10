@@ -53,11 +53,12 @@ export function PlayerCard({ player }: { player: Player }) {
   const legendClubs = player.legend_at_clubs || []
   const iconClubs = player.icon_at_clubs || []
 
-  // Treat the club lists as the source of truth as well as the status field.
-  // This prevents cards with status="NONE" but a populated legend/icon list
-  // from showing the wrong status badge.
-  const isLegend = statusLower.includes('legend') || legendClubs.length > 0
-  const isIcon = !isLegend && (statusLower.includes('icon') || iconClubs.length > 0)
+  // The explicit status field is the source of truth. The club arrays are
+  // only used to show the clubs belonging to that status. This prevents a
+  // player marked as ICON or NONE from being incorrectly promoted to LEGEND
+  // just because legend_at_clubs contains data.
+  const isLegend = statusLower.includes('legend')
+  const isIcon = !isLegend && statusLower.includes('icon')
   const displayStatus = isLegend ? 'LEGEND' : isIcon ? 'ICON' : (player.status || 'PLAYER')
 
   const isFemale = genderLower === 'female' || genderLower === 'f'
@@ -148,11 +149,11 @@ export function PlayerCard({ player }: { player: Player }) {
           <Avatar url={playerImage} name={player.name} className="w-24 h-24" />
 
           <div className="flex flex-col justify-center min-w-0 flex-1">
-            {legendClubs.length > 0 ? (
+            {isLegend && legendClubs.length > 0 ? (
               <p className="text-[11px] font-semibold leading-tight break-words text-amber-300">
                 Legend • {legendClubs.join(', ')}
               </p>
-            ) : iconClubs.length > 0 ? (
+            ) : isIcon && iconClubs.length > 0 ? (
               <p className="text-[11px] font-semibold leading-tight break-words text-slate-200">
                 Icon • {iconClubs.join(', ')}
               </p>

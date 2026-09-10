@@ -8,7 +8,19 @@ import { TEAM_COLORS } from '../lib/team-colors'
 function normalizeNation(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLowerCase() }
 function sameNation(a: unknown, b: unknown): boolean { const left = normalizeNation(a); const right = normalizeNation(b); return Boolean(left && right && left === right) }
 function normalizeClubName(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/\b(football|futbol|club|fc|cf|afc|ac|sc|calcio|de|del|the)\b/g, ' ').replace(/[^a-z0-9]+/g, '') }
-function sameClubName(a: unknown, b: unknown): boolean { const left = normalizeClubName(a); const right = normalizeClubName(b); return Boolean(left && right && left === right) }
+
+const CLUB_ALIASES: Record<string, string> = {
+  manchesterunited: 'manchesterunited', manchesterutd: 'manchesterunited', manunited: 'manchesterunited', manutd: 'manchesterunited', manu: 'manchesterunited', manchesteru: 'manchesterunited',
+  bayernmunich: 'bayernmunich', bayernmunchen: 'bayernmunich', fcbayern: 'bayernmunich',
+  psg: 'parissaintgermain', parissaintgermain: 'parissaintgermain',
+  barcelona: 'barcelona', barca: 'barcelona',
+  realmadrid: 'realmadrid', realmadridcf: 'realmadrid',
+  milan: 'milan', acmilan: 'milan',
+  intermilan: 'intermilan', internazionale: 'intermilan', inter: 'intermilan',
+}
+
+function canonicalClubKey(value: unknown): string { const normalized = normalizeClubName(value); return CLUB_ALIASES[normalized] || normalized }
+function sameClubName(a: unknown, b: unknown): boolean { const left = canonicalClubKey(a); const right = canonicalClubKey(b); return Boolean(left && right && left === right) }
 
 export const Route = createFileRoute('/nation/$nation')({
   loader: async ({ params }) => {
@@ -45,9 +57,23 @@ function NationPage() {
   const flag = String((representative as any)?.nationality_flag_url || (representative as any)?.nation_flag || '')
   const totals = useMemo(() => players.reduce((a, p) => ({ apps: a.apps + getApps(p), goals: a.goals + getGoals(p), assists: a.assists + Number((p as any).assists || 0), trophies: a.trophies + Number((p as any).trophies || 0) }), { apps: 0, goals: 0, assists: 0, trophies: 0 }), [players, careerTotals])
   const clubs = useMemo(() => {
-    const map = new Map<string, { count: number; apps: number; goals: number; logo: string }>()
-    nationCareers.forEach((row: any) => { const raw = String(row.team_name || '').trim(); if (!raw) return; const existingKey = [...map.keys()].find((name) => sameClubName(name, raw)); const key = existingKey || raw; const current = map.get(key) || { count: 0, apps: 0, goals: 0, logo: '' }; current.count++; current.apps += Number(row.apps || 0); current.goals += Number(row.goals || 0); current.logo ||= String(row.club_logo_url || ''); map.set(key, current) })
-    return [...map.entries()].sort((a, b) => b[1].apps - a[1].apps || b[1].count - a[1].count || a[0].localeCompare(b[0]))
+    const map = new Map<string, { name: string; count: number; apps: number; goals: number; logo: string }>()
+    nationCareers.forEach((row: any) => {
+      const raw = String(row.team_name || '').trim()
+      if (!raw) return
+      const key = canonicalClubKey(raw)
+      if (!key) return
+      const current = map.get(key) || { name: raw, count: 0, apps: 0, goals: 0, logo: '' }
+      current.count += 1
+      current.apps += Number(row.apps || 0)
+      current.goals += Number(row.goals || 0)
+      current.logo ||= String(row.club_logo_url || '')
+      // Prefer the most recognizable/full club name when aliases were merged.
+      if (raw.length > current.name.length) current.name = raw
+      map.set(key, current)
+    })
+    return [...map.values()]
+      .sort((a, b) => b.apps - a.apps || b.count - a.count || a.name.localeCompare(b.name))
   }, [nationCareers])
 
   return <div className="min-h-screen bg-[#070d18] p-4 text-slate-100 sm:p-8"><div className="mx-auto max-w-7xl space-y-6">
@@ -55,7 +81,7 @@ function NationPage() {
     <section className="border border-slate-800 bg-[#0a1220] p-5 sm:p-6"><SectionHeader eyebrow="NATIONAL RECORD / 01" title="Archive Totals" count={`${totals.trophies.toLocaleString()} connected trophies`} /><div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4"><Metric label="APPS" value={totals.apps} /><Metric label="GOALS" value={totals.goals} /><Metric label="ASSISTS" value={totals.assists} /><Metric label="TROPHIES" value={totals.trophies} /></div></section>
     <section className="grid gap-6 lg:grid-cols-2"><LegacySection title="National Legends" eyebrow="LEGACY INDEX / 01" color="#fbbf24" players={legends} /><LegacySection title="National Icons" eyebrow="LEGACY INDEX / 02" color="#cbd5e1" players={icons} /></section>
     <section className="grid gap-6 lg:grid-cols-3"><Ranking title="Most Appearances" eyebrow="RECORD INDEX / 01" players={rankedApps} getValue={getApps} /><Ranking title="Top Scorers" eyebrow="RECORD INDEX / 02" players={rankedGoals} getValue={getGoals} /><Ranking title="Most Decorated" eyebrow="RECORD INDEX / 03" players={rankedTrophies} getValue={(p) => Number((p as any).trophies || 0)} /></section>
-    <section className="border border-slate-800 bg-[#0a1220] p-5 sm:p-6"><SectionHeader eyebrow="CONNECTED DATABASE / CLUBS" title="Represented Clubs" count={`${clubs.length} clubs`} />{clubs.length ? <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">{clubs.map(([club, info]) => <Link key={club} to="/club/$club" params={{ club }} className="group flex items-center gap-3 border border-slate-800 bg-[#060c16] p-3 transition-all hover:-translate-y-0.5 hover:border-slate-600"><div className="flex h-10 w-12 items-center justify-center">{info.logo && <img src={storageUrl(info.logo)} alt="" className="max-h-8 max-w-10 object-contain" />}</div><div className="min-w-0 flex-1"><div className="truncate font-heading text-sm font-bold uppercase text-slate-200 group-hover:text-white">{club}</div><div className="mt-1 font-mono text-[8px] uppercase tracking-widest text-slate-600">{info.count} player spell{info.count === 1 ? '' : 's'} / {info.apps.toLocaleString()} apps</div></div><span className="font-mono text-[9px] text-slate-600">→</span></Link>)}</div> : <Empty />}</section>
+    <section className="border border-slate-800 bg-[#0a1220] p-5 sm:p-6"><SectionHeader eyebrow="CONNECTED DATABASE / CLUBS" title="Represented Clubs" count={`${clubs.length} clubs`} />{clubs.length ? <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">{clubs.map((entry) => <Link key={canonicalClubKey(entry.name)} to="/club/$club" params={{ club: entry.name }} className="group flex items-center gap-3 border border-slate-800 bg-[#060c16] p-3 transition-all hover:-translate-y-0.5 hover:border-slate-600"><div className="flex h-10 w-12 items-center justify-center">{entry.logo && <img src={storageUrl(entry.logo)} alt="" className="max-h-8 max-w-10 object-contain" />}</div><div className="min-w-0 flex-1"><div className="truncate font-heading text-sm font-bold uppercase text-slate-200 group-hover:text-white">{entry.name}</div><div className="mt-1 font-mono text-[8px] uppercase tracking-widest text-slate-600">{entry.count} player spell{entry.count === 1 ? '' : 's'} / {entry.apps.toLocaleString()} apps</div></div><span className="font-mono text-[9px] text-slate-600">→</span></Link>)}</div> : <Empty />}</section>
     <div className="border-t border-slate-900 pt-4 font-mono text-[9px] uppercase tracking-[0.2em] text-slate-700">FM SQUAD ARCHIVE // NATIONAL RECORD // SOURCE: PLAYER + CAREER HISTORY</div>
   </div></div>
 }

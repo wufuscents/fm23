@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
+import { TEAM_COLORS } from '../lib/team-colors'
 
 export const Route = createFileRoute('/player/$id')({
   loader: async ({ params }) => {
@@ -116,6 +117,12 @@ function PlayerProfilePage() {
     })
   }, [playerCareer])
 
+  const latestClub = sortedPlayerCareer[0] as any
+  const latestClubName = latestClub?.team_name || player.current_club || '—'
+  const latestClubLogo = latestClub?.club_logo_url || null
+  const nationColor = TEAM_COLORS[playerNation] || (isFemale ? '#ec4899' : isMale ? '#3b82f6' : '#64748b')
+  const statusAccent = isLegend ? '#fbbf24' : isIcon ? '#cbd5e1' : nationColor
+
   const totalCareerApps = useMemo(() => {
     return sortedPlayerCareer.reduce((sum: number, c: any) => sum + (c.apps || 0), 0)
   }, [sortedPlayerCareer])
@@ -164,108 +171,185 @@ function PlayerProfilePage() {
           ← BACK TO DIRECTORY
         </Link>
 
-        {/* 1. Header Profile Card */}
-        <div className={`p-6 sm:p-8 rounded-2xl ${cardBackground} backdrop-blur-xl border ${cardBorder}`}>
-          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-            <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl flex items-center justify-center p-2">
-              {playerImage ? (
-                <img
-                  src={storageUrl(playerImage)}
-                  alt={player.name}
-                  className="w-full h-full object-contain max-h-full"
-                />
-              ) : (
-                <span className="text-slate-500 font-mono text-xs">NO IMAGE</span>
-              )}
+        {/* 1. Player Database Dossier Header */}
+        <section
+          className="group relative overflow-hidden rounded-3xl border backdrop-blur-xl"
+          style={{
+            borderColor: `${statusAccent}80`,
+            boxShadow: `0 0 55px ${statusAccent}14`,
+            background: `radial-gradient(circle at 8% 15%, ${nationColor}28 0%, transparent 32%), radial-gradient(circle at 92% 0%, ${statusAccent}18 0%, transparent 30%), linear-gradient(135deg, rgba(15,23,42,.98), rgba(7,12,25,.99))`,
+          }}
+        >
+          <div
+            className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full blur-3xl opacity-20 transition-all duration-700 group-hover:scale-125 group-hover:opacity-30"
+            style={{ backgroundColor: nationColor }}
+          />
+          <div
+            className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full blur-3xl opacity-15 transition-all duration-700 group-hover:scale-125 group-hover:opacity-25"
+            style={{ backgroundColor: statusAccent }}
+          />
+
+          <div className="relative z-10 border-b border-white/10 px-5 py-3 sm:px-7 flex items-center justify-between gap-4 font-mono">
+            <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] text-slate-500">
+              <span className="h-1.5 w-8 rounded-full" style={{ backgroundColor: statusAccent }} />
+              PLAYER DATABASE DOSSIER
             </div>
+            <div className="hidden sm:block text-[9px] uppercase tracking-[0.2em] text-slate-600">
+              FM SQUAD ARCHIVE • VERIFIED PROFILE
+            </div>
+          </div>
 
-            <div className="flex-1 text-center md:text-left space-y-3">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                {playerFlag && (
-                  <img src={playerFlag} alt={playerNation} className="w-5 h-5 rounded-full object-cover shadow-sm" />
-                )}
-                <span className="text-xs font-mono uppercase text-slate-400">{playerNation}</span>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${
-                    isLegend
-                      ? 'bg-amber-400/20 text-amber-300 border-amber-400/70'
-                      : isIcon
-                      ? 'bg-slate-200/15 text-slate-100 border-slate-300/70'
-                      : isFemale
-                      ? 'bg-pink-500/15 text-pink-300 border-pink-400/50'
-                      : isMale
-                      ? 'bg-blue-500/15 text-blue-300 border-blue-400/50'
-                      : 'bg-slate-800/90 text-slate-300 border-slate-600/80'
-                  }`}
+          <div className="relative z-10 p-5 sm:p-7 lg:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-7 lg:gap-9 items-stretch">
+              {/* Portrait / identity plate */}
+              <div className="flex flex-col items-center lg:items-stretch gap-3">
+                <div
+                  className="relative w-48 h-56 sm:w-52 sm:h-60 lg:w-full lg:h-64 rounded-2xl overflow-hidden border bg-slate-950/75 shadow-2xl flex items-center justify-center p-3"
+                  style={{ borderColor: `${nationColor}66` }}
                 >
-                  {statusText}
-                </span>
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-20"
+                    style={{ background: `linear-gradient(135deg, ${nationColor}35, transparent 45%, ${statusAccent}22)` }}
+                  />
+                  {playerImage ? (
+                    <img
+                      src={storageUrl(playerImage)}
+                      alt={player.name}
+                      className="relative z-10 w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.025]"
+                    />
+                  ) : (
+                    <span className="relative z-10 text-slate-500 font-mono text-xs">NO IMAGE</span>
+                  )}
+                  <div className="absolute bottom-0 inset-x-0 h-12 bg-gradient-to-t from-slate-950/90 to-transparent" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 font-mono text-center">
+                  <div className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-2">
+                    <div className="text-[9px] uppercase tracking-widest text-slate-600">Gender</div>
+                    <div className="mt-0.5 text-xs font-bold uppercase" style={{ color: nationColor }}>
+                      {isFemale ? 'Female' : isMale ? 'Male' : '—'}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-2">
+                    <div className="text-[9px] uppercase tracking-widest text-slate-600">Archive</div>
+                    <div className="mt-0.5 text-xs font-bold text-white">ACTIVE</div>
+                  </div>
+                </div>
               </div>
 
-              <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
-                {player.name}
-              </h1>
-
-              <p className="text-xs sm:text-sm text-slate-300 font-mono">
-                {playerPos}
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-                {isLegend && legendClubs.map((clubName: string) => (
+              {/* Main player information */}
+              <div className="min-w-0 flex flex-col">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
-                    key={clubName}
-                    className="text-xs font-semibold px-2.5 py-1 rounded border border-amber-400/50 bg-amber-400/10 text-amber-300"
+                    className="inline-flex items-center gap-2 rounded-lg border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider"
+                    style={{
+                      color: statusAccent,
+                      borderColor: `${statusAccent}88`,
+                      backgroundColor: `${statusAccent}16`,
+                    }}
                   >
-                    Legend • {clubName}
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: statusAccent }} />
+                    {statusText}
                   </span>
-                ))}
-                {isIcon && iconClubs.map((clubName: string) => (
-                  <span
-                    key={clubName}
-                    className="text-xs font-semibold px-2.5 py-1 rounded border border-slate-300/50 bg-slate-300/10 text-slate-200"
-                  >
-                    Icon • {clubName}
-                  </span>
-                ))}
-              </div>
+                  {playerFlag && (
+                    <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/50 px-2.5 py-1 font-mono text-[10px] text-slate-300">
+                      <img src={playerFlag} alt={playerNation} className="h-4 w-5 rounded-sm object-cover" />
+                      {playerNation}
+                    </span>
+                  )}
+                </div>
 
-              {/* Header Stat Boxes: APPS, GOALS, ASSISTS, G+A, G/GM, TROPHIES, AWARDS */}
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-2xl">
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{displayApps}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Apps</div>
+                <div className="mt-4">
+                  <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold uppercase leading-none tracking-wide text-white">
+                    {player.name}
+                  </h1>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-xs uppercase tracking-wider text-slate-400">
+                    <span className="font-bold text-slate-200">{playerPos}</span>
+                    <span className="text-slate-700">•</span>
+                    <span>{playerNation}</span>
+                  </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{displayGoals}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Goals</div>
+
+                {/* Club identity strip */}
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3 flex items-center gap-3">
+                    <div className="h-11 w-11 flex-shrink-0 rounded-lg border border-white/10 bg-slate-900/80 flex items-center justify-center p-2">
+                      {latestClubLogo ? (
+                        <img src={storageUrl(latestClubLogo)} alt="" className="h-full w-full object-contain" />
+                      ) : (
+                        <span className="font-heading text-[10px] font-bold text-slate-500">CLUB</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-mono uppercase tracking-widest text-slate-600">Latest Club</div>
+                      <div className="mt-0.5 truncate text-sm font-bold text-white">{latestClubName}</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3 flex items-center gap-3">
+                    <div className="h-11 w-11 flex-shrink-0 rounded-lg border border-white/10 bg-slate-900/80 flex items-center justify-center">
+                      {playerFlag ? (
+                        <img src={playerFlag} alt="" className="h-7 w-9 rounded-sm object-cover" />
+                      ) : (
+                        <span className="text-lg">🌐</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-mono uppercase tracking-widest text-slate-600">National Identity</div>
+                      <div className="mt-0.5 truncate text-sm font-bold text-white">{playerNation}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{displayAssists}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Assists</div>
-                </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{goalContributions}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">G+A</div>
-                </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-white">{goalsPerGame.toFixed(2)}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">G/GM</div>
-                </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-amber-400">{totalTrophiesCount}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Trophies</div>
-                </div>
-                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-                  <div className="text-xl font-bold text-emerald-400">{totalAwardsCount}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Awards</div>
+
+                {/* Status / club recognition */}
+                {(isLegend && legendClubs.length > 0) || (isIcon && iconClubs.length > 0) ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {isLegend && legendClubs.map((clubName: string) => (
+                      <span
+                        key={clubName}
+                        className="rounded-lg border border-amber-400/45 bg-amber-400/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300"
+                      >
+                        ★ LEGEND • {clubName}
+                      </span>
+                    ))}
+                    {isIcon && iconClubs.map((clubName: string) => (
+                      <span
+                        key={clubName}
+                        className="rounded-lg border border-slate-300/35 bg-slate-300/10 px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200"
+                      >
+                        ◆ ICON • {clubName}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {/* Headline statistics */}
+                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2 font-mono text-center">
+                  {[
+                    { label: 'APPS', value: displayApps, color: nationColor },
+                    { label: 'GOALS', value: displayGoals, color: nationColor },
+                    { label: 'ASSISTS', value: displayAssists, color: nationColor },
+                    { label: 'G+A', value: goalContributions, color: '#a78bfa' },
+                    { label: 'G/GM', value: goalsPerGame.toFixed(2), color: '#60a5fa' },
+                    { label: 'TROPHIES', value: totalTrophiesCount, color: '#fbbf24' },
+                    { label: 'AWARDS', value: totalAwardsCount, color: '#34d399' },
+                  ].map(({ label, value, color }) => (
+                    <div
+                      key={String(label)}
+                      className="group/stat rounded-xl border border-white/10 bg-slate-950/60 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-950/80"
+                    >
+                      <div className="text-lg sm:text-xl font-extrabold text-white" style={{ textShadow: `0 0 14px ${color}35` }}>
+                        {typeof value === 'number' ? value.toLocaleString() : value}
+                      </div>
+                      <div className="mt-0.5 text-[8px] uppercase tracking-widest text-slate-600">{label}</div>
+                      <div className="mx-auto mt-2 h-0.5 w-8 rounded-full transition-all duration-300 group-hover/stat:w-12" style={{ backgroundColor: color }} />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* 2. Milestones Grid Section */}
         <div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createFileRoute } from '@tanstack/react-router';
 import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../lib/fm';
 
 export interface ComparePlayer {
@@ -10,10 +11,6 @@ export interface ComparePlayer {
   assists?: number | null;
   trophies?: number | null;
   awards?: number | null;
-}
-
-interface CompareProps {
-  players: ComparePlayer[];
 }
 
 interface ComparisonRowProps {
@@ -39,7 +36,6 @@ const ComparisonRow: React.FC<ComparisonRowProps> = ({
   const display1 = isPerGame ? getPerGameMetric(val1, apps1) : formatIntegerMetric(val1);
   const display2 = isPerGame ? getPerGameMetric(val2, apps2) : formatIntegerMetric(val2);
 
-  // Both players must have valid (non-null) data to compare and highlight
   const p1Wins = num1 !== null && num2 !== null && num1 > num2;
   const p2Wins = num1 !== null && num2 !== null && num2 > num1;
 
@@ -56,7 +52,12 @@ const ComparisonRow: React.FC<ComparisonRowProps> = ({
   );
 };
 
-export const CompareRoute: React.FC<CompareProps> = ({ players = [] }) => {
+export const Route = createFileRoute('/compare')({
+  component: ComparePage,
+});
+
+function ComparePage() {
+  const [players] = useState<ComparePlayer[]>([]);
   const [selectedP1, setSelectedP1] = useState<string>(players[0]?.id || '');
   const [selectedP2, setSelectedP2] = useState<string>(players[1]?.id || '');
 
@@ -70,7 +71,6 @@ export const CompareRoute: React.FC<CompareProps> = ({ players = [] }) => {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 space-y-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-white text-center">Player Comparison</h1>
 
-      {/* Selectors */}
       <div className="grid grid-cols-2 gap-4">
         <select
           value={selectedP1}
@@ -97,7 +97,6 @@ export const CompareRoute: React.FC<CompareProps> = ({ players = [] }) => {
         </select>
       </div>
 
-      {/* Comparison Grid */}
       {p1 && p2 ? (
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 md:p-6">
           <div className="grid grid-cols-3 pb-4 mb-2 border-b border-slate-800 text-center items-center">
@@ -134,6 +133,4 @@ export const CompareRoute: React.FC<CompareProps> = ({ players = [] }) => {
       )}
     </div>
   );
-};
-
-export default CompareRoute;
+}

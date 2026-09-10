@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { PlayerCard } from '../components/fm/PlayerCard'
@@ -32,11 +32,63 @@ function DirectoryPage() {
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
-  const [genderMode, setGenderMode] = useState<'both' | 'male' | 'female'>('both')
+  const [genderMode, setGenderMode] = useState<'both' | 'male' | 'female'>('male')
   const [club, setClub] = useState('all')
   const [nation, setNation] = useState('all')
   const [sortBy, setSortBy] = useState('trophies')
   const [page, setPage] = useState(1)
+  const [filtersReady, setFiltersReady] = useState(false)
+  const skipInitialPageReset = useRef(true)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fm_directory_state')
+      if (saved) {
+        const state = JSON.parse(saved) as {
+          search?: string
+          status?: string
+          genderMode?: 'both' | 'male' | 'female'
+          club?: string
+          nation?: string
+          sortBy?: string
+          page?: number
+        }
+
+        if (typeof state.search === 'string') setSearch(state.search)
+        if (typeof state.status === 'string') setStatus(state.status)
+        if (state.genderMode === 'both' || state.genderMode === 'male' || state.genderMode === 'female') {
+          setGenderMode(state.genderMode)
+        }
+        if (typeof state.club === 'string') setClub(state.club)
+        if (typeof state.nation === 'string') setNation(state.nation)
+        if (
+          state.sortBy === 'trophies' ||
+          state.sortBy === 'apps' ||
+          state.sortBy === 'goals' ||
+          state.sortBy === 'awards' ||
+          state.sortBy === 'name'
+        ) {
+          setSortBy(state.sortBy)
+        }
+        if (typeof state.page === 'number' && Number.isFinite(state.page) && state.page >= 1) {
+          setPage(Math.floor(state.page))
+        }
+      }
+    } catch {
+      // Ignore malformed saved directory state and use the defaults.
+    } finally {
+      setFiltersReady(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!filtersReady) return
+
+    localStorage.setItem(
+      'fm_directory_state',
+      JSON.stringify({ search, status, genderMode, club, nation, sortBy, page }),
+    )
+  }, [filtersReady, search, status, genderMode, club, nation, sortBy, page])
 
   const toggleGenderMode = () => {
     setPage(1)
@@ -145,8 +197,13 @@ function DirectoryPage() {
   }, [players, nation])
 
   useEffect(() => {
+    if (!filtersReady) return
+    if (skipInitialPageReset.current) {
+      skipInitialPageReset.current = false
+      return
+    }
     setPage(1)
-  }, [search, status, genderMode, club, nation, sortBy])
+  }, [filtersReady, search, status, genderMode, club, nation, sortBy])
 
   const totalPages = Math.ceil(filteredPlayers.length / PAGE_SIZE) || 1
   const paginatedPlayers = useMemo(() => {

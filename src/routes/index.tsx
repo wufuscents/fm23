@@ -211,16 +211,19 @@ function DirectoryPage() {
     return filteredPlayers.slice(start, start + PAGE_SIZE)
   }, [filteredPlayers, page])
 
-  const leftColor = club !== 'all' && TEAM_COLORS[club] ? TEAM_COLORS[club] : 'transparent'
-  const rightColor = nation !== 'all' && TEAM_COLORS[nation] ? TEAM_COLORS[nation] : 'transparent'
+  // Keep each side independently valid. `transparent33` is not a valid CSS color,
+  // so using it as the fallback would invalidate the entire background-image when
+  // only one filter is selected.
+  const leftColor = club !== 'all' && TEAM_COLORS[club] ? `${TEAM_COLORS[club]}33` : 'transparent'
+  const rightColor = nation !== 'all' && TEAM_COLORS[nation] ? `${TEAM_COLORS[nation]}33` : 'transparent'
 
   return (
     <div
       className="min-h-screen bg-slate-950 text-slate-100 transition-all duration-700 relative"
       style={{
         backgroundImage: `
-          radial-gradient(circle at 10% 20%, ${leftColor}33 0%, transparent 45%),
-          radial-gradient(circle at 90% 20%, ${rightColor}33 0%, transparent 45%)
+          radial-gradient(circle at 10% 20%, ${leftColor} 0%, transparent 45%),
+          radial-gradient(circle at 90% 20%, ${rightColor} 0%, transparent 45%)
         `,
       }}
     >

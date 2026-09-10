@@ -61,11 +61,91 @@ function PlayerProfilePage() {
 
   if (!player) {
     return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4 p-4">
+        <div className="text-base text-white">Player profile could not be loaded.</div>
+        <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs hover:border-slate-600 transition-colors">
+          ← BACK TO DIRECTORY
+        </Link>
+      </div>
+    )
+  }
+
+  const statusLower = String(player.status || '').trim().toLowerCase()
+  const genderLower = String(player.gender || '').trim().toLowerCase()
+
+  const isLegend = statusLower.includes('legend')
+  const isIcon = !isLegend && statusLower.includes('icon')
+  const isFemale = genderLower === 'female' || genderLower === 'f'
+  const isMale = genderLower === 'male' || genderLower === 'm'
+
+  const statusText = isLegend ? 'LEGEND' : isIcon ? 'ICON' : (player.status || 'PLAYER')
+
+  const playerImage = (player as any).image_url || (player as any).photo_url || ''
+  const playerNation = (player as any).nationality || (player as any).nation || 'Global'
+  const playerFlag = (player as any).nationality_flag_url || (player as any).nation_flag || null
+  const playerPos = (player as any).role || (player as any).positions_short || (player as any).position || '-'
+
+  const legendClubs = (player as any).legend_at_clubs || []
+  const iconClubs = (player as any).icon_at_clubs || []
+
+  const sortedPlayerCareer = useMemo(() => {
+    return [...playerCareer].sort((a: any, b: any) => getStartYear(b.years) - getStartYear(a.years))
+  }, [playerCareer])
+
+  const mostPlayedClub = useMemo(() => {
+    const totals = new Map<string, { teamName: string; apps: number; goals: number; logo: string | null }>()
+    for (const career of playerCareer as any[]) {
+      const teamName = String(career.team_name || '').trim()
+      if (!teamName) continue
+      const existing = totals.get(teamName) || { teamName, apps: 0, goals: 0, logo: null }
+      existing.apps += Number(career.apps || 0)
+      existing.goals += Number(career.goals || 0)
+      if (!existing.logo && career.club_logo_url) existing.logo = String(career.club_logo_url)
+      totals.set(teamName, existing)
+    }
+    return Array.from(totals.values()).sort((a, b) =>
+      b.apps - a.apps || b.goals - a.goals || a.teamName.localeCompare(b.teamName)
+    )[0] || null
+  }, [playerCareer])
+
+  const nationColor = TEAM_COLORS[playerNation] || (isFemale ? '#ec4899' : isMale ? '#3b82f6' : '#64748b')
+  const statusAccent = isLegend ? '#fbbf24' : isIcon ? '#cbd5e1' : nationColor
+
+  const totalCareerApps = useMemo(() => sortedPlayerCareer.reduce((sum: number, c: any) => sum + Number(c.apps || 0), 0), [sortedPlayerCareer])
+  const totalCareerGoals = useMemo(() => sortedPlayerCareer.reduce((sum: number, c: any) => sum + Number(c.goals || 0), 0), [sortedPlayerCareer])
+
+  const teamTrophies = useMemo(() => awards.filter((a: any) => {
+    const cat = String(a.category || '').toLowerCase()
+    return cat.includes('team') || cat.includes('trophy') || !cat
+  }), [awards])
+
+  const individualAwards = useMemo(() => awards.filter((a: any) => {
+    const cat = String(a.category || '').toLowerCase()
+    return cat.includes('indiv') || cat.includes('award') || cat.includes('personal')
+  }), [awards])
+
+  const totalTrophiesCount = useMemo(() => {
+    const playerTrophies = Number((player as any).trophies || 0)
+    return playerTrophies > 0 ? playerTrophies : teamTrophies.reduce((sum: number, a: any) => sum + Number(a.amount || 1), 0)
+  }, [player, teamTrophies])
+
+  const totalAwardsCount = useMemo(() => {
+    const playerAwards = Number((player as any).awards || 0)
+    return playerAwards > 0 ? playerAwards : individualAwards.reduce((sum: number, a: any) => sum + Number(a.amount || 1), 0)
+  }, [player, individualAwards])
+
+  const displayApps = Number((player as any).apps ?? totalCareerApps ?? 0)
+  const displayGoals = Number((player as any).goals ?? totalCareerGoals ?? 0)
+  const displayAssists = Number((player as any).assists ?? 0)
+  const goalContributions = displayGoals + displayAssists
+  const goalsPerGame = displayApps > 0 ? displayGoals / displayApps : 0
+
+  return (
+    <div className="min-h-screen bg-[#070d18] text-slate-100 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         <Link
           to="/"
-          className="inline-flex items-center text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-slate-500 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-slate-500 hover:text-white transition-colors"
         >
           ← BACK TO DIRECTORY
         </Link>

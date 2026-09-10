@@ -62,10 +62,7 @@ function PlayerProfilePage() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4 p-4">
         <div className="text-base text-white">Player profile could not be loaded.</div>
-        <Link
-          to="/"
-          className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs hover:border-slate-600 transition-colors"
-        >
+        <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs hover:border-slate-600 transition-colors">
           ← BACK TO DIRECTORY
         </Link>
       </div>
@@ -73,10 +70,8 @@ function PlayerProfilePage() {
   }
 
   const statusLower = (player.status || '').toLowerCase()
-  const isLegend =
-    statusLower.includes('legend') || (player.legend_at_clubs && player.legend_at_clubs.length > 0)
-  const isIcon =
-    statusLower.includes('icon') || (player.icon_at_clubs && player.icon_at_clubs.length > 0)
+  const isLegend = statusLower.includes('legend') || (player.legend_at_clubs && player.legend_at_clubs.length > 0)
+  const isIcon = statusLower.includes('icon') || (player.icon_at_clubs && player.icon_at_clubs.length > 0)
 
   const cardBorder = isLegend
     ? 'border-amber-500/30 shadow-[0_0_30px_rgba(251,191,36,0.1)]'
@@ -161,11 +156,7 @@ function PlayerProfilePage() {
             <div className="flex-1 text-center md:text-left space-y-3">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 {playerFlag && (
-                  <img
-                    src={playerFlag}
-                    alt={playerNation}
-                    className="w-5 h-5 rounded-full object-cover shadow-sm"
-                  />
+                  <img src={playerFlag} alt={playerNation} className="w-5 h-5 rounded-full object-cover shadow-sm" />
                 )}
                 <span className="text-xs font-mono uppercase text-slate-400">{playerNation}</span>
               </div>
@@ -174,7 +165,9 @@ function PlayerProfilePage() {
                 {player.name}
               </h1>
 
-              <p className="text-xs sm:text-sm text-slate-300 font-mono">{playerPos}</p>
+              <p className="text-xs sm:text-sm text-slate-300 font-mono">
+                {playerPos}
+              </p>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
                 {legendClubs.map((clubName: string) => (
@@ -272,22 +265,14 @@ function PlayerProfilePage() {
                   <tr key={entry.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
                       {entry.club_logo_url && (
-                        <img
-                          src={storageUrl(entry.club_logo_url)}
-                          alt=""
-                          className="w-4 h-4 object-contain"
-                        />
+                        <img src={storageUrl(entry.club_logo_url)} alt="" className="w-4 h-4 object-contain" />
                       )}
                       {entry.team_name}
                     </td>
                     <td className="py-3 px-3 text-slate-400">{entry.country || '-'}</td>
                     <td className="py-3 px-3 text-slate-300">{entry.years || '-'}</td>
-                    <td className="py-3 px-3 text-right font-bold text-white">
-                      {entry.apps ?? '-'}
-                    </td>
-                    <td className="py-3 px-3 text-right font-bold text-emerald-400">
-                      {entry.goals ?? '-'}
-                    </td>
+                    <td className="py-3 px-3 text-right font-bold text-white">{entry.apps ?? '-'}</td>
+                    <td className="py-3 px-3 text-right font-bold text-emerald-400">{entry.goals ?? '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -326,19 +311,13 @@ function PlayerProfilePage() {
                     <tr key={entry.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
                         {entry.club_logo_url && (
-                          <img
-                            src={storageUrl(entry.club_logo_url)}
-                            alt=""
-                            className="w-4 h-4 object-contain"
-                          />
+                          <img src={storageUrl(entry.club_logo_url)} alt="" className="w-4 h-4 object-contain" />
                         )}
                         {entry.team_name}
                       </td>
                       <td className="py-3 px-3 text-slate-400">{entry.country || '-'}</td>
                       <td className="py-3 px-3 text-slate-300">{entry.years || '-'}</td>
-                      <td className="py-3 px-3 text-right font-bold text-white">
-                        {entry.matches_managed ?? '-'}
-                      </td>
+                      <td className="py-3 px-3 text-right font-bold text-white">{entry.matches_managed ?? '-'}</td>
                       <td className="py-3 px-3 text-right font-bold text-emerald-400">
                         {entry.win_percentage ? `${entry.win_percentage}%` : '-'}
                       </td>

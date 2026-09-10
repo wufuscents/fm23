@@ -16,14 +16,37 @@ export const Route = createFileRoute('/leaderboards')({
       data = fallback.data || []
     }
 
-    const { data: awardRows } = await supabase
-      .from('awards_and_trophies')
-      .select('player_id, name, amount')
+    // Supabase can cap a single query at 1,000 rows. Fetch the honours table
+    // in pages so Ballon d'Or records are not missed when the table is large.
+    const awardRows: Array<{ player_id: string | null; name: string | null; amount: number | null }> = []
+    const pageSize = 1000
+    let from = 0
+
+    while (true) {
+      const { data: page, error: awardsError } = await supabase
+        .from('awards_and_trophies')
+        .select('player_id, name, amount')
+        .range(from, from + pageSize - 1)
+
+      if (awardsError || !page || page.length === 0) break
+
+      awardRows.push(...page)
+
+      if (page.length < pageSize) break
+      from += pageSize
+    }
 
     const ballonDorCounts: Record<string, number> = {}
 
-    for (const award of awardRows || []) {
-      const awardName = String(award.name || '').toLowerCase().replace(/[’']/g, '')
+    for (const award of awardRows) {
+      const awardName = String(award.name || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[’'`]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+
       if (awardName.includes('ballon dor')) {
         const playerId = String(award.player_id || '')
         if (playerId) {

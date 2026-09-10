@@ -22,18 +22,18 @@ export const Route = createFileRoute('/')({
       data = fallback.data || []
     }
 
-    // Pull club logos from the career-history table so the selected club
-    // legacy card can use the real database logo instead of generated initials.
-    const { data: careerLogoRows } = await supabase
-      .from('player_career_history')
-      .select('team_name, club_logo_url')
+    // Club Legacy logos come directly from the dedicated club leaderboard view.
+    // This keeps the logo source independent from player career-history naming.
+    const { data: clubLogoRows } = await supabase
+      .from('club_leaderboard_view')
+      .select('club_name, club_logo_url')
 
     const clubLogoMap: Record<string, string> = {}
-    ;(careerLogoRows || []).forEach((row: any) => {
-      const teamName = String(row.team_name || '').trim()
+    ;(clubLogoRows || []).forEach((row: any) => {
+      const clubName = String(row.club_name || '').trim()
       const logo = String(row.club_logo_url || '').trim()
-      if (teamName && logo && !clubLogoMap[teamName]) {
-        clubLogoMap[teamName] = logo
+      if (clubName && logo) {
+        clubLogoMap[clubName] = logo
       }
     })
 
@@ -362,10 +362,7 @@ function DirectoryPage() {
             {clubLegacyStats && (() => {
               const values = [clubLegacyStats.apps, clubLegacyStats.goals, clubLegacyStats.trophies, clubLegacyStats.awards]
               const maxValue = Math.max(...values, 1)
-              const clubLogo =
-                clubLogoMap[clubLegacyStats.name] ||
-                Object.entries(clubLogoMap).find(([name]) => name.toLowerCase() === clubLegacyStats.name.toLowerCase())?.[1] ||
-                null
+              const clubLogo = clubLogoMap[clubLegacyStats.name] || null
 
               return (
                 <div

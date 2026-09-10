@@ -98,19 +98,28 @@ function HallOfFamePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 text-slate-100 sm:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <header className="flex flex-col gap-5 border-b border-slate-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="flex flex-col gap-4 border-b border-slate-800 pb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.35em] text-amber-400">FM SQUAD ARCHIVE</div>
-            <h1 className="mt-2 font-heading text-5xl font-black uppercase tracking-widest text-white sm:text-6xl">Hall of Fame</h1>
-            <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-slate-500">The museum floor of the archive — a dedicated home for Legends, Icons, and the players whose legacy earned a permanent place in history.</p>
+            <div className="flex items-center gap-3">
+              <span className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
+              <span className="font-heading text-xl font-extrabold tracking-wider text-white">FM SQUAD ARCHIVE</span>
+            </div>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">Legacy archive</p>
           </div>
-          <nav className="flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-widest">
-            <Link to="/" className="rounded-lg border border-slate-800 px-3 py-2 text-slate-400 hover:border-slate-700 hover:text-white">Directory</Link>
-            <Link to="/leaderboards" className="rounded-lg border border-slate-800 px-3 py-2 text-slate-400 hover:border-slate-700 hover:text-white">Records</Link>
-            <Link to="/compare" className="rounded-lg border border-slate-800 px-3 py-2 text-slate-400 hover:border-slate-700 hover:text-white">Compare</Link>
+          <nav className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
+            <Link to="/" className="transition-colors hover:text-white">DIRECTORY</Link>
+            <Link to="/hall-of-fame" className="border-b-2 border-emerald-400 pb-1 font-bold text-emerald-400">HALL OF FAME</Link>
+            <Link to="/leaderboards" className="transition-colors hover:text-white">RECORDS</Link>
+            <Link to="/compare" className="transition-colors hover:text-white">COMPARE</Link>
           </nav>
         </header>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 backdrop-blur-md sm:p-6">
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-400">Legacy Archive</div>
+          <h1 className="mt-1 font-heading text-3xl font-extrabold uppercase tracking-wide text-white sm:text-4xl">Hall of Fame</h1>
+          <p className="mt-2 max-w-3xl font-mono text-xs leading-relaxed text-slate-500">The museum floor of the archive — a dedicated home for Legends, Icons, and the players whose legacy earned a permanent place in history.</p>
+        </section>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile label="ARCHIVED PLAYERS" value={players.length} accent="#34d399" />

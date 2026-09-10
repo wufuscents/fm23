@@ -175,7 +175,8 @@ function LeaderboardsPage() {
           </div>
           <nav className="flex items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
             <Link to="/" className="hover:text-white transition-colors">DIRECTORY</Link>
-            <Link to="/leaderboards" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">HALL OF FAME</Link>
+            <Link to="/hall-of-fame" className="hover:text-white transition-colors">HALL OF FAME</Link>
+            <Link to="/leaderboards" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">RECORDS</Link>
             <Link to="/compare" className="hover:text-white transition-colors">COMPARE</Link>
           </nav>
         </div>

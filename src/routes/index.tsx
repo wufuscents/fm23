@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import PlayerCard from '../components/fm/PlayerCard';
 import { getGoalContributions } from '../lib/fm';
+import { supabase } from '../lib/supabase'; // Adjust import if your supabase client path differs
 
 export interface DirectoryPlayer {
   id: string;
@@ -18,18 +19,23 @@ export interface DirectoryPlayer {
 }
 
 export const Route = createFileRoute('/')({
+  loader: async () => {
+    const { data, error } = await supabase.from('players').select('*');
+    if (error) throw error;
+    return { players: (data || []) as DirectoryPlayer[] };
+  },
   component: IndexPage,
 });
 
 function IndexPage() {
+  const { players } = Route.useLoaderData();
   const navigate = useNavigate();
-  const [players, setPlayers] = useState<DirectoryPlayer[]>([]);
   const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<string>('goals');
+  const [sortKey, setSortKey] = useState<string>('g_plus_a_per_game');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const filteredAndSortedPlayers = useMemo(() => {
-    let list = players.filter((p) =>
+    let list = (players || []).filter((p) =>
       p.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -74,6 +80,7 @@ function IndexPage() {
       const valA = getValue(a, sortKey);
       const valB = getValue(b, sortKey);
 
+      // Place null/legacy values at the bottom
       if (valA === null && valB === null) return 0;
       if (valA === null) return 1;
       if (valB === null) return -1;

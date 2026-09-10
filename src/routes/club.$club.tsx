@@ -63,8 +63,15 @@ function ClubPage() {
   const { club, players, matchingCareerRows, logo } = Route.useLoaderData()
   const color = TEAM_COLORS[club] || '#3b82f6'
 
-  const legends = useMemo(() => players.filter((p) => String((p as any).status || '').toLowerCase().includes('legend')), [players])
-  const icons = useMemo(() => players.filter((p) => String((p as any).status || '').toLowerCase().includes('icon')), [players])
+  const legends = useMemo(() => players.filter((p) => {
+    const legendClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
+    return legendClubs.some((name: unknown) => sameClubName(name, club))
+  }), [players, club])
+
+  const icons = useMemo(() => players.filter((p) => {
+    const iconClubs = Array.isArray((p as any).icon_at_clubs) ? (p as any).icon_at_clubs : []
+    return iconClubs.some((name: unknown) => sameClubName(name, club))
+  }), [players, club])
 
   const clubStats = useMemo(() => {
     const byPlayer = new Map<string, { apps: number; goals: number }>()

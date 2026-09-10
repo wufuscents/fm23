@@ -127,6 +127,9 @@ function PlayerProfilePage() {
 
   const displayApps = player.apps ?? totalCareerApps ?? 0
   const displayGoals = player.goals ?? totalCareerGoals ?? 0
+  const displayAssists = (player as any).assists ?? 0
+  const goalContributions = displayGoals + displayAssists
+  const goalsPerGame = displayApps > 0 ? displayGoals / displayApps : 0
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
@@ -188,8 +191,8 @@ function PlayerProfilePage() {
                 ))}
               </div>
 
-              {/* Header Stat Boxes: APPS, GOALS, TROPHIES, AWARDS */}
-              <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-md">
+              {/* Header Stat Boxes: APPS, GOALS, ASSISTS, G+A, G/GM, TROPHIES, AWARDS */}
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 pt-4 border-t border-slate-800/80 text-center font-mono max-w-2xl">
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                   <div className="text-xl font-bold text-white">{displayApps}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Apps</div>
@@ -197,6 +200,18 @@ function PlayerProfilePage() {
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                   <div className="text-xl font-bold text-white">{displayGoals}</div>
                   <div className="text-[10px] text-slate-500 uppercase">Goals</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{displayAssists}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Assists</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{goalContributions}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">G+A</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                  <div className="text-xl font-bold text-white">{goalsPerGame.toFixed(2)}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">G/GM</div>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                   <div className="text-xl font-bold text-amber-400">{totalTrophiesCount}</div>

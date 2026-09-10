@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import PlayerCard from '../components/fm/PlayerCard';
-import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../lib/fm';
+import { getGoalContributions } from '../lib/fm';
 
 export interface DirectoryPlayer {
   id: string;
@@ -16,12 +17,13 @@ export interface DirectoryPlayer {
   awards?: number | null;
 }
 
-interface IndexProps {
-  players: DirectoryPlayer[];
-  onPlayerClick?: (id: string) => void;
-}
+export const Route = createFileRoute('/')({
+  component: IndexPage,
+});
 
-export const IndexRoute: React.FC<IndexProps> = ({ players = [], onPlayerClick }) => {
+function IndexPage() {
+  const navigate = useNavigate();
+  const [players, setPlayers] = useState<DirectoryPlayer[]>([]);
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string>('goals');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -40,7 +42,7 @@ export const IndexRoute: React.FC<IndexProps> = ({ players = [], onPlayerClick }
 
         switch (key) {
           case 'name':
-            return null; // Handle string separately
+            return null;
           case 'goals':
             return goals;
           case 'assists':
@@ -72,7 +74,6 @@ export const IndexRoute: React.FC<IndexProps> = ({ players = [], onPlayerClick }
       const valA = getValue(a, sortKey);
       const valB = getValue(b, sortKey);
 
-      // Null / legacy values are placed at the very bottom
       if (valA === null && valB === null) return 0;
       if (valA === null) return 1;
       if (valB === null) return -1;
@@ -127,12 +128,10 @@ export const IndexRoute: React.FC<IndexProps> = ({ players = [], onPlayerClick }
           <PlayerCard
             key={player.id}
             player={player}
-            onClick={() => onPlayerClick?.(player.id)}
+            onClick={() => navigate({ to: '/player/$id', params: { id: player.id } })}
           />
         ))}
       </div>
     </div>
   );
-};
-
-export default IndexRoute;
+}

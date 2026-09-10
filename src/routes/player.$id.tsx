@@ -69,15 +69,38 @@ function PlayerProfilePage() {
     )
   }
 
-  const statusLower = (player.status || '').toLowerCase()
-  const isLegend = statusLower.includes('legend') || (player.legend_at_clubs && player.legend_at_clubs.length > 0)
-  const isIcon = statusLower.includes('icon') || (player.icon_at_clubs && player.icon_at_clubs.length > 0)
+  const statusLower = String(player.status || '').trim().toLowerCase()
+  const genderLower = String(player.gender || '').trim().toLowerCase()
+
+  const isLegend = statusLower.includes('legend')
+  const isIcon = !isLegend && statusLower.includes('icon')
+  const isFemale = genderLower === 'female' || genderLower === 'f'
+  const isMale = genderLower === 'male' || genderLower === 'm'
+
+  // Status controls the metallic accent; gender controls the underlying
+  // colour atmosphere. Keep the two independent so combinations such as
+  // female Legend and male Icon are both represented correctly.
+  const cardBackground = isFemale
+    ? 'bg-gradient-to-br from-pink-950/70 via-slate-900/90 to-slate-950'
+    : isMale
+    ? 'bg-gradient-to-br from-blue-950/70 via-slate-900/90 to-slate-950'
+    : 'bg-slate-900/80'
 
   const cardBorder = isLegend
-    ? 'border-amber-500/30 shadow-[0_0_30px_rgba(251,191,36,0.1)]'
+    ? 'border-amber-400/90 shadow-[0_0_26px_rgba(251,191,36,0.16)]'
     : isIcon
-    ? 'border-slate-300/30 shadow-[0_0_30px_rgba(203,213,225,0.1)]'
+    ? 'border-slate-300/80 shadow-[0_0_22px_rgba(226,232,240,0.14)]'
+    : isFemale
+    ? 'border-pink-500/50 shadow-[0_0_24px_rgba(236,72,153,0.14)]'
+    : isMale
+    ? 'border-blue-500/50 shadow-[0_0_24px_rgba(59,130,246,0.14)]'
     : 'border-slate-800'
+
+  const statusText = isLegend
+    ? 'LEGEND'
+    : isIcon
+    ? 'ICON'
+    : (player.status || 'PLAYER')
 
   const playerImage = player.image_url || player.photo_url || ''
   const playerNation = player.nationality || player.nation || 'Global'
@@ -142,7 +165,7 @@ function PlayerProfilePage() {
         </Link>
 
         {/* 1. Header Profile Card */}
-        <div className={`p-6 sm:p-8 rounded-2xl bg-slate-900/80 backdrop-blur-xl border ${cardBorder}`}>
+        <div className={`p-6 sm:p-8 rounded-2xl ${cardBackground} backdrop-blur-xl border ${cardBorder}`}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 shadow-2xl flex items-center justify-center p-2">
               {playerImage ? (
@@ -164,6 +187,24 @@ function PlayerProfilePage() {
                 <span className="text-xs font-mono uppercase text-slate-400">{playerNation}</span>
               </div>
 
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${
+                    isLegend
+                      ? 'bg-amber-400/20 text-amber-300 border-amber-400/70'
+                      : isIcon
+                      ? 'bg-slate-200/15 text-slate-100 border-slate-300/70'
+                      : isFemale
+                      ? 'bg-pink-500/15 text-pink-300 border-pink-400/50'
+                      : isMale
+                      ? 'bg-blue-500/15 text-blue-300 border-blue-400/50'
+                      : 'bg-slate-800/90 text-slate-300 border-slate-600/80'
+                  }`}
+                >
+                  {statusText}
+                </span>
+              </div>
+
               <h1 className="font-heading text-4xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
                 {player.name}
               </h1>
@@ -173,7 +214,7 @@ function PlayerProfilePage() {
               </p>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-                {legendClubs.map((clubName: string) => (
+                {isLegend && legendClubs.map((clubName: string) => (
                   <span
                     key={clubName}
                     className="text-xs font-semibold px-2.5 py-1 rounded border border-amber-400/50 bg-amber-400/10 text-amber-300"
@@ -181,7 +222,7 @@ function PlayerProfilePage() {
                     Legend • {clubName}
                   </span>
                 ))}
-                {iconClubs.map((clubName: string) => (
+                {isIcon && iconClubs.map((clubName: string) => (
                   <span
                     key={clubName}
                     className="text-xs font-semibold px-2.5 py-1 rounded border border-slate-300/50 bg-slate-300/10 text-slate-200"

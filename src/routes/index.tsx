@@ -28,17 +28,6 @@ export const Route = createFileRoute('/')({
       .from('club_leaderboard_view')
       .select('club_name, club_logo_url')
 
-    // Club dossiers and the directory's club selector use this view as the
-    // single source of truth. A club appearing elsewhere in player data does
-    // not automatically become a dossier. Adding a row to this view makes
-    // it available automatically on the next load.
-    const clubDirectoryRows = (clubLogoRows || [])
-      .map((row: any) => ({
-        club_name: String(row.club_name || '').trim(),
-        club_logo_url: String(row.club_logo_url || '').trim(),
-      }))
-      .filter((row: any) => row.club_name)
-
     const clubLogoMap: Record<string, string> = {}
     ;(clubLogoRows || []).forEach((row: any) => {
       const clubName = String(row.club_name || '').trim()
@@ -48,13 +37,13 @@ export const Route = createFileRoute('/')({
       }
     })
 
-    return { players: (data || []) as Player[], clubLogoMap, clubDirectoryRows }
+    return { players: (data || []) as Player[], clubLogoMap }
   },
   component: DirectoryPage,
 })
 
 function DirectoryPage() {
-  const { players, clubLogoMap, clubDirectoryRows } = Route.useLoaderData()
+  const { players, clubLogoMap } = Route.useLoaderData()
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -123,13 +112,20 @@ function DirectoryPage() {
     else setGenderMode('both')
   }
 
-  const clubs = useMemo(
-    () => clubDirectoryRows
-      .map((row: any) => row.club_name)
-      .filter(Boolean)
-      .sort((a: string, b: string) => a.localeCompare(b)),
-    [clubDirectoryRows],
-  )
+  const clubs = useMemo(() => {
+    const clubSet = new Set<string>()
+    players.forEach((p) => {
+      if (Array.isArray(p.legend_at_clubs)) {
+        p.legend_at_clubs.forEach((c) => c && clubSet.add(c))
+      }
+      if (Array.isArray(p.icon_at_clubs)) {
+        p.icon_at_clubs.forEach((c) => c && clubSet.add(c))
+      }
+      if (p.club_name) clubSet.add(p.club_name)
+      if (p.current_club) clubSet.add(p.current_club)
+    })
+    return Array.from(clubSet).sort()
+  }, [players])
 
   const nations = useMemo(() => {
     const unique = new Set(players.map((p) => p.nationality || p.nation).filter(Boolean))
@@ -182,12 +178,6 @@ function DirectoryPage() {
   // Club Dynasty Stat Calculations (Total Apps & Goals)
   const clubLegacyStats = useMemo(() => {
     if (club === 'all') return null
-
-    // Never build a club summary from arbitrary player/career names. The
-    // selected club must exist in club_leaderboard_view.
-    const clubRow = clubDirectoryRows.find((row: any) => row.club_name === club)
-    if (!clubRow) return null
-
     const clubPlayers = players.filter((p) => {
       const pClubs = [
         ...(p.legend_at_clubs || []),
@@ -197,16 +187,15 @@ function DirectoryPage() {
       ]
       return pClubs.includes(club)
     })
-
     return {
-      name: clubRow.club_name,
+      name: club,
       count: clubPlayers.length,
       apps: clubPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
       goals: clubPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
       trophies: clubPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
       awards: clubPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
     }
-  }, [players, club, clubDirectoryRows])
+  }, [players, club])
 
   // Country Dynasty Stat Calculations (Total Apps & Goals)
   const nationLegacyStats = useMemo(() => {
@@ -462,10 +451,7 @@ function DirectoryPage() {
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <a
-                      href={`/club/${encodeURIComponent(clubLegacyStats.name)}`}
-                      className="font-bold text-slate-400 transition-colors hover:text-white"
-                    >
+                    <a href={`/club/${encodeURIComponent(clubLegacyStats.name)}`} className="font-bold text-slate-400 transition-colors hover:text-white">
                       OPEN CLUB DOSSIER →
                     </a>
                   </div>
@@ -543,10 +529,7 @@ function DirectoryPage() {
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <a
-                      href={`/nation/${encodeURIComponent(nationLegacyStats.name)}`}
-                      className="font-bold text-slate-400 transition-colors hover:text-white"
-                    >
+                    <a href={`/nation/${encodeURIComponent(nationLegacyStats.name)}`} className="font-bold text-slate-400 transition-colors hover:text-white">
                       OPEN NATION DOSSIER →
                     </a>
                   </div>

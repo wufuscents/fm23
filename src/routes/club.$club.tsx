@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
@@ -184,27 +184,36 @@ export const Route = createFileRoute('/club/$club')({
 
     const careers = await fetchAllCareerRows()
 
-    // The dedicated club_logos table is the primary logo source. The old view
-    // and career-history logos remain fallbacks so existing clubs keep working.
-    let logo = ''
-    const { data: clubLogoRow } = await supabase
-      .from('club_logos')
+    // CLUB DOSSIER SOURCE OF TRUTH:
+    // A club dossier exists ONLY when that club is present in
+    // club_leaderboard_view. We deliberately do not use club_logos,
+    // player career history, or legacy-club arrays to create dossiers.
+    //
+    // This is intentionally dynamic: every route load reads the current
+    // club_leaderboard_view, so adding a new row there automatically makes
+    // a new dossier available at /club/<club_name> without adding code.
+    const { data: clubViewRows, error: clubViewError } = await supabase
+      .from('club_leaderboard_view')
       .select('club_name, club_logo_url')
-      .limit(1000)
 
-    const directLogoMatch = (clubLogoRow || []).find((row: any) => sameClubName(row.club_name, decoded))
-    logo = String(directLogoMatch?.club_logo_url || '')
-
-    if (!logo) {
-      const { data: clubViewRows } = await supabase
-        .from('club_leaderboard_view')
-        .select('club_name, club_logo_url')
-
-      const viewMatch = (clubViewRows || []).find((row: any) => sameClubName(row.club_name, decoded))
-      logo = String(viewMatch?.club_logo_url || '')
+    if (clubViewError || !clubViewRows?.length) {
+      throw notFound()
     }
 
-    const matchingCareerRows = careers.filter((c: any) => sameClubName(c.team_name, decoded))
+    const viewMatch = (clubViewRows || []).find((row: any) => sameClubName(row.club_name, decoded))
+
+    if (!viewMatch?.club_name) {
+      // Prevent career-history-only / legacy-only names from becoming
+      // separate club dossiers (for example ZÉRO vs Dynasty Zéro).
+      throw notFound()
+    }
+
+    // Always use the canonical name stored in club_leaderboard_view for the
+    // dossier title, matching, colors, and generated links.
+    const canonicalClubName = String(viewMatch.club_name).trim()
+    let logo = String(viewMatch.club_logo_url || '')
+
+    const matchingCareerRows = careers.filter((c: any) => sameClubName(c.team_name, canonicalClubName))
     const matchingIds = new Set(matchingCareerRows.map((c: any) => String(c.player_id)))
 
     // A player is connected to a club through either their career history or
@@ -217,7 +226,7 @@ export const Route = createFileRoute('/club/$club')({
       const legacyClubs = playerLegacyClubs(p)
       return (
         matchingIds.has(String(p.id)) ||
-        legacyClubs.some((name: unknown) => sameClubName(name, decoded))
+        legacyClubs.some((name: unknown) => sameClubName(name, canonicalClubName))
       )
     })
 
@@ -226,7 +235,7 @@ export const Route = createFileRoute('/club/$club')({
     // player_directory_view. This is important because legacy status is a
     // separate database relationship from a player's career history.
     const legacyPlayers = allPlayers.filter((p: any) =>
-      playerLegacyClubs(p).some((name: unknown) => sameClubName(name, decoded)),
+      playerLegacyClubs(p).some((name: unknown) => sameClubName(name, canonicalClubName)),
     )
 
     if (!logo) {
@@ -234,7 +243,7 @@ export const Route = createFileRoute('/club/$club')({
       logo = String(careerLogo?.club_logo_url || '')
     }
 
-    return { club: decoded, players, legacyPlayers, matchingCareerRows, logo }
+    return { club: canonicalClubName, players, legacyPlayers, matchingCareerRows, logo }
   },
   component: ClubPage,
 })

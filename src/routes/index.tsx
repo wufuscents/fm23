@@ -1,144 +1,162 @@
-import React, { useState, useMemo } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import PlayerCard from '../components/fm/PlayerCard';
-import { getGoalContributions } from '../lib/fm';
-import { supabase } from '../lib/supabase'; // Adjust import if your supabase client path differs
+@@ -1,113 +1,114 @@
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useMemo, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { Player } from '../lib/types'
+import { PlayerCard } from '../components/fm/PlayerCard'
+import { TEAM_COLORS } from '../lib/team-colors'
 
-export interface DirectoryPlayer {
-  id: string;
-  name: string;
-  nationality?: string | null;
-  nationality_flag_url?: string | null;
-  image_url?: string | null;
-  role?: string | null;
-  apps?: number | null;
-  goals?: number | null;
-  assists?: number | null;
-  trophies?: number | null;
-  awards?: number | null;
-}
+const PAGE_SIZE = 12
 
 export const Route = createFileRoute('/')({
   loader: async () => {
-    const { data, error } = await supabase.from('players').select('*');
-    if (error) throw error;
-    return { players: (data || []) as DirectoryPlayer[] };
+    let { data, error } = await supabase
+      .from('player_directory_view')
+      .select('*')
+      .order('trophies', { ascending: false })
+
+    if (error || !data || data.length === 0) {
+      const fallback = await supabase
+        .from('players')
+        .select('*')
+        .order('trophies', { ascending: false })
+      data = fallback.data || []
+    }
+
+    return { players: (data || []) as Player[] }
   },
-  component: IndexPage,
-});
+  component: DirectoryPage,
+})
 
-function IndexPage() {
-  const { players } = Route.useLoaderData();
-  const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<string>('g_plus_a_per_game');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+function DirectoryPage() {
+  const { players } = Route.useLoaderData()
 
-  const filteredAndSortedPlayers = useMemo(() => {
-    let list = (players || []).filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
-    );
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [genderMode, setGenderMode] = useState<'both' | 'male' | 'female'>('both')
+  const [club, setClub] = useState('all')
+  const [nation, setNation] = useState('all')
+  const [sortBy, setSortBy] = useState('trophies')
+  const [page, setPage] = useState(1)
 
-    return list.sort((a, b) => {
-      const getValue = (player: DirectoryPlayer, key: string): number | null => {
-        const apps = player.apps ?? 0;
-        const goals = player.goals ?? 0;
-        const assists = player.assists ?? null;
-        const gPlusA = getGoalContributions(player);
+  const toggleGenderMode = () => {
+    setPage(1)
+    if (genderMode === 'both') setGenderMode('male')
+    else if (genderMode === 'male') setGenderMode('female')
+    else setGenderMode('both')
+  }
 
-        switch (key) {
-          case 'name':
-            return null;
-          case 'goals':
-            return goals;
-          case 'assists':
-            return assists;
-          case 'g_plus_a':
-            return gPlusA;
-          case 'gpg':
-            return apps > 0 ? goals / apps : null;
-          case 'apg':
-            return assists !== null && apps > 0 ? assists / apps : null;
-          case 'g_plus_a_per_game':
-            return gPlusA !== null && apps > 0 ? gPlusA / apps : null;
-          case 'apps':
-            return apps;
-          case 'trophies':
-            return player.trophies ?? 0;
-          case 'awards':
-            return player.awards ?? 0;
-          default:
-            return null;
-        }
-      };
-
-      if (sortKey === 'name') {
-        const comp = a.name.localeCompare(b.name);
-        return sortDirection === 'asc' ? comp : -comp;
+  const clubs = useMemo(() => {
+    const clubSet = new Set<string>()
+    players.forEach((p) => {
+      if (Array.isArray(p.legend_at_clubs)) {
+        p.legend_at_clubs.forEach((c) => c && clubSet.add(c))
       }
+      if (Array.isArray(p.icon_at_clubs)) {
+        p.icon_at_clubs.forEach((c) => c && clubSet.add(c))
+      }
+      if (p.club_name) clubSet.add(p.club_name)
+      if (p.current_club) clubSet.add(p.current_club)
+    })
+    return Array.from(clubSet).sort()
+  }, [players])
 
-      const valA = getValue(a, sortKey);
-      const valB = getValue(b, sortKey);
+  const nations = useMemo(() => {
+    const unique = new Set(players.map((p) => p.nationality || p.nation).filter(Boolean))
+    return Array.from(unique).sort()
+  }, [players])
 
-      // Place null/legacy values at the bottom
-      if (valA === null && valB === null) return 0;
-      if (valA === null) return 1;
-      if (valB === null) return -1;
+  const filteredPlayers = useMemo(() => {
+    return players
+      .filter((player) => {
+        const playerNation = player.nationality || player.nation || ''
+        const playerGender = (player.gender || '').toLowerCase()
 
-      return sortDirection === 'desc' ? valB - valA : valA - valB;
-    });
-  }, [players, search, sortKey, sortDirection]);
+        const playerClubs = [
+          ...(player.legend_at_clubs || []),
+          ...(player.icon_at_clubs || []),
+          player.club_name,
+          player.current_club,
+        ].filter(Boolean) as string[]
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-        <input
-          type="text"
-          placeholder="Search players..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full md:w-64 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
-        />
+        const matchesSearch =
+          !search ||
+          player.name.toLowerCase().includes(search.toLowerCase()) ||
+          playerNation.toLowerCase().includes(search.toLowerCase()) ||
+          playerClubs.some((c) => c.toLowerCase().includes(search.toLowerCase()))
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-            Sort By:
-          </label>
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
-            className="bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 w-full md:w-auto"
-          >
-            <option value="goals">Goals</option>
-            <option value="assists">Assists (AST)</option>
-            <option value="g_plus_a">Goal Contributions (G+A)</option>
-            <option value="gpg">Goals / Game (GPG)</option>
-            <option value="apg">Assists / Game (APG)</option>
-            <option value="g_plus_a_per_game">G+A / Game</option>
-            <option value="apps">Apps</option>
-            <option value="trophies">Trophies</option>
-            <option value="awards">Awards</option>
-            <option value="name">Name</option>
-          </select>
+        const matchesStatus =
+          status === 'all' ||
+          (player.status || '').toLowerCase().includes(status.toLowerCase())
 
-          <button
-            onClick={() => setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-            className="bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg text-xs font-mono hover:bg-slate-800"
-          >
-            {sortDirection.toUpperCase()}
-          </button>
-        </div>
-      </div>
+        const matchesGender =
+          genderMode === 'both' ||
+          (genderMode === 'female' && (playerGender === 'female' || playerGender === 'f')) ||
+          (genderMode === 'male' && (playerGender === 'male' || playerGender === 'm'))
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredAndSortedPlayers.map((player) => (
-          <PlayerCard
-            key={player.id}
-            player={player}
-            onClick={() => navigate({ to: '/player/$id', params: { id: player.id } })}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+        const matchesClub = club === 'all' || playerClubs.includes(club)
+        const matchesNation = nation === 'all' || playerNation === nation
+
+        return matchesSearch && matchesStatus && matchesGender && matchesClub && matchesNation
+      })
+      .sort((a, b) => {
+        if (sortBy === 'trophies') return (b.trophies || 0) - (a.trophies || 0)
+        if (sortBy === 'apps') return (b.international_apps || b.apps || 0) - (a.international_apps || a.apps || 0)
+        if (sortBy === 'goals') return (b.international_goals || b.goals || 0) - (a.international_goals || a.goals || 0)
+        if (sortBy === 'apps') return (b.apps || 0) - (a.apps || 0)
+        if (sortBy === 'goals') return (b.goals || 0) - (a.goals || 0)
+        if (sortBy === 'awards') return (b.awards || 0) - (a.awards || 0)
+        if (sortBy === 'name') return a.name.localeCompare(b.name)
+        return 0
+      })
+  }, [players, search, status, genderMode, club, nation, sortBy])
+
+  // Club Dynasty Stat Calculations (Total Apps & Goals)
+  const clubLegacyStats = useMemo(() => {
+    if (club === 'all') return null
+    const clubPlayers = players.filter((p) => {
+@@ -122,21 +123,22 @@
+    return {
+      name: club,
+      count: clubPlayers.length,
+      apps: clubPlayers.reduce((sum, p) => sum + (p.international_apps || p.apps || 0), 0),
+      goals: clubPlayers.reduce((sum, p) => sum + (p.international_goals || p.goals || 0), 0),
+      apps: clubPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
+      goals: clubPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
+      trophies: clubPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
+      awards: clubPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
+    }
+  }, [players, club])
+
+  // Country Dynasty Stat Calculations (Total Apps & Goals)
+  const nationLegacyStats = useMemo(() => {
+    if (nation === 'all') return null
+    const nationPlayers = players.filter((p) => (p.nationality || p.nation) === nation)
+    return {
+      name: nation,
+      count: nationPlayers.length,
+      apps: nationPlayers.reduce((sum, p) => sum + (p.international_apps || p.apps || 0), 0),
+      goals: nationPlayers.reduce((sum, p) => sum + (p.international_goals || p.goals || 0), 0),
+      apps: nationPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
+      goals: nationPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
+      trophies: nationPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
+      awards: nationPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
+    }
+@@ -293,7 +295,7 @@
+                <div className="grid grid-cols-4 gap-2 font-mono text-center">
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{clubLegacyStats.apps.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Caps</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{clubLegacyStats.goals.toLocaleString()}</div>
+@@ -325,7 +327,7 @@
+                <div className="grid grid-cols-4 gap-2 font-mono text-center">
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{nationLegacyStats.apps.toLocaleString()}</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Caps</div>
+                    <div className="text-[9px] text-slate-500 uppercase">Apps</div>
+                  </div>
+                  <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
+                    <div className="text-base font-bold text-white">{nationLegacyStats.goals.toLocaleString()}</div>

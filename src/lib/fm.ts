@@ -6,6 +6,15 @@ export interface PlayerStats {
 }
 
 /**
+ * Storage URL helper used by leaderboards and image loaders
+ */
+export function storageUrl(path: string | null | undefined): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `https://your-supabase-url.supabase.co/storage/v1/object/public/fm-assets/${path}`;
+}
+
+/**
  * Calculates Goal Contributions (G+A)
  * Returns null if assists is missing/legacy (null or undefined)
  */

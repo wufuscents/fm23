@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { formatIntegerMetric, getGoalContributions, getPerGameMetric } from '../lib/fm';
+import { supabase } from '../lib/supabase'; // Adjust path if needed
 
 export interface ComparePlayer {
   id: string;
@@ -53,11 +54,16 @@ const ComparisonRow: React.FC<ComparisonRowProps> = ({
 };
 
 export const Route = createFileRoute('/compare')({
+  loader: async () => {
+    const { data, error } = await supabase.from('players').select('*');
+    if (error) throw error;
+    return { players: (data || []) as ComparePlayer[] };
+  },
   component: ComparePage,
 });
 
 function ComparePage() {
-  const [players] = useState<ComparePlayer[]>([]);
+  const { players } = Route.useLoaderData();
   const [selectedP1, setSelectedP1] = useState<string>(players[0]?.id || '');
   const [selectedP2, setSelectedP2] = useState<string>(players[1]?.id || '');
 

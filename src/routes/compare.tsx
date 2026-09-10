@@ -147,10 +147,152 @@ function ComparePlayer({ player }: { player: Player }) {
   )
 }
 
+function PlayerPicker({
+  slot,
+  players,
+  value,
+  onChange,
+}: {
+  slot: number
+  players: Player[]
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+
+  const selectedPlayer = useMemo(
+    () => players.find((p) => String(p.id) === value),
+    [players, value],
+  )
+
+  const filteredPlayers = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return players
+
+    return players.filter((player) => {
+      const name = String(player.name || '').toLowerCase()
+      const nationality = String((player as any).nationality || (player as any).nation || '').toLowerCase()
+      const role = String((player as any).role || (player as any).positions_short || '').toLowerCase()
+      const status = String((player as any).status || '').toLowerCase()
+      return (
+        name.includes(normalized) ||
+        nationality.includes(normalized) ||
+        role.includes(normalized) ||
+        status.includes(normalized)
+      )
+    })
+  }, [players, query])
+
+  const choosePlayer = (player: Player) => {
+    onChange(String(player.id))
+    setQuery('')
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <label className="block mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Player {slot}</label>
+
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className={`w-full min-h-[48px] rounded-lg border bg-slate-950 px-3 py-2.5 text-left transition-colors focus:outline-none ${
+          open ? 'border-emerald-500/60' : 'border-slate-800 hover:border-slate-700'
+        }`}
+      >
+        {selectedPlayer ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold text-white">{selectedPlayer.name}</div>
+              <div className="mt-0.5 truncate text-[9px] font-mono uppercase tracking-wider text-slate-500">
+                {(selectedPlayer as any).nationality || (selectedPlayer as any).nation || 'Global'}
+                {(selectedPlayer as any).role || (selectedPlayer as any).positions_short ? ` • ${(selectedPlayer as any).role || (selectedPlayer as any).positions_short}` : ''}
+              </div>
+            </div>
+            <span className="shrink-0 text-xs text-slate-500">⌄</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-500">Search and choose a player…</span>
+            <span className="shrink-0 text-xs text-slate-600">⌄</span>
+          </div>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl shadow-black/40">
+          <div className="border-b border-slate-800 p-2.5">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-600">⌕</span>
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setOpen(false)
+                }}
+                placeholder="Search name, club, nation, role, status…"
+                className="w-full rounded-lg border border-slate-800 bg-slate-900/80 py-2.5 pl-8 pr-3 text-xs text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/50"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-72 overflow-y-auto p-1.5">
+            {filteredPlayers.length > 0 ? (
+              filteredPlayers.map((player) => {
+                const playerId = String(player.id)
+                const nationality = (player as any).nationality || (player as any).nation || 'Global'
+                const isSelected = playerId === value
+
+                return (
+                  <button
+                    type="button"
+                    key={playerId}
+                    onClick={() => choosePlayer(player)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                      isSelected ? 'bg-emerald-500/10 border border-emerald-500/20' : 'border border-transparent hover:bg-slate-900 hover:border-slate-800'
+                    }`}
+                  >
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
+                      {(player as any).image_url || (player as any).photo_url ? (
+                        <img
+                          src={storageUrl((player as any).image_url || (player as any).photo_url)}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[9px] font-mono text-slate-600">FM</div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs font-bold text-white">{player.name}</div>
+                      <div className="mt-0.5 truncate text-[9px] font-mono uppercase tracking-wider text-slate-600">
+                        {nationality} • {(player as any).role || (player as any).positions_short || 'PLAYER'}
+                      </div>
+                    </div>
+                    {isSelected && <span className="text-[10px] font-mono font-bold uppercase text-emerald-400">SELECTED</span>}
+                  </button>
+                )
+              })
+            ) : (
+              <div className="px-4 py-8 text-center">
+                <div className="text-xs font-bold text-slate-400">NO PLAYERS FOUND</div>
+                <div className="mt-1 text-[9px] font-mono uppercase tracking-wider text-slate-600">Try another name, club, nation, role or status</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ComparePage() {
   const { players } = Route.useLoaderData()
-  const [player1Id, setPlayer1Id] = useState<string>(players[0]?.id ? String(players[0].id) : '')
-  const [player2Id, setPlayer2Id] = useState<string>(players[1]?.id ? String(players[1].id) : '')
+  // Start with an empty comparison so the user chooses both players intentionally.
+  const [player1Id, setPlayer1Id] = useState<string>('')
+  const [player2Id, setPlayer2Id] = useState<string>('')
 
   const p1 = useMemo(() => players.find((p) => String(p.id) === player1Id), [players, player1Id])
   const p2 = useMemo(() => players.find((p) => String(p.id) === player2Id), [players, player2Id])
@@ -194,26 +336,18 @@ function ComparePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[1, 2].map((slot) => {
-              const value = slot === 1 ? player1Id : player2Id
-              const setter = slot === 1 ? setPlayer1Id : setPlayer2Id
-              return (
-                <div key={slot}>
-                  <label className="block mb-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Player {slot}</label>
-                  <select
-                    value={value}
-                    onChange={(e) => setter(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                  >
-                    {players.map((p) => (
-                      <option key={String(p.id)} value={String(p.id)}>
-                        {p.name} — {(p as any).nationality || (p as any).nation || 'Global'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )
-            })}
+            <PlayerPicker
+              slot={1}
+              players={players}
+              value={player1Id}
+              onChange={setPlayer1Id}
+            />
+            <PlayerPicker
+              slot={2}
+              players={players}
+              value={player2Id}
+              onChange={setPlayer2Id}
+            />
           </div>
         </div>
 

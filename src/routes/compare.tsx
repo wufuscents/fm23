@@ -15,20 +15,26 @@ export const Route = createFileRoute('/compare')({
       const fallback = await supabase.from('players').select('*')
       data = fallback.data || []
     }
+
     return { players: (data || []) as Player[] }
   },
   component: ComparePage,
 })
+
 function ComparePage() {
   const { players } = Route.useLoaderData()
   const [player1Id, setPlayer1Id] = useState<string>(players[0]?.id ? String(players[0].id) : '')
   const [player2Id, setPlayer2Id] = useState<string>(players[1]?.id ? String(players[1].id) : '')
+
   const p1 = useMemo(() => players.find((p) => String(p.id) === player1Id), [players, player1Id])
   const p2 = useMemo(() => players.find((p) => String(p.id) === player2Id), [players, player2Id])
+
   const p1Img = p1?.image_url || p1?.photo_url || ''
   const p2Img = p2?.image_url || p2?.photo_url || ''
+
   const p1Flag = p1?.nationality_flag_url || p1?.nation_flag || null
   const p2Flag = p2?.nationality_flag_url || p2?.nation_flag || null
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -50,6 +56,7 @@ function ComparePage() {
             </Link>
           </nav>
         </div>
+
         {/* Player Selectors */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
@@ -82,6 +89,7 @@ function ComparePage() {
             </select>
           </div>
         </div>
+
         {/* Comparison Layout */}
         {p1 && p2 && (
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">

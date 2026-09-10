@@ -22,13 +22,28 @@ export const Route = createFileRoute('/')({
       data = fallback.data || []
     }
 
-    return { players: (data || []) as Player[] }
+    // Pull club logos from the career-history table so the selected club
+    // legacy card can use the real database logo instead of generated initials.
+    const { data: careerLogoRows } = await supabase
+      .from('player_career_history')
+      .select('team_name, club_logo_url')
+
+    const clubLogoMap: Record<string, string> = {}
+    ;(careerLogoRows || []).forEach((row: any) => {
+      const teamName = String(row.team_name || '').trim()
+      const logo = String(row.club_logo_url || '').trim()
+      if (teamName && logo && !clubLogoMap[teamName]) {
+        clubLogoMap[teamName] = logo
+      }
+    })
+
+    return { players: (data || []) as Player[], clubLogoMap }
   },
   component: DirectoryPage,
 })
 
 function DirectoryPage() {
-  const { players } = Route.useLoaderData()
+  const { players, clubLogoMap } = Route.useLoaderData()
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -122,8 +137,6 @@ function DirectoryPage() {
       .filter((player) => {
         const playerNation = player.nationality || player.nation || ''
         const playerGender = (player.gender || '').toLowerCase()
-        const playerRole = String(player.role || player.positions_short || '').toLowerCase()
-        const playerStatus = String(player.status || '').toLowerCase()
 
         const playerClubs = [
           ...(player.legend_at_clubs || []),
@@ -136,8 +149,6 @@ function DirectoryPage() {
           !search ||
           player.name.toLowerCase().includes(search.toLowerCase()) ||
           playerNation.toLowerCase().includes(search.toLowerCase()) ||
-          playerRole.includes(search.toLowerCase()) ||
-          playerStatus.includes(search.toLowerCase()) ||
           playerClubs.some((c) => c.toLowerCase().includes(search.toLowerCase()))
 
         const matchesStatus =
@@ -242,7 +253,7 @@ function DirectoryPage() {
             <Link to="/" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">
               DIRECTORY
             </Link>
-            <Link to="/hall-of-fame" className="hover:text-white transition-colors">
+            <Link to="/leaderboards" className="hover:text-white transition-colors">
               HALL OF FAME
             </Link>
             <Link to="/compare" className="hover:text-white transition-colors">
@@ -286,7 +297,7 @@ function DirectoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
             <input
               type="text"
-              placeholder="Search player, club, nation, role, or status..."
+              placeholder="Search player or club..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
@@ -348,19 +359,14 @@ function DirectoryPage() {
             {clubLegacyStats && (() => {
               const values = [clubLegacyStats.apps, clubLegacyStats.goals, clubLegacyStats.trophies, clubLegacyStats.awards]
               const maxValue = Math.max(...values, 1)
-              const initials = clubLegacyStats.name
-                .split(/\s+/)
-                .filter(Boolean)
-                .slice(0, 3)
-                .map((part) => part[0])
-                .join('')
-                .toUpperCase()
+              const clubLogo =
+                clubLogoMap[clubLegacyStats.name] ||
+                Object.entries(clubLogoMap).find(([name]) => name.toLowerCase() === clubLegacyStats.name.toLowerCase())?.[1] ||
+                null
 
               return (
-                <Link
-                  to="/club/$club"
-                  params={{ club: clubLegacyStats.name }}
-                  className="group relative block overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
+                <div
+                  className="group relative overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
                   style={{
                     borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
                     boxShadow: `0 0 35px ${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}22`,
@@ -375,13 +381,25 @@ function DirectoryPage() {
                   <div className="relative z-10 flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-4">
                       <div
-                        className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border bg-slate-950/70 font-heading text-lg font-extrabold tracking-wider text-white shadow-inner"
+                        className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border bg-slate-950/70 p-2 shadow-inner"
                         style={{
                           borderColor: `${TEAM_COLORS[clubLegacyStats.name] || '#3b82f6'}99`,
-                          color: TEAM_COLORS[clubLegacyStats.name] || '#93c5fd',
                         }}
                       >
-                        {initials || 'CL'}
+                        {clubLogo ? (
+                          <img
+                            src={clubLogo}
+                            alt={clubLegacyStats.name}
+                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                          />
+                        ) : (
+                          <span
+                            className="font-heading text-lg font-extrabold tracking-wider"
+                            style={{ color: TEAM_COLORS[clubLegacyStats.name] || '#93c5fd' }}
+                          >
+                            CL
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.22em] text-slate-400">
@@ -432,10 +450,12 @@ function DirectoryPage() {
                   </div>
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
-                    <span>MORE THAN A CLUB</span>
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
+                    <Link to="/club/$club" params={{ club: clubLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
+                      OPEN CLUB DOSSIER →
+                    </Link>
                   </div>
-                </Link>
+                </div>
               )
             })()}
 
@@ -448,10 +468,8 @@ function DirectoryPage() {
               const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
 
               return (
-                <Link
-                  to="/nation/$nation"
-                  params={{ nation: nationLegacyStats.name }}
-                  className="group relative block overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
+                <div
+                  className="group relative overflow-hidden rounded-2xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1"
                   style={{
                     borderColor: `${nationColor}99`,
                     boxShadow: `0 0 35px ${nationColor}22`,
@@ -464,7 +482,7 @@ function DirectoryPage() {
                     <div className="flex min-w-0 items-center gap-4">
                       <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border border-white/15 bg-slate-950/70 p-2 shadow-inner">
                         {flagUrl ? (
-                          <img src={flagUrl} alt={nationLegacyStats.name} className="h-full w-full rounded-lg object-cover" />
+                          <img src={flagUrl} alt={nationLegacyStats.name} className="max-h-full max-w-full rounded-md object-contain" />
                         ) : (
                           <span className="font-heading text-lg font-extrabold text-slate-300">NAT</span>
                         )}
@@ -510,10 +528,12 @@ function DirectoryPage() {
                   </div>
 
                   <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">
-                    <span>ONE NATION • ENDLESS PRIDE</span>
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
+                    <Link to="/nation/$nation" params={{ nation: nationLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
+                      OPEN NATION DOSSIER →
+                    </Link>
                   </div>
-                </Link>
+                </div>
               )
             })()}
           </div>

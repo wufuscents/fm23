@@ -211,7 +211,9 @@ export const Route = createFileRoute('/club/$club')({
     // their legacy-club relationship. Status decides Legend vs Icon; the
     // icon_at_clubs column is intentionally not used because the database
     // currently stores both legacy types in legend_at_clubs.
-    const players = (playerRows as Player[]).filter((p: any) => {
+    const allPlayers = playerRows as Player[]
+
+    const players = allPlayers.filter((p: any) => {
       const legacyClubs = playerLegacyClubs(p)
       return (
         matchingIds.has(String(p.id)) ||
@@ -219,30 +221,38 @@ export const Route = createFileRoute('/club/$club')({
       )
     })
 
+    // Legacy membership is read DIRECTLY from the players table. It is not
+    // dependent on career-history rows, current club fields, or the
+    // player_directory_view. This is important because legacy status is a
+    // separate database relationship from a player's career history.
+    const legacyPlayers = allPlayers.filter((p: any) =>
+      playerLegacyClubs(p).some((name: unknown) => sameClubName(name, decoded)),
+    )
+
     if (!logo) {
       const careerLogo = matchingCareerRows.find((row: any) => String(row.club_logo_url || '').trim())
       logo = String(careerLogo?.club_logo_url || '')
     }
 
-    return { club: decoded, players, matchingCareerRows, logo }
+    return { club: decoded, players, legacyPlayers, matchingCareerRows, logo }
   },
   component: ClubPage,
 })
 
 function ClubPage() {
-  const { club, players, matchingCareerRows, logo } = Route.useLoaderData()
+  const { club, players, legacyPlayers, matchingCareerRows, logo } = Route.useLoaderData()
   const color = TEAM_COLORS[club] || '#3b82f6'
 
-  const legends = useMemo(() => players.filter((p) => {
+  const legends = useMemo(() => legacyPlayers.filter((p) => {
     const legacyClubs = playerLegacyClubs(p)
     const status = String((p as any).status || '').trim().toLowerCase()
     return (
       legacyClubs.some((name: unknown) => sameClubName(name, club)) &&
       status.includes('legend')
     )
-  }), [players, club])
+  }), [legacyPlayers, club])
 
-  const icons = useMemo(() => players.filter((p) => {
+  const icons = useMemo(() => legacyPlayers.filter((p) => {
     const legacyClubs = playerLegacyClubs(p)
     const status = String((p as any).status || '').trim().toLowerCase()
     return (
@@ -250,7 +260,7 @@ function ClubPage() {
       status.includes('icon') &&
       !status.includes('legend')
     )
-  }), [players, club])
+  }), [legacyPlayers, club])
 
   const clubStats = useMemo(() => {
     const byPlayer = new Map<string, { apps: number; goals: number }>()

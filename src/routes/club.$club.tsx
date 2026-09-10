@@ -72,12 +72,10 @@ export const Route = createFileRoute('/club/$club')({
     const matchingIds = new Set(matchingCareerRows.map((c: any) => String(c.player_id)))
 
     const players = playerRows.filter((p: any) => {
-      const legendClubs = Array.isArray(p.legend_at_clubs) ? p.legend_at_clubs : []
-      const iconClubs = Array.isArray(p.icon_at_clubs) ? p.icon_at_clubs : []
+      const legacyClubs = Array.isArray(p.legend_at_clubs) ? p.legend_at_clubs : []
       return (
         matchingIds.has(String(p.id)) ||
-        legendClubs.some((name: unknown) => sameClubName(name, decoded)) ||
-        iconClubs.some((name: unknown) => sameClubName(name, decoded)) ||
+        legacyClubs.some((name: unknown) => sameClubName(name, decoded)) ||
         sameClubName(p.club_name, decoded) ||
         sameClubName(p.current_club, decoded)
       )
@@ -96,13 +94,22 @@ function ClubPage() {
   const color = TEAM_COLORS[club] || '#3b82f6'
 
   const legends = useMemo(() => players.filter((p) => {
-    const legendClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
-    return legendClubs.some((name: unknown) => sameClubName(name, club))
+    const legacyClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
+    const status = String((p as any).status || '').trim().toLowerCase()
+    return (
+      legacyClubs.some((name: unknown) => sameClubName(name, club)) &&
+      status.includes('legend')
+    )
   }), [players, club])
 
   const icons = useMemo(() => players.filter((p) => {
-    const iconClubs = Array.isArray((p as any).icon_at_clubs) ? (p as any).icon_at_clubs : []
-    return iconClubs.some((name: unknown) => sameClubName(name, club))
+    const legacyClubs = Array.isArray((p as any).legend_at_clubs) ? (p as any).legend_at_clubs : []
+    const status = String((p as any).status || '').trim().toLowerCase()
+    return (
+      legacyClubs.some((name: unknown) => sameClubName(name, club)) &&
+      status.includes('icon') &&
+      !status.includes('legend')
+    )
   }), [players, club])
 
   const clubStats = useMemo(() => {

@@ -10,13 +10,37 @@ function sameNation(a: unknown, b: unknown): boolean { const left = normalizeNat
 function normalizeClubName(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/\b(football|futbol|club|fc|cf|afc|ac|sc|calcio|de|del|the)\b/g, ' ').replace(/[^a-z0-9]+/g, '') }
 
 const CLUB_ALIASES: Record<string, string> = {
-  manchesterunited: 'manchesterunited', manchesterutd: 'manchesterunited', manunited: 'manchesterunited', manutd: 'manchesterunited', manu: 'manchesterunited', manchesteru: 'manchesterunited',
-  bayernmunich: 'bayernmunich', bayernmunchen: 'bayernmunich', fcbayern: 'bayernmunich',
-  psg: 'parissaintgermain', parissaintgermain: 'parissaintgermain',
-  barcelona: 'barcelona', barca: 'barcelona',
-  realmadrid: 'realmadrid', realmadridcf: 'realmadrid',
-  milan: 'milan', acmilan: 'milan',
-  intermilan: 'intermilan', internazionale: 'intermilan', inter: 'intermilan',
+  manchesterunited: 'manchesterunited',
+  manchesterutd: 'manchesterunited',
+  manunited: 'manchesterunited',
+  manutd: 'manchesterunited',
+  manu: 'manchesterunited',
+  manchesteru: 'manchesterunited',
+  manufc: 'manchesterunited',
+
+  bayern: 'bayernmunich',
+  bayernmunich: 'bayernmunich',
+  bayernmunchen: 'bayernmunich',
+  fcbayern: 'bayernmunich',
+
+  psg: 'parissaintgermain',
+  parissaintgermain: 'parissaintgermain',
+
+  barcelona: 'barcelona',
+  barca: 'barcelona',
+
+  realmadrid: 'realmadrid',
+  realmadridcf: 'realmadrid',
+
+  milan: 'milan',
+  acmilan: 'milan',
+
+  intermilan: 'intermilan',
+  internazionale: 'intermilan',
+  inter: 'intermilan',
+
+  feyenoord: 'feyenoord',
+  feyenoordrotterdam: 'feyenoord',
 }
 
 function canonicalClubKey(value: unknown): string { const normalized = normalizeClubName(value); return CLUB_ALIASES[normalized] || normalized }

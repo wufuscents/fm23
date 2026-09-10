@@ -11,12 +11,25 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+const AUTH_STORAGE_KEY = "fm_auth_expires_at";
+const AUTH_DURATION_MS = 2 * 60 * 60 * 1000;
+
+function hasValidAuthSession() {
+  if (typeof window === "undefined") return false;
+
+  const expiresAt = Number(localStorage.getItem(AUTH_STORAGE_KEY) || 0);
+  if (expiresAt > Date.now()) return true;
+
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  return false;
+}
+
 function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("fm_auth") === "true") {
+    if (hasValidAuthSession()) {
       router.navigate({ to: "/", replace: true });
     }
   }, [router]);
@@ -27,7 +40,7 @@ function LoginPage() {
     const username = data.get("username");
     const password = data.get("password");
     if (username === "Death" && password === "liveisdead") {
-      sessionStorage.setItem("fm_auth", "true");
+      localStorage.setItem(AUTH_STORAGE_KEY, String(Date.now() + AUTH_DURATION_MS));
       router.navigate({ to: "/", replace: true });
     } else {
       setError(true);

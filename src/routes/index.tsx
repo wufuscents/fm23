@@ -477,7 +477,7 @@ function DirectoryPage() {
               const values = [nationLegacyStats.apps, nationLegacyStats.goals, nationLegacyStats.trophies, nationLegacyStats.awards]
               const maxValue = Math.max(...values, 1)
               const nationPlayer = players.find((p) => (p.nationality || p.nation) === nationLegacyStats.name)
-              const flagUrl = nationPlayer?.nationality_flag_url || nationPlayer?.nation_flag || null
+              const flagUrl = storageUrl(nationPlayer?.nationality_flag_url || nationPlayer?.nation_flag || '')
 
               const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
 

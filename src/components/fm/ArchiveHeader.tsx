@@ -77,17 +77,11 @@ export function ArchiveHeader({ active }: { active: ArchiveSection }) {
             <Link
               key={item.key}
               to={item.to}
-              className={`group relative whitespace-nowrap pb-2 transition-colors hover:text-white ${
-                isActive ? `${itemConfig.active} font-bold` : ''
+              className={`group relative whitespace-nowrap border-b-2 border-transparent pb-2 transition-colors hover:text-white ${
+                isActive ? `${itemConfig.active} ${itemConfig.underline} font-bold` : ''
               }`}
             >
               {item.label}
-              <span
-                aria-hidden="true"
-                className={`absolute inset-x-0 bottom-0 h-[2px] transition-opacity ${
-                  isActive ? `${itemConfig.underline} opacity-100` : 'opacity-0 group-hover:opacity-30'
-                }`}
-              />
             </Link>
           )
         })}

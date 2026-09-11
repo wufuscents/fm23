@@ -93,6 +93,8 @@ function DirectoryPage() {
   const [sortBy, setSortBy] = useState('trophies')
   const [page, setPage] = useState(1)
   const [filtersReady, setFiltersReady] = useState(false)
+  const [pageTransition, setPageTransition] = useState<'idle' | 'exit-next' | 'exit-prev' | 'enter-next' | 'enter-prev'>('idle')
+  const pageTransitionTimer = useRef<number | null>(null)
   const skipInitialPageReset = useRef(true)
 
   useEffect(() => {
@@ -273,6 +275,42 @@ function DirectoryPage() {
   }, [filtersReady, search, status, genderMode, club, nation, sortBy])
 
   const totalPages = Math.ceil(filteredPlayers.length / PAGE_SIZE) || 1
+
+  useEffect(() => {
+    return () => {
+      if (pageTransitionTimer.current !== null) {
+        window.clearTimeout(pageTransitionTimer.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
+
+  const goToPage = (targetPage: number, direction?: 'next' | 'prev') => {
+    const safeTarget = Math.min(Math.max(targetPage, 1), totalPages)
+    if (safeTarget === page || pageTransition !== 'idle') return
+
+    const resolvedDirection = direction ?? (safeTarget > page ? 'next' : 'prev')
+
+    if (pageTransitionTimer.current !== null) {
+      window.clearTimeout(pageTransitionTimer.current)
+    }
+
+    setPageTransition(resolvedDirection === 'next' ? 'exit-next' : 'exit-prev')
+
+    pageTransitionTimer.current = window.setTimeout(() => {
+      setPage(safeTarget)
+      setPageTransition(resolvedDirection === 'next' ? 'enter-next' : 'enter-prev')
+
+      pageTransitionTimer.current = window.setTimeout(() => {
+        setPageTransition('idle')
+        pageTransitionTimer.current = null
+      }, 220)
+    }, 220)
+  }
+
   const paginatedPlayers = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
     return filteredPlayers.slice(start, start + PAGE_SIZE)
@@ -583,8 +621,44 @@ function DirectoryPage() {
         </div>
 
         {/* Squad Grid */}
+        <style>{`
+          .fm-directory-page-transition {
+            will-change: transform, opacity;
+          }
+          .fm-directory-page-transition.exit-next {
+            animation: fm-directory-exit-next 220ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+          }
+          .fm-directory-page-transition.exit-prev {
+            animation: fm-directory-exit-prev 220ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+          }
+          .fm-directory-page-transition.enter-next {
+            animation: fm-directory-enter-next 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          }
+          .fm-directory-page-transition.enter-prev {
+            animation: fm-directory-enter-prev 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          }
+          @keyframes fm-directory-exit-next {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-7%); opacity: 0; }
+          }
+          @keyframes fm-directory-exit-prev {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(7%); opacity: 0; }
+          }
+          @keyframes fm-directory-enter-next {
+            from { transform: translateX(7%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes fm-directory-enter-prev {
+            from { transform: translateX(-7%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+        `}</style>
         {paginatedPlayers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            key={`directory-page-${page}`}
+            className={`fm-directory-page-transition ${pageTransition} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}
+          >
             {paginatedPlayers.map((player) => (
               <PlayerCard key={player.id} player={player} />
             ))}
@@ -597,20 +671,39 @@ function DirectoryPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-8 font-mono text-xs">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 font-mono text-xs sm:flex-row">
             <button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
+              onClick={() => goToPage(page - 1, 'prev')}
+              disabled={page === 1 || pageTransition !== 'idle'}
               className="px-4 py-2 rounded-sm bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-40 hover:border-slate-600 transition-colors"
             >
               ← PREVIOUS
             </button>
-            <span className="text-slate-400">
-              {page} / {totalPages}
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">PAGE</span>
+              <select
+                value={page}
+                onChange={(e) => {
+                  const target = Number(e.target.value)
+                  goToPage(target)
+                }}
+                disabled={pageTransition !== 'idle'}
+                aria-label="Choose directory page"
+                className="min-w-[82px] appearance-none rounded-sm border border-slate-800 bg-slate-900 px-3 py-2 text-center text-slate-200 outline-none transition-colors hover:border-slate-600 focus:border-red-500/60 disabled:opacity-50"
+              >
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+                  <option key={pageNumber} value={pageNumber}>
+                    {pageNumber}
+                  </option>
+                ))}
+              </select>
+              <span className="text-slate-500">OF {totalPages}</span>
+            </div>
+
             <button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              disabled={page === totalPages}
+              onClick={() => goToPage(page + 1, 'next')}
+              disabled={page === totalPages || pageTransition !== 'idle'}
               className="px-4 py-2 rounded-sm bg-slate-900 border border-slate-800 text-slate-300 disabled:opacity-40 hover:border-slate-600 transition-colors"
             >
               NEXT →

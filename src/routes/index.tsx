@@ -165,9 +165,9 @@ function DirectoryPage() {
           playerNation.toLowerCase().includes(searchLower) ||
           playerClubs.some((c) => c.toLowerCase().includes(searchLower))
 
+        const playerStatus = String(player.status ?? '').toLowerCase()
         const matchesStatus =
-          status === 'all' ||
-          (player.status || '').toLowerCase().includes(status.toLowerCase())
+          status === 'all' || playerStatus.includes(status.toLowerCase())
 
         const matchesGender =
           genderMode === 'both' ||
@@ -289,12 +289,12 @@ function DirectoryPage() {
                 SQUAD DIRECTORY
               </h1>
               {genderMode === 'male' && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-emerald-500/50 bg-emerald-500/20 text-emerald-300 font-bold">
+                <span className="text-xs font-mono px-2 py-0.5 rounded border border-red-500/60 bg-red-500/15 text-red-300 font-bold">
                   M
                 </span>
               )}
               {genderMode === 'female' && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-pink-500/50 bg-pink-500/20 text-pink-300 font-bold">
+                <span className="text-xs font-mono px-2 py-0.5 rounded border border-red-500/60 bg-red-500/15 text-red-300 font-bold">
                   F
                 </span>
               )}
@@ -475,7 +475,9 @@ function DirectoryPage() {
               const nationPlayer = players.find(
                 (p) => String(p.nationality ?? p.nation ?? '').trim() === nationLegacyStats.name,
               )
-              const rawFlag = nationPlayer?.nationality_flag_url ?? nationPlayer?.nation_flag ?? ''
+              const rawFlag = nationPlayer
+                ? nationPlayer.nationality_flag_url ?? nationPlayer.nation_flag ?? ''
+                : ''
               const flagUrl = storageUrl(String(rawFlag || ''))
               const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
 
@@ -507,14 +509,13 @@ function DirectoryPage() {
                           NATIONAL TEAM LEGACY
                         </div>
                         <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide">
-                          <Link
-                            to="/nation/$nation"
-                            params={{ nation: String(nationLegacyStats.name) }}
+                          <a
+                            href={`/nation/${encodeURIComponent(String(nationLegacyStats.name))}`}
                             className="text-white transition-colors duration-200 hover:text-red-300 focus-visible:outline-none focus-visible:text-red-300"
                             aria-label={`Open ${nationLegacyStats.name} nation dossier`}
                           >
                             {nationLegacyStats.name}
-                          </Link>
+                          </a>
                         </h3>
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
                           {nationLegacyStats.count} profiles • national archive

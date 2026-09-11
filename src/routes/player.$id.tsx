@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { TEAM_COLORS } from '../lib/team-colors'
+import { getArchiveProfile, isPlayerVisibleToProfile } from '../lib/archive-auth'
 
 export const Route = createFileRoute('/player/$id')({
   loader: async ({ params }) => {
@@ -59,10 +60,24 @@ function PlayerProfilePage() {
   const { player, playerCareer, coachCareer, awards } = Route.useLoaderData()
   const [awardTab, setAwardTab] = useState<'team' | 'individual'>('team')
 
+  const archiveProfile = getArchiveProfile()
+
   if (!player) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4 p-4">
         <div className="text-base text-white">Player profile could not be loaded.</div>
+        <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs hover:border-slate-600 transition-colors">
+          ← BACK TO DIRECTORY
+        </Link>
+      </div>
+    )
+  }
+
+  if (!isPlayerVisibleToProfile(player as any, archiveProfile)) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-mono gap-4 p-4">
+        <div className="text-[10px] uppercase tracking-[0.25em] text-amber-400">Archive access restriction</div>
+        <div className="text-base text-white">This player is outside the active archive profile.</div>
         <Link to="/" className="px-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs hover:border-slate-600 transition-colors">
           ← BACK TO DIRECTORY
         </Link>

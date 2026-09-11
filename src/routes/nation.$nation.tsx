@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { TEAM_COLORS } from '../lib/team-colors'
+import { filterPlayersForProfile, getArchiveProfile } from '../lib/archive-auth'
 
 function normalizeNation(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLowerCase() }
 function sameNation(a: unknown, b: unknown): boolean { const left = normalizeNation(a); const right = normalizeNation(b); return Boolean(left && right && left === right) }
@@ -68,7 +69,11 @@ export const Route = createFileRoute('/nation/$nation')({
 })
 
 function NationPage() {
-  const { nation, players, careerTotals, nationCareers } = Route.useLoaderData()
+  const { nation, players: loadedPlayers, careerTotals, nationCareers: loadedNationCareers } = Route.useLoaderData()
+  const archiveProfile = getArchiveProfile()
+  const players = useMemo(() => filterPlayersForProfile(loadedPlayers, archiveProfile), [loadedPlayers, archiveProfile])
+  const visibleIds = useMemo(() => new Set(players.map((player: any) => String(player.id))), [players])
+  const nationCareers = useMemo(() => loadedNationCareers.filter((row: any) => visibleIds.has(String(row.player_id))), [loadedNationCareers, visibleIds])
   const color = TEAM_COLORS[nation] || '#3b82f6'
   const getApps = (p: Player) => careerTotals[String(p.id)]?.apps || 0
   const getGoals = (p: Player) => careerTotals[String(p.id)]?.goals || 0

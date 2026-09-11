@@ -6,6 +6,7 @@ import { storageUrl } from '../lib/fm'
 import { PlayerCard } from '../components/fm/PlayerCard'
 import { TEAM_COLORS } from '../lib/team-colors'
 import { ArchiveHeader } from '../components/fm/ArchiveHeader'
+import { filterPlayersForProfile, getArchiveProfile } from '../lib/archive-auth'
 
 const PAGE_SIZE = 12
 
@@ -56,7 +57,9 @@ export const Route = createFileRoute('/')({
 })
 
 function DirectoryPage() {
-  const { players, clubLogoMap, clubDirectoryRows } = Route.useLoaderData()
+  const { players: loadedPlayers, clubLogoMap, clubDirectoryRows } = Route.useLoaderData()
+  const archiveProfile = getArchiveProfile()
+  const players = useMemo(() => filterPlayersForProfile(loadedPlayers, archiveProfile), [loadedPlayers, archiveProfile])
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -144,6 +147,7 @@ function DirectoryPage() {
   }, [filtersReady, search, status, club, nation, sortBy, page])
 
   const toggleGenderMode = () => {
+    if (archiveProfile === 'Yggdrasil') return
     setPage(1)
     if (genderMode === 'both') setGenderMode('male')
     else if (genderMode === 'male') setGenderMode('female')

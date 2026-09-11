@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { hasValidAuthSession } from "../lib/archive-auth";
+
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -122,19 +124,6 @@ function RootShell({ children }: { children: ReactNode }) {
       </body>
     </html>
   );
-}
-
-const AUTH_STORAGE_KEY = "fm_auth_expires_at";
-const AUTH_DURATION_MS = 2 * 60 * 60 * 1000;
-
-function hasValidAuthSession() {
-  if (typeof window === "undefined") return false;
-
-  const expiresAt = Number(localStorage.getItem(AUTH_STORAGE_KEY) || 0);
-  if (expiresAt > Date.now()) return true;
-
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  return false;
 }
 
 function AuthGate({ children }: { children: ReactNode }) {

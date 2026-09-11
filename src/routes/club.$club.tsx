@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { TEAM_COLORS } from '../lib/team-colors'
+import { filterPlayersForProfile, getArchiveProfile } from '../lib/archive-auth'
 
 function normalizeClubName(value: unknown): string {
   return String(value || '')
@@ -251,7 +252,12 @@ export const Route = createFileRoute('/club/$club')({
 })
 
 function ClubPage() {
-  const { club, players, legacyPlayers, matchingCareerRows, logo } = Route.useLoaderData()
+  const { club, players: loadedPlayers, legacyPlayers: loadedLegacyPlayers, matchingCareerRows: loadedCareerRows, logo } = Route.useLoaderData()
+  const archiveProfile = getArchiveProfile()
+  const players = useMemo(() => filterPlayersForProfile(loadedPlayers, archiveProfile), [loadedPlayers, archiveProfile])
+  const visibleIds = useMemo(() => new Set(players.map((player: any) => String(player.id))), [players])
+  const legacyPlayers = useMemo(() => filterPlayersForProfile(loadedLegacyPlayers, archiveProfile), [loadedLegacyPlayers, archiveProfile])
+  const matchingCareerRows = useMemo(() => loadedCareerRows.filter((row: any) => visibleIds.has(String(row.player_id))), [loadedCareerRows, visibleIds])
   const color = TEAM_COLORS[club] || '#3b82f6'
 
   const legends = useMemo(() => legacyPlayers.filter((p) => {

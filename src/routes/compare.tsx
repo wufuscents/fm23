@@ -5,6 +5,7 @@ import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { Flag } from '../components/fm/PlayerCard'
 import { ArchiveHeader } from '../components/fm/ArchiveHeader'
+import { filterPlayersForProfile, getArchiveProfile } from '../lib/archive-auth'
 
 export const Route = createFileRoute('/compare')({
   loader: async () => {
@@ -451,7 +452,9 @@ function ScoreBox({ player, wins, total }: { player: Player; wins: number; total
 }
 
 function ComparePage() {
-  const { players } = Route.useLoaderData()
+  const { players: loadedPlayers } = Route.useLoaderData()
+  const archiveProfile = getArchiveProfile()
+  const players = useMemo(() => filterPlayersForProfile(loadedPlayers, archiveProfile), [loadedPlayers, archiveProfile])
   const [player1Id, setPlayer1Id] = useState('')
   const [player2Id, setPlayer2Id] = useState('')
 

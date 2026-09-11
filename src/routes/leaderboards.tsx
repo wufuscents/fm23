@@ -5,6 +5,7 @@ import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { Flag } from '../components/fm/PlayerCard'
 import { ArchiveHeader } from '../components/fm/ArchiveHeader'
+import { filterPlayersForProfile, getArchiveProfile } from '../lib/archive-auth'
 
 export const Route = createFileRoute('/leaderboards')({
   loader: async () => {
@@ -138,7 +139,9 @@ function statusClasses(player: Player) {
 }
 
 function LeaderboardsPage() {
-  const { players, ballonDorCounts } = Route.useLoaderData()
+  const { players: loadedPlayers, ballonDorCounts } = Route.useLoaderData()
+  const archiveProfile = getArchiveProfile()
+  const players = useMemo(() => filterPlayersForProfile(loadedPlayers, archiveProfile), [loadedPlayers, archiveProfile])
   const [metric, setMetric] = useState<Metric>('trophies')
 
   const metrics: Metric[] = [

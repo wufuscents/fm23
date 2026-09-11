@@ -5,6 +5,7 @@ import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { Flag } from '../components/fm/PlayerCard'
 import { ArchiveHeader } from '../components/fm/ArchiveHeader'
+import { filterPlayersForProfile, getArchiveProfile } from '../lib/archive-auth'
 
 export const Route = createFileRoute('/hall-of-fame')({
   loader: async () => {
@@ -171,7 +172,9 @@ function CollectionCard({ player, rank, category }: { player: Player; rank: numb
 }
 
 function HallOfFamePage() {
-  const { players } = Route.useLoaderData()
+  const { players: loadedPlayers } = Route.useLoaderData()
+  const archiveProfile = getArchiveProfile()
+  const players = useMemo(() => filterPlayersForProfile(loadedPlayers, archiveProfile), [loadedPlayers, archiveProfile])
   const [category, setCategory] = useState<Category>('legends')
 
   const legends = useMemo(

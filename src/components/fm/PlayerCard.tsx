@@ -50,8 +50,9 @@ export function PlayerCard({ player }: { player: Player }) {
   const statusLower = String(player.status || '').trim().toLowerCase()
   const genderLower = String(player.gender || '').trim().toLowerCase()
 
-  const legendClubs = player.legend_at_clubs || []
-  const iconClubs = player.icon_at_clubs || []
+  const legacyClubs = player.legend_at_clubs || []
+  const legendClubs = legacyClubs
+  const iconClubs = legacyClubs
 
   // The explicit status field is the source of truth. The club arrays only
   // describe the clubs associated with that status.

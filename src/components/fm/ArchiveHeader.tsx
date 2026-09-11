@@ -15,7 +15,7 @@ const sectionConfig: Record<ArchiveSection, {
     subtitle: 'Scouting index • player database',
     dot: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.45)]',
     active: 'text-red-400',
-    underline: 'border-red-400',
+    underline: 'bg-red-400',
     tint: 'bg-red-400/10',
   },
   hall: {
@@ -23,7 +23,7 @@ const sectionConfig: Record<ArchiveSection, {
     subtitle: 'Football museum • legacy collection',
     dot: 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.45)]',
     active: 'text-yellow-300',
-    underline: 'border-yellow-300',
+    underline: 'bg-yellow-300',
     tint: 'bg-yellow-400/10',
   },
   records: {
@@ -31,7 +31,7 @@ const sectionConfig: Record<ArchiveSection, {
     subtitle: 'All-time statistics • record room',
     dot: 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.45)]',
     active: 'text-blue-400',
-    underline: 'border-blue-400',
+    underline: 'bg-blue-400',
     tint: 'bg-blue-400/10',
   },
   compare: {
@@ -39,7 +39,7 @@ const sectionConfig: Record<ArchiveSection, {
     subtitle: 'Head-to-head • player analysis',
     dot: 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.45)]',
     active: 'text-emerald-400',
-    underline: 'border-emerald-400',
+    underline: 'bg-emerald-400',
     tint: 'bg-emerald-400/10',
   },
 }
@@ -77,11 +77,17 @@ export function ArchiveHeader({ active }: { active: ArchiveSection }) {
             <Link
               key={item.key}
               to={item.to}
-              className={`whitespace-nowrap border-b-2 border-transparent pb-1 transition-colors hover:text-white ${
-                isActive ? `${itemConfig.active} ${itemConfig.underline} font-bold` : ''
+              className={`group relative whitespace-nowrap pb-2 transition-colors hover:text-white ${
+                isActive ? `${itemConfig.active} font-bold` : ''
               }`}
             >
               {item.label}
+              <span
+                aria-hidden="true"
+                className={`absolute inset-x-0 bottom-0 h-[2px] transition-opacity ${
+                  isActive ? `${itemConfig.underline} opacity-100` : 'opacity-0 group-hover:opacity-30'
+                }`}
+              />
             </Link>
           )
         })}

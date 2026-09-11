@@ -3,7 +3,7 @@ import { Player } from '../../lib/types'
 import { storageUrl } from '../../lib/fm'
 
 export function Flag({ url, name }: { url?: string | null; name?: string | null }) {
-  const flagSrc = url || ''
+  const flagSrc = storageUrl(url || '')
   if (!flagSrc) return null
   return (
     <img

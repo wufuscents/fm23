@@ -100,8 +100,9 @@ function PlayerProfilePage() {
   const playerFlag = (player as any).nationality_flag_url || (player as any).nation_flag || null
   const playerPos = (player as any).role || (player as any).positions_short || (player as any).position || '-'
 
-  const legendClubs = (player as any).legend_at_clubs || []
-  const iconClubs = (player as any).icon_at_clubs || []
+  const legacyClubs = (player as any).legend_at_clubs || []
+  const legendClubs = legacyClubs
+  const iconClubs = legacyClubs
 
   const sortedPlayerCareer = useMemo(() => {
     return [...playerCareer].sort((a: any, b: any) => getStartYear(b.years) - getStartYear(a.years))

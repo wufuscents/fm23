@@ -181,7 +181,6 @@ function DirectoryPage() {
 
         const playerClubs = [
           ...(Array.isArray(player.legend_at_clubs) ? player.legend_at_clubs : []),
-          ...(Array.isArray(player.icon_at_clubs) ? player.icon_at_clubs : []),
           player.club_name,
           player.current_club,
         ]
@@ -231,7 +230,6 @@ function DirectoryPage() {
     const clubPlayers = players.filter((p) => {
       const pClubs = [
         ...(p.legend_at_clubs || []),
-        ...(p.icon_at_clubs || []),
         p.club_name,
         p.current_club,
       ]

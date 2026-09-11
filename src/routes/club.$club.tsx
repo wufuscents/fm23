@@ -97,10 +97,10 @@ function readClubList(value: unknown): string[] {
 }
 
 function playerLegacyClubs(player: any): string[] {
-  return [
-    ...readClubList(player.legend_at_clubs),
-    ...readClubList(player.icon_at_clubs),
-  ]
+  // Both Legends and Icons are stored in legend_at_clubs. The player's
+  // status field determines whether those relationships render as Legend
+  // or Icon; icon_at_clubs is not the source of truth.
+  return readClubList(player.legend_at_clubs)
 }
 
 async function fetchAllPlayers(): Promise<any[]> {

@@ -241,6 +241,52 @@ function LeaderboardsPage() {
   return (
     <main className="min-h-screen bg-[#07101d] px-4 py-5 text-slate-100 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-7xl space-y-5">
+        <header className="flex flex-col gap-4 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            to="/"
+            className="group flex items-center gap-2.5 text-white transition-colors hover:text-sky-300"
+          >
+            <span className="grid h-8 w-8 place-items-center border border-sky-400/40 bg-sky-400/10 font-display text-lg font-black text-sky-300 transition-colors group-hover:border-sky-300/70 group-hover:text-sky-200">
+              FM
+            </span>
+            <span className="font-display text-lg font-bold uppercase tracking-[0.15em] sm:text-xl">
+              Squad Archive
+            </span>
+          </Link>
+
+          <nav className="flex items-center gap-1 overflow-x-auto font-mono text-[9px] uppercase tracking-[0.18em] sm:text-[10px]">
+            <Link
+              to="/"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: 'bg-white/[0.06] text-white' }}
+              className="whitespace-nowrap px-3 py-2 text-slate-500 transition-colors hover:text-slate-100"
+            >
+              Directory
+            </Link>
+            <Link
+              to="/hall-of-fame"
+              activeProps={{ className: 'bg-white/[0.06] text-amber-300' }}
+              className="whitespace-nowrap px-3 py-2 text-slate-500 transition-colors hover:text-slate-100"
+            >
+              Hall of Fame
+            </Link>
+            <Link
+              to="/leaderboards"
+              activeProps={{ className: 'bg-sky-400/10 text-sky-300' }}
+              className="whitespace-nowrap px-3 py-2 text-sky-300 transition-colors"
+            >
+              Records
+            </Link>
+            <Link
+              to="/compare"
+              activeProps={{ className: 'bg-white/[0.06] text-white' }}
+              className="whitespace-nowrap px-3 py-2 text-slate-500 transition-colors hover:text-slate-100"
+            >
+              Compare
+            </Link>
+          </nav>
+        </header>
+
         <section className="relative overflow-hidden border border-slate-800 bg-[#0a1423]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(56,189,248,0.12),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.02),transparent_45%)]" />
           <div className="relative p-5 sm:p-7">

@@ -134,28 +134,36 @@ function DirectoryPage() {
 
 
   const nations = useMemo(() => {
-    const unique = new Set(players.map((p) => p.nationality || p.nation).filter(Boolean))
-    return Array.from(unique).sort()
+    const unique = new Set(
+      players
+        .map((p) => String(p.nationality ?? p.nation ?? '').trim())
+        .filter(Boolean),
+    )
+    return Array.from(unique).sort((a, b) => a.localeCompare(b))
   }, [players])
 
   const filteredPlayers = useMemo(() => {
     return players
       .filter((player) => {
-        const playerNation = player.nationality || player.nation || ''
-        const playerGender = (player.gender || '').toLowerCase()
+        const playerName = String(player.name ?? '')
+        const playerNation = String(player.nationality ?? player.nation ?? '').trim()
+        const playerGender = String(player.gender ?? '').toLowerCase()
 
         const playerClubs = [
-          ...(player.legend_at_clubs || []),
-          ...(player.icon_at_clubs || []),
+          ...(Array.isArray(player.legend_at_clubs) ? player.legend_at_clubs : []),
+          ...(Array.isArray(player.icon_at_clubs) ? player.icon_at_clubs : []),
           player.club_name,
           player.current_club,
-        ].filter(Boolean) as string[]
+        ]
+          .map((value) => String(value ?? '').trim())
+          .filter(Boolean)
 
+        const searchLower = search.toLowerCase()
         const matchesSearch =
-          !search ||
-          player.name.toLowerCase().includes(search.toLowerCase()) ||
-          playerNation.toLowerCase().includes(search.toLowerCase()) ||
-          playerClubs.some((c) => c.toLowerCase().includes(search.toLowerCase()))
+          !searchLower ||
+          playerName.toLowerCase().includes(searchLower) ||
+          playerNation.toLowerCase().includes(searchLower) ||
+          playerClubs.some((c) => c.toLowerCase().includes(searchLower))
 
         const matchesStatus =
           status === 'all' ||
@@ -213,14 +221,21 @@ function DirectoryPage() {
   // Country Dynasty Stat Calculations (Total Apps & Goals)
   const nationLegacyStats = useMemo(() => {
     if (nation === 'all') return null
-    const nationPlayers = players.filter((p) => (p.nationality || p.nation) === nation)
+
+    const selectedNation = String(nation || '').trim()
+    if (!selectedNation) return null
+
+    const nationPlayers = players.filter(
+      (p) => String(p.nationality ?? p.nation ?? '').trim() === selectedNation,
+    )
+
     return {
-      name: nation,
+      name: selectedNation,
       count: nationPlayers.length,
-      apps: nationPlayers.reduce((sum, p) => sum + (p.apps || 0), 0),
-      goals: nationPlayers.reduce((sum, p) => sum + (p.goals || 0), 0),
-      trophies: nationPlayers.reduce((sum, p) => sum + (p.trophies || 0), 0),
-      awards: nationPlayers.reduce((sum, p) => sum + (p.awards || 0), 0),
+      apps: nationPlayers.reduce((sum, p) => sum + Number(p.apps || 0), 0),
+      goals: nationPlayers.reduce((sum, p) => sum + Number(p.goals || 0), 0),
+      trophies: nationPlayers.reduce((sum, p) => sum + Number(p.trophies || 0), 0),
+      awards: nationPlayers.reduce((sum, p) => sum + Number(p.awards || 0), 0),
     }
   }, [players, nation])
 
@@ -260,7 +275,7 @@ function DirectoryPage() {
 
         {/* Directory Card & Filters */}
         <div className="mb-8 p-5 sm:p-6 bg-[#0b1424]/90 border border-slate-800/90 backdrop-blur-md shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] relative overflow-hidden">
-          <div className="text-[9px] font-mono font-bold tracking-[0.28em] text-emerald-400 uppercase mb-1">
+          <div className="text-[9px] font-mono font-bold tracking-[0.28em] text-red-400 uppercase mb-1">
             SCOUTING DATABASE
           </div>
 
@@ -296,13 +311,13 @@ function DirectoryPage() {
               placeholder="Search player or club..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500/50 transition-colors"
             />
 
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
             >
               <option value="all">All Statuses</option>
               <option value="legend">Legend</option>
@@ -312,7 +327,7 @@ function DirectoryPage() {
             <select
               value={club}
               onChange={(e) => setClub(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
             >
               <option value="all">All Clubs</option>
               {clubs.map((c) => (
@@ -325,7 +340,7 @@ function DirectoryPage() {
             <select
               value={nation}
               onChange={(e) => setNation(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
             >
               <option value="all">All Nations</option>
               {nations.map((n) => (
@@ -457,9 +472,11 @@ function DirectoryPage() {
             {nationLegacyStats && (() => {
               const values = [nationLegacyStats.apps, nationLegacyStats.goals, nationLegacyStats.trophies, nationLegacyStats.awards]
               const maxValue = Math.max(...values, 1)
-              const nationPlayer = players.find((p) => (p.nationality || p.nation) === nationLegacyStats.name)
-              const flagUrl = storageUrl(nationPlayer?.nationality_flag_url || nationPlayer?.nation_flag || '')
-
+              const nationPlayer = players.find(
+                (p) => String(p.nationality ?? p.nation ?? '').trim() === nationLegacyStats.name,
+              )
+              const rawFlag = nationPlayer?.nationality_flag_url ?? nationPlayer?.nation_flag ?? ''
+              const flagUrl = storageUrl(String(rawFlag || ''))
               const nationColor = TEAM_COLORS[nationLegacyStats.name] || '#ef4444'
 
               return (
@@ -492,7 +509,7 @@ function DirectoryPage() {
                         <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide">
                           <Link
                             to="/nation/$nation"
-                            params={{ nation: nationLegacyStats.name }}
+                            params={{ nation: String(nationLegacyStats.name) }}
                             className="text-white transition-colors duration-200 hover:text-red-300 focus-visible:outline-none focus-visible:text-red-300"
                             aria-label={`Open ${nationLegacyStats.name} nation dossier`}
                           >

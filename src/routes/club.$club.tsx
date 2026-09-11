@@ -405,7 +405,7 @@ function ClubPage() {
                   className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3 transition-colors hover:border-slate-600"
                 >
                   <div className="flex h-8 w-11 items-center justify-center">
-                    {info.flag ? <img src={info.flag} alt="" className="max-h-6 max-w-9 object-contain" /> : null}
+                    {info.flag ? <img src={storageUrl(info.flag)} alt="" className="max-h-6 max-w-9 object-contain" /> : null}
                   </div>
                   <span className="flex-1 truncate font-heading font-bold uppercase text-white">{name}</span>
                   <span className="font-mono text-[9px] text-slate-500">{info.count}</span>

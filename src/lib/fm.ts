@@ -95,17 +95,40 @@ export const list = (row: Row | undefined, keys: string[]): string[] => {
 };
 
 /**
- * Image columns hold either a bare storage path or a URL still pointing at the
- * placeholder project ref, so every image is normalised to the public bucket.
+ * Image assets are now served from the Cloudflare R2 public development URL.
+ *
+ * Database rows may still contain:
+ * - a bare path such as `players/arceon.png`
+ * - a bucket-prefixed path such as `fm-images/players/arceon.png`
+ * - an old Supabase public Storage URL
+ * - a different absolute URL that should remain untouched
+ *
+ * Normalising all of those forms here lets the rest of the app keep using the
+ * same `storageUrl()` helper while image delivery moves off Supabase Storage.
  */
-const BUCKET = "https://fenmghxzmawubuxavrol.supabase.co/storage/v1/object/public/fm-images/";
+const R2_BUCKET = "https://pub-b0a2d4bf95e34c0aaa79ae7f6f1dddd3.r2.dev/";
+const SUPABASE_PUBLIC_BUCKET = "/storage/v1/object/public/fm-images/";
 
 export const storageUrl = (value: string): string => {
   if (!value) return "";
-  const placeholder = /^https?:\/\/[^/]*(YOUR-PROJECT-REF|your-project-ref)[^/]*\.supabase\.co\/storage\/v1\/object\/public\/([^/]+)\//;
-  if (placeholder.test(value)) return value.replace(placeholder, BUCKET);
-  if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
-  return BUCKET + value.replace(/^\/+/, "").replace(/^fm-images\//, "");
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("data:")) return trimmed;
+
+  // Preserve unrelated absolute URLs. Convert both known Supabase public
+  // Storage URL shapes into the new R2 object path instead.
+  if (/^https?:\/\//i.test(trimmed)) {
+    const markerIndex = trimmed.indexOf(SUPABASE_PUBLIC_BUCKET);
+    if (markerIndex >= 0) {
+      return R2_BUCKET + decodeURIComponent(trimmed.slice(markerIndex + SUPABASE_PUBLIC_BUCKET.length));
+    }
+
+    return trimmed;
+  }
+
+  const objectPath = trimmed.replace(/^\/+/, "").replace(/^fm-images\//, "");
+  return R2_BUCKET + objectPath;
 };
 
 export interface Player {

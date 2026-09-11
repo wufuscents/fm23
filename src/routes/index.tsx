@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
+import { storageUrl } from '../lib/fm'
 import { PlayerCard } from '../components/fm/PlayerCard'
 import { TEAM_COLORS } from '../lib/team-colors'
 import { ArchiveHeader } from '../components/fm/ArchiveHeader'
@@ -60,6 +61,33 @@ function DirectoryPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [genderMode, setGenderMode] = useState<'both' | 'male' | 'female'>('male')
+
+  const genderTheme = useMemo(() => {
+    if (genderMode === 'female') {
+      return {
+        text: 'text-pink-400',
+        border: 'border-pink-500/50',
+        focusBorder: 'focus:border-pink-500/60',
+        glow: 'rgba(236,72,153,0.18)',
+      }
+    }
+
+    if (genderMode === 'both') {
+      return {
+        text: 'text-violet-400',
+        border: 'border-violet-500/50',
+        focusBorder: 'focus:border-violet-500/60',
+        glow: 'rgba(139,92,246,0.18)',
+      }
+    }
+
+    return {
+      text: 'text-red-400',
+      border: 'border-red-500/50',
+      focusBorder: 'focus:border-red-500/60',
+      glow: 'rgba(239,68,68,0.18)',
+    }
+  }, [genderMode])
   const [club, setClub] = useState('all')
   const [nation, setNation] = useState('all')
   const [sortBy, setSortBy] = useState('trophies')
@@ -262,16 +290,17 @@ function DirectoryPage() {
       style={{
         backgroundImage: `
           radial-gradient(circle at 10% 20%, ${leftColor} 0%, transparent 45%),
-          radial-gradient(circle at 90% 20%, ${rightColor} 0%, transparent 45%)
+          radial-gradient(circle at 90% 20%, ${rightColor} 0%, transparent 45%),
+          radial-gradient(circle at 50% -10%, ${genderTheme.glow} 0%, transparent 42%)
         `,
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
-        <ArchiveHeader active="directory" />
+        <ArchiveHeader active="directory" directoryGender={genderMode} />
 
         {/* Directory Card & Filters */}
-        <div className="mb-8 p-5 sm:p-6 bg-[#0b1424]/90 border border-slate-800/90 backdrop-blur-md shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] relative overflow-hidden">
-          <div className="text-[9px] font-mono font-bold tracking-[0.28em] text-red-400 uppercase mb-1">
+        <div className={`mb-8 p-5 sm:p-6 bg-[#0b1424]/90 border ${genderTheme.border} backdrop-blur-md shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] relative overflow-hidden`}>
+          <div className={`text-[9px] font-mono font-bold tracking-[0.28em] ${genderTheme.text} uppercase mb-1`}>
             SCOUTING DATABASE
           </div>
 
@@ -280,21 +309,11 @@ function DirectoryPage() {
               onClick={toggleGenderMode}
               type="button"
               className="text-left group focus:outline-none flex items-center gap-3"
+              aria-label="Toggle gender filter"
             >
               <h1 className="font-heading text-3xl sm:text-5xl font-extrabold text-white tracking-[0.04em]">
                 SQUAD DIRECTORY
               </h1>
-              <span
-                className={`text-xs font-mono px-2 py-0.5 rounded border font-bold transition-colors ${
-                  genderMode === 'male'
-                    ? 'border-red-500/60 bg-red-500/15 text-red-300'
-                    : genderMode === 'female'
-                      ? 'border-pink-500/60 bg-pink-500/15 text-pink-300'
-                      : 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                }`}
-              >
-                {genderMode === 'male' ? 'M' : genderMode === 'female' ? 'F' : 'M + F'}
-              </span>
             </button>
           </div>
 
@@ -308,13 +327,13 @@ function DirectoryPage() {
               placeholder="Search player or club..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500/50 transition-colors"
+              className={`bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none ${genderTheme.focusBorder} transition-colors`}
             />
 
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
+              className={`bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none ${genderTheme.focusBorder} transition-colors`}
             >
               <option value="all">All Statuses</option>
               <option value="legend">Legend</option>
@@ -324,7 +343,7 @@ function DirectoryPage() {
             <select
               value={club}
               onChange={(e) => setClub(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
+              className={`bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none ${genderTheme.focusBorder} transition-colors`}
             >
               <option value="all">All Clubs</option>
               {clubs.map((c) => (
@@ -337,7 +356,7 @@ function DirectoryPage() {
             <select
               value={nation}
               onChange={(e) => setNation(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
+              className={`bg-slate-950/80 border border-slate-800 rounded-sm px-3 py-2 text-sm text-white focus:outline-none ${genderTheme.focusBorder} transition-colors`}
             >
               <option value="all">All Nations</option>
               {nations.map((n) => (

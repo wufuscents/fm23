@@ -51,8 +51,40 @@ const links: Array<{ key: ArchiveSection; label: string; to: '/' | '/hall-of-fam
   { key: 'compare', label: 'COMPARE', to: '/compare' },
 ]
 
-export function ArchiveHeader({ active }: { active: ArchiveSection }) {
-  const config = sectionConfig[active]
+type DirectoryGender = 'male' | 'female' | 'both'
+
+const directoryGenderConfig: Record<DirectoryGender, Pick<typeof sectionConfig.directory, 'dot' | 'active' | 'underline' | 'tint'>> = {
+  male: {
+    dot: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.45)]',
+    active: 'text-red-400',
+    underline: 'bg-red-400',
+    tint: 'bg-red-400/10',
+  },
+  female: {
+    dot: 'bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.45)]',
+    active: 'text-pink-400',
+    underline: 'bg-pink-400',
+    tint: 'bg-pink-400/10',
+  },
+  both: {
+    dot: 'bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.45)]',
+    active: 'text-violet-400',
+    underline: 'bg-violet-400',
+    tint: 'bg-violet-400/10',
+  },
+}
+
+export function ArchiveHeader({
+  active,
+  directoryGender = 'male',
+}: {
+  active: ArchiveSection
+  directoryGender?: DirectoryGender
+}) {
+  const baseConfig = sectionConfig[active]
+  const config = active === 'directory'
+    ? { ...baseConfig, ...directoryGenderConfig[directoryGender] }
+    : baseConfig
 
   return (
     <header className="flex flex-col gap-4 border-b border-slate-800/90 pb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -70,7 +102,9 @@ export function ArchiveHeader({ active }: { active: ArchiveSection }) {
 
       <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
         {links.map((item) => {
-          const itemConfig = sectionConfig[item.key]
+          const itemConfig = item.key === 'directory' && active === 'directory'
+            ? config
+            : sectionConfig[item.key]
           const isActive = item.key === active
 
           return (

@@ -217,7 +217,7 @@ function PlayerProfilePage() {
                       params={{ nation: playerNation }}
                       className="inline-flex items-center gap-2 border border-white/10 bg-slate-950/50 px-2.5 py-1 font-mono text-[10px] text-slate-300 hover:border-white/30 hover:text-white transition-colors"
                     >
-                      <img src={playerFlag} alt={playerNation} className="h-5 w-7 max-h-5 max-w-7 shrink-0 rounded-sm object-contain" />
+                      <img src={storageUrl(playerFlag)} alt={playerNation} className="h-5 w-7 max-h-5 max-w-7 shrink-0 rounded-sm object-contain" />
                       {playerNation}
                     </Link>
                   )}

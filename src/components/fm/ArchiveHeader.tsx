@@ -1,4 +1,6 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
+import { useRef, type MouseEvent } from 'react'
+import { clearArchiveSession } from '../../lib/archive-auth'
 
 type ArchiveSection = 'directory' | 'hall' | 'records' | 'compare'
 
@@ -51,6 +53,13 @@ const links: Array<{ key: ArchiveSection; label: string; to: '/' | '/hall-of-fam
   { key: 'compare', label: 'COMPARE', to: '/compare' },
 ]
 
+const HIDDEN_LOGOUT_CLICK_WINDOW_MS = 2000
+const HIDDEN_LOGOUT_REQUIRED_CLICKS = 5
+
+// Module-level so the click sequence survives route changes caused by the header link.
+let hiddenLogoutClicks = 0
+let hiddenLogoutLastClickAt = 0
+
 type DirectoryGender = 'male' | 'female' | 'both'
 
 const directoryGenderConfig: Record<DirectoryGender, Pick<typeof sectionConfig.directory, 'dot' | 'active' | 'underline' | 'tint'>> = {
@@ -81,6 +90,37 @@ export function ArchiveHeader({
   active: ArchiveSection
   directoryGender?: DirectoryGender
 }) {
+  const router = useRouter()
+  const logoutResetTimer = useRef<number | null>(null)
+
+  const handleHiddenLogoutClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    const now = Date.now()
+
+    if (now - hiddenLogoutLastClickAt > HIDDEN_LOGOUT_CLICK_WINDOW_MS) {
+      hiddenLogoutClicks = 0
+    }
+
+    hiddenLogoutLastClickAt = now
+    hiddenLogoutClicks += 1
+
+    if (logoutResetTimer.current !== null) {
+      window.clearTimeout(logoutResetTimer.current)
+    }
+
+    logoutResetTimer.current = window.setTimeout(() => {
+      hiddenLogoutClicks = 0
+      hiddenLogoutLastClickAt = 0
+    }, HIDDEN_LOGOUT_CLICK_WINDOW_MS)
+
+    if (hiddenLogoutClicks >= HIDDEN_LOGOUT_REQUIRED_CLICKS) {
+      event.preventDefault()
+      hiddenLogoutClicks = 0
+      hiddenLogoutLastClickAt = 0
+      clearArchiveSession()
+      router.navigate({ to: '/login', replace: true })
+    }
+  }
+
   const baseConfig = sectionConfig[active]
   const config = active === 'directory'
     ? { ...baseConfig, ...directoryGenderConfig[directoryGender] }
@@ -88,7 +128,12 @@ export function ArchiveHeader({
 
   return (
     <header className="flex flex-col gap-4 border-b border-slate-800/90 pb-5 sm:flex-row sm:items-end sm:justify-between">
-      <Link to="/" className="min-w-0 group">
+      <Link
+        to="/"
+        className="min-w-0 group"
+        onClick={handleHiddenLogoutClick}
+        aria-label="FM Squad Archive"
+      >
         <div className="flex items-center gap-3">
           <span className={`h-3 w-3 shrink-0 rounded-full animate-pulse ${config.dot}`} />
           <span className="font-heading text-xl font-extrabold tracking-[0.12em] text-white transition-colors group-hover:text-slate-100">

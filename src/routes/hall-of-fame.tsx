@@ -61,51 +61,52 @@ function FeaturedMember({ player, rank, featuredLabel }: { player: Player; rank:
     <Link
       to="/player/$id"
       params={{ id: String(player.id) }}
-      className="group relative overflow-hidden rounded-xl border bg-[#0a1220] p-4 transition-all duration-300 hover:-translate-y-1"
+      className="group relative flex min-h-[318px] flex-col overflow-hidden rounded-xl border bg-[#0a1220] p-5 transition-all duration-300 hover:-translate-y-1"
       style={{ borderColor: `${accent}35`, boxShadow: `inset 0 1px 0 ${accent}15` }}
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent_45%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.055),transparent_42%)]"
         aria-hidden="true"
       />
-      <div className="relative flex items-center gap-4">
-        <div className="flex w-10 shrink-0 flex-col items-center">
+
+      <div className="relative flex items-start justify-between gap-3 border-b border-white/5 pb-3">
+        <div>
           <div className="font-mono text-[8px] uppercase tracking-[0.25em] text-slate-600">Rank</div>
-          <div className="mt-1 font-display text-3xl font-black" style={{ color: accent }}>
+          <div className="mt-0.5 font-display text-3xl font-black" style={{ color: accent }}>
             {rank}
           </div>
         </div>
-
-        <div
-          className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-slate-950 p-1"
-          style={{ borderColor: `${accent}38` }}
-        >
-          <PlayerPortrait player={player} className="h-full w-full" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="font-mono text-[8px] uppercase tracking-[0.25em]" style={{ color: accent }}>
-            {featuredLabel}
+        <div className="text-right">
+          <div className="font-mono text-[8px] uppercase tracking-[0.22em]" style={{ color: accent }}>
+            Featured Legacy
           </div>
-          <h3 className="mt-1 truncate font-display text-2xl font-black uppercase tracking-wide text-white transition-colors group-hover:text-amber-200">
-            {player.name}
-          </h3>
-          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
-            <span style={{ color: accent }}>{isLegend ? 'LEGEND' : 'ICON'}</span>
-            <span className="text-slate-700">•</span>
-            {flag ? <Flag url={flag} name={nation} /> : null}
-            <span>{nation}</span>
+          <div className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-slate-600">
+            File / {featuredLabel}
           </div>
-        </div>
-
-        <div className="hidden shrink-0 grid-cols-3 gap-2 text-center sm:grid">
-          <MuseumStat label="TROPHIES" value={trophies} />
-          <MuseumStat label="GOALS" value={goals} />
-          <MuseumStat label="G+A" value={goals + assists} />
         </div>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-3 gap-2 border-t border-white/5 pt-3 text-center font-mono sm:hidden">
+      <div className="relative flex flex-1 flex-col items-center justify-center py-5 text-center">
+        <div
+          className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border bg-slate-950 p-1.5"
+          style={{ borderColor: `${accent}38` }}
+        >
+          <PlayerPortrait player={player} className="h-full w-full rounded-md" />
+        </div>
+
+        <h3 className="mt-4 min-h-[3.75rem] max-w-full font-display text-2xl font-black uppercase leading-tight tracking-wide text-white transition-colors group-hover:text-amber-200">
+          {player.name}
+        </h3>
+
+        <div className="mt-2 flex min-h-[24px] items-center justify-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">
+          <span style={{ color: accent }}>{isLegend ? 'LEGEND' : 'ICON'}</span>
+          <span className="text-slate-700">•</span>
+          {flag ? <Flag url={flag} name={nation} /> : null}
+          <span>{nation}</span>
+        </div>
+      </div>
+
+      <div className="relative grid grid-cols-3 border-t border-white/5 pt-3 text-center font-mono">
         <MuseumStat label="TROPHIES" value={trophies} />
         <MuseumStat label="GOALS" value={goals} />
         <MuseumStat label="G+A" value={goals + assists} />
@@ -204,54 +205,32 @@ function HallOfFamePage() {
   return (
     <div className="min-h-screen bg-slate-950 p-4 text-slate-100 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="border-b border-slate-800 pb-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <header className="border-b border-slate-800 pb-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <span className="grid h-8 w-8 place-items-center border border-amber-400/40 bg-amber-400/10 font-display text-lg font-black text-amber-300">
-                  H
-                </span>
-                <div>
-                  <div className="font-display text-xl font-black uppercase tracking-[0.16em] text-white">
-                    FM Squad Archive
-                  </div>
-                  <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.28em] text-slate-600">
-                    Football museum • legacy collection
-                  </div>
-                </div>
+                <span className="h-3 w-3 rounded-full bg-amber-400" />
+                <span className="font-heading text-xl font-extrabold tracking-wider text-white">FM SQUAD ARCHIVE</span>
               </div>
+              <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">
+                Football museum • legacy collection
+              </p>
             </div>
 
-            <nav className="flex flex-wrap gap-1 font-display text-[10px] uppercase tracking-[0.18em] sm:text-xs">
-              <Link
-                to="/"
-                className="border border-transparent px-3 py-2 text-slate-500 transition-colors hover:text-white"
-              >
-                Directory
-              </Link>
+            <nav className="flex items-center gap-5 overflow-x-auto whitespace-nowrap font-mono text-xs uppercase tracking-widest text-slate-400">
+              <Link to="/" className="transition-colors hover:text-white">DIRECTORY</Link>
               <Link
                 to="/hall-of-fame"
-                activeProps={{ className: 'border-amber-400/40 bg-amber-400/10 text-amber-300' }}
-                className="border border-transparent px-3 py-2 font-bold text-slate-500 transition-colors hover:text-white"
+                activeProps={{ className: 'text-amber-300 font-bold border-b-2 border-amber-300 pb-1' }}
+                className="transition-colors hover:text-white"
               >
-                Hall of Fame
+                HALL OF FAME
               </Link>
-              <Link
-                to="/leaderboards"
-                className="border border-transparent px-3 py-2 text-slate-500 transition-colors hover:text-white"
-              >
-                Records
-              </Link>
-              <Link
-                to="/compare"
-                className="border border-transparent px-3 py-2 text-slate-500 transition-colors hover:text-white"
-              >
-                Compare
-              </Link>
+              <Link to="/leaderboards" className="transition-colors hover:text-white">RECORDS</Link>
+              <Link to="/compare" className="transition-colors hover:text-white">COMPARE</Link>
             </nav>
           </div>
         </header>
-
         <section className="relative overflow-hidden border border-amber-400/20 bg-[linear-gradient(135deg,rgba(22,18,10,0.98),rgba(10,16,28,0.98))] p-6 sm:p-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(251,191,36,0.10),transparent_36%),radial-gradient(circle_at_85%_100%,rgba(148,163,184,0.05),transparent_35%)]" />
           <div className="relative max-w-4xl">

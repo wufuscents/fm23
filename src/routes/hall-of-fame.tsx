@@ -17,169 +17,337 @@ export const Route = createFileRoute('/hall-of-fame')({
   component: HallOfFamePage,
 })
 
-type Category = 'legends' | 'icons' | 'decorated'
+type Category = 'legends' | 'icons'
 
-function statusKind(player: Player) {
+type StatusKind = 'legend' | 'icon' | 'other'
+
+function statusKind(player: Player): StatusKind {
   const value = String((player as any).status || '').trim().toLowerCase()
   if (value.includes('legend')) return 'legend'
   if (value.includes('icon')) return 'icon'
   return 'other'
 }
 
-function numeric(player: Player, key: string) {
+function numeric(player: Player, key: string): number {
   return Number((player as any)[key] ?? 0)
 }
 
-function HallPlayerCard({ player, rank, category }: { player: Player; rank: number; category: Category }) {
+function PlayerPortrait({ player, className }: { player: Player; className: string }) {
+  const image = String((player as any).image_url || (player as any).photo_url || '')
+  return (
+    <div className={`overflow-hidden bg-slate-950 ${className}`}>
+      {image ? (
+        <img src={storageUrl(image)} alt={player.name} className="h-full w-full object-contain" loading="lazy" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center font-mono text-[8px] uppercase tracking-widest text-slate-700">
+          No Portrait
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FeaturedMember({ player, rank, featuredLabel }: { player: Player; rank: number; featuredLabel: string }) {
   const kind = statusKind(player)
-  const accent = kind === 'legend' ? '#fbbf24' : '#cbd5e1'
+  const isLegend = kind === 'legend'
+  const accent = isLegend ? '#fbbf24' : '#cbd5e1'
   const nation = String((player as any).nationality || (player as any).nation || 'Unknown')
   const flag = String((player as any).nationality_flag_url || (player as any).nation_flag || '')
-  const image = String((player as any).image_url || (player as any).photo_url || '')
-  const label = category === 'decorated' ? 'TROPHIES' : kind === 'legend' ? 'LEGEND' : 'ICON'
+  const trophies = numeric(player, 'trophies')
+  const goals = numeric(player, 'goals')
+  const assists = numeric(player, 'assists')
 
   return (
     <Link
       to="/player/$id"
       params={{ id: String(player.id) }}
-      className="group relative block overflow-hidden rounded-2xl border bg-slate-900/75 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-slate-900"
-      style={{ borderColor: `${accent}38`, boxShadow: `inset 3px 0 0 ${accent}cc` }}
+      className="group relative overflow-hidden rounded-xl border bg-[#0a1220] p-4 transition-all duration-300 hover:-translate-y-1"
+      style={{ borderColor: `${accent}35`, boxShadow: `inset 0 1px 0 ${accent}15` }}
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full blur-3xl opacity-10 transition-opacity group-hover:opacity-20" style={{ backgroundColor: accent }} />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent_45%)]"
+        aria-hidden="true"
+      />
       <div className="relative flex items-center gap-4">
-        <div className="w-10 shrink-0 text-center font-heading text-2xl font-black" style={{ color: rank <= 3 ? accent : '#64748b' }}>
-          {rank}
-        </div>
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-slate-950 p-1">
-          {image ? <img src={storageUrl(image)} alt="" className="h-full w-full object-contain" /> : <span className="flex h-full items-center justify-center font-mono text-[8px] text-slate-600">NO IMG</span>}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-heading text-xl font-extrabold uppercase tracking-wide text-white group-hover:text-amber-300">{player.name}</h3>
-            {flag && <Flag url={flag} alt={nation} />}
+        <div className="flex w-10 shrink-0 flex-col items-center">
+          <div className="font-mono text-[8px] uppercase tracking-[0.25em] text-slate-600">Rank</div>
+          <div className="mt-1 font-display text-3xl font-black" style={{ color: accent }}>
+            {rank}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
-            <span style={{ color: accent }}>{kind === 'legend' ? 'LEGEND' : kind === 'icon' ? 'ICON' : 'ARCHIVE MEMBER'}</span>
-            <span>•</span>
+        </div>
+
+        <div
+          className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-slate-950 p-1"
+          style={{ borderColor: `${accent}38` }}
+        >
+          <PlayerPortrait player={player} className="h-full w-full" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="font-mono text-[8px] uppercase tracking-[0.25em]" style={{ color: accent }}>
+            {featuredLabel}
+          </div>
+          <h3 className="mt-1 truncate font-display text-2xl font-black uppercase tracking-wide text-white transition-colors group-hover:text-amber-200">
+            {player.name}
+          </h3>
+          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
+            <span style={{ color: accent }}>{isLegend ? 'LEGEND' : 'ICON'}</span>
+            <span className="text-slate-700">•</span>
+            {flag ? <Flag url={flag} name={nation} /> : null}
             <span>{nation}</span>
           </div>
         </div>
-        <div className="shrink-0 text-right">
-          <div className="font-heading text-2xl font-black text-white">{numeric(player, 'trophies').toLocaleString()}</div>
-          <div className="font-mono text-[8px] uppercase tracking-widest" style={{ color: accent }}>{label}</div>
+
+        <div className="hidden shrink-0 grid-cols-3 gap-2 text-center sm:grid">
+          <MuseumStat label="TROPHIES" value={trophies} />
+          <MuseumStat label="GOALS" value={goals} />
+          <MuseumStat label="G+A" value={goals + assists} />
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-4 gap-2 border-t border-white/5 pt-3 text-center font-mono">
-        <MiniStat label="APPS" value={numeric(player, 'apps')} />
-        <MiniStat label="GOALS" value={numeric(player, 'goals')} />
-        <MiniStat label="ASSISTS" value={numeric(player, 'assists')} />
-        <MiniStat label="G+A" value={numeric(player, 'goals') + numeric(player, 'assists')} />
+
+      <div className="relative mt-4 grid grid-cols-3 gap-2 border-t border-white/5 pt-3 text-center font-mono sm:hidden">
+        <MuseumStat label="TROPHIES" value={trophies} />
+        <MuseumStat label="GOALS" value={goals} />
+        <MuseumStat label="G+A" value={goals + assists} />
       </div>
     </Link>
   )
 }
 
-function MiniStat({ label, value }: { label: string; value: number }) {
-  return <div><div className="text-sm font-bold text-slate-200">{value.toLocaleString()}</div><div className="mt-0.5 text-[7px] uppercase tracking-widest text-slate-600">{label}</div></div>
+function MuseumStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="font-display text-lg font-black text-white">{value.toLocaleString()}</div>
+      <div className="mt-0.5 text-[7px] uppercase tracking-[0.2em] text-slate-600">{label}</div>
+    </div>
+  )
+}
+
+function CollectionCard({ player, rank, category }: { player: Player; rank: number; category: Category }) {
+  const kind = statusKind(player)
+  const isLegend = kind === 'legend'
+  const accent = isLegend ? '#fbbf24' : '#cbd5e1'
+  const nation = String((player as any).nationality || (player as any).nation || 'Unknown')
+  const flag = String((player as any).nationality_flag_url || (player as any).nation_flag || '')
+
+  return (
+    <Link
+      to="/player/$id"
+      params={{ id: String(player.id) }}
+      className="group relative flex overflow-hidden rounded-lg border border-slate-800 bg-slate-950/60 p-3 transition-all duration-300 hover:border-slate-600 hover:bg-slate-900/80"
+    >
+      <div className="mr-3 flex w-8 shrink-0 flex-col items-center justify-between py-1">
+        <span className="font-mono text-[8px] uppercase tracking-widest text-slate-600">#{rank}</span>
+        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
+      </div>
+
+      <PlayerPortrait
+        player={player}
+        className="h-16 w-16 shrink-0 rounded-md border border-white/5 p-1"
+      />
+
+      <div className="ml-3 min-w-0 flex-1 self-center">
+        <div className="flex items-center gap-2">
+          <h3 className="truncate font-display text-lg font-bold uppercase tracking-wide text-white group-hover:text-amber-200">
+            {player.name}
+          </h3>
+          {flag ? <Flag url={flag} name={nation} /> : null}
+        </div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[8px] uppercase tracking-[0.18em] text-slate-600">
+          <span style={{ color: accent }}>{isLegend ? 'LEGEND' : category === 'icons' ? 'ICON' : 'ARCHIVE'}</span>
+          <span>•</span>
+          <span>{nation}</span>
+        </div>
+      </div>
+
+      <div className="self-center pl-3 text-right">
+        <div className="font-display text-xl font-black text-white">{numeric(player, 'trophies').toLocaleString()}</div>
+        <div className="font-mono text-[7px] uppercase tracking-[0.18em] text-slate-600">TROPHIES</div>
+      </div>
+    </Link>
+  )
 }
 
 function HallOfFamePage() {
   const { players } = Route.useLoaderData()
   const [category, setCategory] = useState<Category>('legends')
 
-  const legends = useMemo(() => players.filter((p) => statusKind(p) === 'legend').sort((a, b) => numeric(b, 'trophies') - numeric(a, 'trophies') || numeric(b, 'goals') - numeric(a, 'goals')), [players])
-  const icons = useMemo(() => players.filter((p) => statusKind(p) === 'icon').sort((a, b) => numeric(b, 'trophies') - numeric(a, 'trophies') || numeric(b, 'goals') - numeric(a, 'goals')), [players])
-  const decorated = useMemo(() => players.filter((p) => statusKind(p) === 'legend' || statusKind(p) === 'icon').sort((a, b) => numeric(b, 'trophies') - numeric(a, 'trophies') || numeric(b, 'goals') - numeric(a, 'goals')), [players])
+  const legends = useMemo(
+    () =>
+      players
+        .filter((player) => statusKind(player) === 'legend')
+        .sort(
+          (a, b) =>
+            numeric(b, 'trophies') - numeric(a, 'trophies') ||
+            numeric(b, 'goals') - numeric(a, 'goals') ||
+            numeric(b, 'assists') - numeric(a, 'assists'),
+        ),
+    [players],
+  )
 
-  const ranked = category === 'legends' ? legends : category === 'icons' ? icons : decorated
-  const featured = legends[0]
-  const legendCount = legends.length
-  const iconCount = icons.length
+  const icons = useMemo(
+    () =>
+      players
+        .filter((player) => statusKind(player) === 'icon')
+        .sort(
+          (a, b) =>
+            numeric(b, 'trophies') - numeric(a, 'trophies') ||
+            numeric(b, 'goals') - numeric(a, 'goals') ||
+            numeric(b, 'assists') - numeric(a, 'assists'),
+        ),
+    [players],
+  )
+
+  const featured = legends.slice(0, 3)
+  const activeCollection = category === 'legends' ? legends : icons
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 text-slate-100 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col gap-4 border-b border-slate-800 pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
-              <span className="font-heading text-xl font-extrabold tracking-wider text-white">FM SQUAD ARCHIVE</span>
+        <header className="border-b border-slate-800 pb-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="grid h-8 w-8 place-items-center border border-amber-400/40 bg-amber-400/10 font-display text-lg font-black text-amber-300">
+                  H
+                </span>
+                <div>
+                  <div className="font-display text-xl font-black uppercase tracking-[0.16em] text-white">
+                    FM Squad Archive
+                  </div>
+                  <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.28em] text-slate-600">
+                    Football museum • legacy collection
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">Legacy archive</p>
+
+            <nav className="flex flex-wrap gap-1 font-display text-[10px] uppercase tracking-[0.18em] sm:text-xs">
+              <Link
+                to="/"
+                className="border border-transparent px-3 py-2 text-slate-500 transition-colors hover:text-white"
+              >
+                Directory
+              </Link>
+              <Link
+                to="/hall-of-fame"
+                activeProps={{ className: 'border-amber-400/40 bg-amber-400/10 text-amber-300' }}
+                className="border border-transparent px-3 py-2 font-bold text-slate-500 transition-colors hover:text-white"
+              >
+                Hall of Fame
+              </Link>
+              <Link
+                to="/leaderboards"
+                className="border border-transparent px-3 py-2 text-slate-500 transition-colors hover:text-white"
+              >
+                Records
+              </Link>
+              <Link
+                to="/compare"
+                className="border border-transparent px-3 py-2 text-slate-500 transition-colors hover:text-white"
+              >
+                Compare
+              </Link>
+            </nav>
           </div>
-          <nav className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
-            <Link to="/" className="transition-colors hover:text-white">DIRECTORY</Link>
-            <Link to="/hall-of-fame" className="border-b-2 border-emerald-400 pb-1 font-bold text-emerald-400">HALL OF FAME</Link>
-            <Link to="/leaderboards" className="transition-colors hover:text-white">RECORDS</Link>
-            <Link to="/compare" className="transition-colors hover:text-white">COMPARE</Link>
-          </nav>
         </header>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 backdrop-blur-md sm:p-6">
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-400">Legacy Archive</div>
-          <h1 className="mt-1 font-heading text-3xl font-extrabold uppercase tracking-wide text-white sm:text-4xl">Hall of Fame</h1>
-          <p className="mt-2 max-w-3xl font-mono text-xs leading-relaxed text-slate-500">The museum floor of the archive — a dedicated home for Legends, Icons, and the players whose legacy earned a permanent place in history.</p>
+        <section className="relative overflow-hidden border border-amber-400/20 bg-[linear-gradient(135deg,rgba(22,18,10,0.98),rgba(10,16,28,0.98))] p-6 sm:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(251,191,36,0.10),transparent_36%),radial-gradient(circle_at_85%_100%,rgba(148,163,184,0.05),transparent_35%)]" />
+          <div className="relative max-w-4xl">
+            <div className="font-mono text-[9px] uppercase tracking-[0.32em] text-amber-400">Permanent Collection / 06</div>
+            <h1 className="mt-2 font-display text-4xl font-black uppercase tracking-[0.02em] text-white sm:text-6xl">
+              Hall of Fame
+            </h1>
+            <p className="mt-3 max-w-3xl font-mono text-xs leading-relaxed text-slate-500 sm:text-sm">
+              The museum floor of FM Squad Archive. Legends and Icons are preserved here as permanent members of football history — separate from the live statistical records room.
+            </p>
+          </div>
         </section>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatTile label="ARCHIVED PLAYERS" value={players.length} accent="#34d399" />
-          <StatTile label="LEGENDS" value={legendCount} accent="#fbbf24" />
-          <StatTile label="ICONS" value={iconCount} accent="#cbd5e1" />
+          <div className="border border-amber-400/20 bg-slate-900/60 p-5">
+            <div className="font-display text-3xl font-black text-amber-300">{legends.length.toLocaleString()}</div>
+            <div className="mt-1 font-mono text-[8px] uppercase tracking-[0.22em] text-slate-600">LEGENDS</div>
+          </div>
+          <div className="border border-slate-300/15 bg-slate-900/60 p-5">
+            <div className="font-display text-3xl font-black text-slate-100">{icons.length.toLocaleString()}</div>
+            <div className="mt-1 font-mono text-[8px] uppercase tracking-[0.22em] text-slate-600">ICONS</div>
+          </div>
+          <div className="border border-slate-800 bg-slate-900/60 p-5">
+            <div className="font-display text-3xl font-black text-white">{players.length.toLocaleString()}</div>
+            <div className="mt-1 font-mono text-[8px] uppercase tracking-[0.22em] text-slate-600">DATABASE MEMBERS</div>
+          </div>
         </section>
 
-        {featured && (
-          <Link to="/player/$id" params={{ id: String(featured.id) }} className="group relative block overflow-hidden rounded-2xl border border-amber-400/25 bg-slate-900/75 p-5 transition-all hover:border-amber-400/45 sm:p-7">
-            <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl" />
-            <div className="relative grid grid-cols-1 items-center gap-5 lg:grid-cols-[110px_100px_1fr_auto]">
-              <div className="text-center font-heading text-5xl font-black text-amber-300">#1</div>
-              <div className="mx-auto h-24 w-24 overflow-hidden rounded-2xl border border-amber-400/35 bg-slate-950 p-1 lg:mx-0">
-                {(featured as any).image_url ? <img src={storageUrl(String((featured as any).image_url))} alt="" className="h-full w-full object-contain" /> : null}
+        {featured.length > 0 && (
+          <section className="border border-slate-800 bg-slate-900/55 p-4 sm:p-6">
+            <div className="flex flex-col gap-2 border-b border-slate-800 pb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-amber-400">Curator Selection</div>
+                <h2 className="mt-1 font-display text-3xl font-black uppercase tracking-wide text-white">Featured Members</h2>
               </div>
-              <div className="min-w-0 text-center lg:text-left">
-                <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-amber-400">THE HALL'S CURRENT CROWN</div>
-                <h2 className="mt-1 font-heading text-3xl font-black uppercase tracking-wide text-white group-hover:text-amber-300 sm:text-4xl">{featured.name}</h2>
-                <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500 lg:justify-start">
-                  <span className="text-amber-300">LEGEND</span><span>•</span><span>{String((featured as any).nationality || 'Unknown')}</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center font-mono">
-                <FeatureStat label="TROPHIES" value={numeric(featured, 'trophies')} />
-                <FeatureStat label="GOALS" value={numeric(featured, 'goals')} />
-                <FeatureStat label="G+A" value={numeric(featured, 'goals') + numeric(featured, 'assists')} />
-              </div>
+              <div className="font-mono text-[8px] uppercase tracking-[0.24em] text-slate-600">Three highlighted legacy files</div>
             </div>
-          </Link>
+            <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              {featured.map((player, index) => (
+                <FeaturedMember
+                  key={player.id}
+                  player={player}
+                  rank={index + 1}
+                  featuredLabel={index === 0 ? 'Featured legacy / I' : `Featured legacy / ${index + 1}`}
+                />
+              ))}
+            </div>
+          </section>
         )}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/65 p-4 sm:p-6">
-          <div className="flex flex-col gap-4 border-b border-slate-800 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <section className="border border-slate-800 bg-slate-900/55 p-4 sm:p-6">
+          <div className="flex flex-col gap-4 border-b border-slate-800 pb-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-slate-500">Museum Collections</div>
-              <h2 className="mt-1 font-heading text-2xl font-black uppercase tracking-wide text-white">Legacy Archive</h2>
-              <p className="mt-1 font-mono text-[10px] text-slate-600">Records belong in Records. This floor is reserved for legacy status.</p>
+              <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-slate-600">Permanent Collections</div>
+              <h2 className="mt-1 font-display text-3xl font-black uppercase tracking-wide text-white">Legacy Wing</h2>
+              <p className="mt-1 font-mono text-[10px] text-slate-600">Browse the museum by official legacy classification.</p>
             </div>
-            <div className="flex flex-wrap gap-2 font-mono text-[10px] uppercase">
-              {([['legends', 'Legends'], ['icons', 'Icons'], ['decorated', 'Most Decorated Hall Members']] as const).map(([key, label]) => (
-                <button key={key} type="button" onClick={() => setCategory(key)} className={`rounded-lg border px-3 py-2 font-bold transition-all ${category === key ? 'border-amber-400/60 bg-amber-400 text-slate-950' : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'}`}>{label}</button>
-              ))}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCategory('legends')}
+                className={`border px-4 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.18em] transition-colors ${
+                  category === 'legends'
+                    ? 'border-amber-400/50 bg-amber-400/10 text-amber-300'
+                    : 'border-slate-800 bg-slate-950 text-slate-500 hover:text-white'
+                }`}
+              >
+                Legends
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategory('icons')}
+                className={`border px-4 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.18em] transition-colors ${
+                  category === 'icons'
+                    ? 'border-slate-300/30 bg-slate-200/10 text-slate-100'
+                    : 'border-slate-800 bg-slate-950 text-slate-500 hover:text-white'
+                }`}
+              >
+                Icons
+              </button>
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
-            {ranked.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-800 py-12 text-center font-mono text-xs uppercase tracking-widest text-slate-600">No members in this collection.</div>
-            ) : ranked.slice(0, 50).map((player, index) => <HallPlayerCard key={player.id} player={player} rank={index + 1} category={category} />)}
+          <div className="mt-5 grid gap-2 xl:grid-cols-2">
+            {activeCollection.length === 0 ? (
+              <div className="xl:col-span-2 border border-dashed border-slate-800 py-14 text-center font-mono text-xs uppercase tracking-widest text-slate-600">
+                No members in this collection.
+              </div>
+            ) : (
+              activeCollection.slice(0, 50).map((player, index) => (
+                <CollectionCard key={player.id} player={player} rank={index + 1} category={category} />
+              ))
+            )}
           </div>
         </section>
       </div>
     </div>
   )
-}
-
-function StatTile({ label, value, accent }: { label: string; value: number; accent: string }) {
-  return <div className="rounded-2xl border border-slate-800 bg-slate-900/65 p-5"><div className="font-heading text-3xl font-black" style={{ color: accent }}>{value.toLocaleString()}</div><div className="mt-1 font-mono text-[8px] uppercase tracking-widest text-slate-600">{label}</div></div>
-}
-
-function FeatureStat({ label, value }: { label: string; value: number }) {
-  return <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-3"><div className="font-heading text-xl font-black text-white">{value.toLocaleString()}</div><div className="mt-1 text-[7px] uppercase tracking-widest text-slate-600">{label}</div></div>
 }

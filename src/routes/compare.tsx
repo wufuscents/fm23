@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { Flag } from '../components/fm/PlayerCard'
+import { ArchiveHeader } from '../components/fm/ArchiveHeader'
 
 export const Route = createFileRoute('/compare')({
   loader: async () => {
@@ -307,21 +308,7 @@ function ComparePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-heading font-extrabold tracking-wider text-xl text-white">FM SQUAD ARCHIVE</span>
-            </div>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">Head-to-head player dossier</p>
-          </div>
-          <nav className="flex items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
-            <Link to="/" className="hover:text-white transition-colors">DIRECTORY</Link>
-            <Link to="/hall-of-fame" className="hover:text-white transition-colors">HALL OF FAME</Link>
-            <Link to="/leaderboards" className="hover:text-white transition-colors">RECORDS</Link>
-            <Link to="/compare" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">COMPARE</Link>
-          </nav>
-        </div>
+        <ArchiveHeader active="compare" />
 
         <div className="relative z-[100] p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
           <div className="flex items-end justify-between gap-3 mb-4">

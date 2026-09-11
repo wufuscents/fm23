@@ -423,8 +423,15 @@ function DirectoryPage() {
                           />
                           CLUB LEGACY
                         </div>
-                        <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-white">
-                          {clubLegacyStats.name}
+                        <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide">
+                          <Link
+                            to="/club/$club"
+                            params={{ club: clubLegacyStats.name }}
+                            className="text-white transition-colors duration-200 hover:text-sky-300 focus-visible:outline-none focus-visible:text-sky-300"
+                            aria-label={`Open ${clubLegacyStats.name} club dossier`}
+                          >
+                            {clubLegacyStats.name}
+                          </Link>
                         </h3>
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
                           {clubLegacyStats.count} profiles • legacy in numbers
@@ -432,10 +439,6 @@ function DirectoryPage() {
                       </div>
                     </div>
 
-                    <div className="hidden sm:block rounded-sm border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
-                      <div className="text-[9px] uppercase tracking-widest text-slate-500">Archive</div>
-                      <div className="text-xs font-bold text-slate-200">CLUB DOSSIER</div>
-                    </div>
                   </div>
 
                   <div className="relative z-10 mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -463,11 +466,8 @@ function DirectoryPage() {
                     })}
                   </div>
 
-                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
+                  <div className="relative z-10 mt-5 flex items-center border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <Link to="/club/$club" params={{ club: clubLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
-                      OPEN CLUB DOSSIER →
-                    </Link>
                   </div>
                 </div>
               )
@@ -508,8 +508,15 @@ function DirectoryPage() {
                           <span className="h-1.5 w-6 rounded-full bg-red-500" />
                           NATIONAL TEAM LEGACY
                         </div>
-                        <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-white">
-                          {nationLegacyStats.name}
+                        <h3 className="mt-1 truncate font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide">
+                          <Link
+                            to="/nation/$nation"
+                            params={{ nation: nationLegacyStats.name }}
+                            className="text-white transition-colors duration-200 hover:text-red-300 focus-visible:outline-none focus-visible:text-red-300"
+                            aria-label={`Open ${nationLegacyStats.name} nation dossier`}
+                          >
+                            {nationLegacyStats.name}
+                          </Link>
                         </h3>
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
                           {nationLegacyStats.count} profiles • national archive
@@ -517,10 +524,6 @@ function DirectoryPage() {
                       </div>
                     </div>
 
-                    <div className="hidden sm:block rounded-sm border border-white/10 bg-slate-950/50 px-3 py-2 text-right font-mono">
-                      <div className="text-[9px] uppercase tracking-widest text-slate-500">Archive</div>
-                      <div className="text-xs font-bold text-slate-200">NATION DOSSIER</div>
-                    </div>
                   </div>
 
                   <div className="relative z-10 mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -543,11 +546,8 @@ function DirectoryPage() {
                     })}
                   </div>
 
-                  <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
+                  <div className="relative z-10 mt-5 flex items-center border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
                     <span className="text-slate-600">FM SQUAD ARCHIVE</span>
-                    <Link to="/nation/$nation" params={{ nation: nationLegacyStats.name }} className="font-bold text-slate-400 transition-colors hover:text-white">
-                      OPEN NATION DOSSIER →
-                    </Link>
                   </div>
                 </div>
               )

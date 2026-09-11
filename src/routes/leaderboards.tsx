@@ -169,8 +169,8 @@ function LeaderboardsPage() {
         <ArchiveHeader active="records" />
 
         <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-          <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-400">Archive Records</p>
-          <h1 className="mt-1 font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-wide uppercase">HALL OF FAME</h1>
+          <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-blue-400">Archive Records</p>
+          <h1 className="mt-1 font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-wide uppercase">ARCHIVE RECORDS</h1>
           <p className="text-slate-400 text-xs font-mono mt-2 max-w-3xl">
             Career totals, efficiency records, honours, and the FM Squad Archive's composite GOAT score.
           </p>
@@ -182,7 +182,7 @@ function LeaderboardsPage() {
                 onClick={() => setMetric(m)}
                 className={`px-3 py-2 rounded-lg font-bold uppercase transition-all ${
                   metric === m
-                    ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                    ? 'bg-blue-500 text-slate-950 shadow-lg shadow-blue-500/20'
                     : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                 }`}
               >
@@ -203,7 +203,7 @@ function LeaderboardsPage() {
                 ) : <span className="text-[8px] text-slate-500">NO IMG</span>}
               </div>
               <div className="min-w-0 flex-1">
-                <Link to="/player/$id" params={{ id: String(leader.id) }} className="font-heading text-xl font-extrabold uppercase text-white hover:text-emerald-400 transition-colors">
+                <Link to="/player/$id" params={{ id: String(leader.id) }} className="font-heading text-xl font-extrabold uppercase text-white hover:text-blue-400 transition-colors">
                   {leader.name}
                 </Link>
                 <div className="mt-1 flex items-center gap-2 text-[10px] font-mono text-slate-400 uppercase">
@@ -287,7 +287,7 @@ function LeaderboardsPage() {
                           {(player as any).status || 'SQUAD'}
                         </span>
                       </td>
-                      <td className={`py-3 px-4 text-right font-extrabold text-base ${metric === 'goat' || metric === 'ballon_dor' || metric === 'trophies' ? 'text-amber-300' : 'text-emerald-300'}`}>
+                      <td className={`py-3 px-4 text-right font-extrabold text-base ${metric === 'goat' || metric === 'ballon_dor' || metric === 'trophies' ? 'text-amber-300' : 'text-blue-300'}`}>
                         {formatMetricValue(value, metric)}
                       </td>
                     </tr>

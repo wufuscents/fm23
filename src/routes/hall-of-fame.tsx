@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { Flag } from '../components/fm/PlayerCard'
+import { ArchiveHeader } from '../components/fm/ArchiveHeader'
 
 export const Route = createFileRoute('/hall-of-fame')({
   loader: async () => {
@@ -205,32 +206,7 @@ function HallOfFamePage() {
   return (
     <div className="min-h-screen bg-slate-950 p-4 text-slate-100 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="border-b border-slate-800 pb-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full bg-amber-400" />
-                <span className="font-heading text-xl font-extrabold tracking-wider text-white">FM SQUAD ARCHIVE</span>
-              </div>
-              <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">
-                Football museum • legacy collection
-              </p>
-            </div>
-
-            <nav className="flex items-center gap-5 overflow-x-auto whitespace-nowrap font-mono text-xs uppercase tracking-widest text-slate-400">
-              <Link to="/" className="transition-colors hover:text-white">DIRECTORY</Link>
-              <Link
-                to="/hall-of-fame"
-                activeProps={{ className: 'text-amber-300 font-bold border-b-2 border-amber-300 pb-1' }}
-                className="transition-colors hover:text-white"
-              >
-                HALL OF FAME
-              </Link>
-              <Link to="/leaderboards" className="transition-colors hover:text-white">RECORDS</Link>
-              <Link to="/compare" className="transition-colors hover:text-white">COMPARE</Link>
-            </nav>
-          </div>
-        </header>
+        <ArchiveHeader active="hall" />
         <section className="relative overflow-hidden border border-amber-400/20 bg-[linear-gradient(135deg,rgba(22,18,10,0.98),rgba(10,16,28,0.98))] p-6 sm:p-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(251,191,36,0.10),transparent_36%),radial-gradient(circle_at_85%_100%,rgba(148,163,184,0.05),transparent_35%)]" />
           <div className="relative max-w-4xl">

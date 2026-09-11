@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Player } from '../lib/types'
 import { PlayerCard } from '../components/fm/PlayerCard'
 import { TEAM_COLORS } from '../lib/team-colors'
+import { ArchiveHeader } from '../components/fm/ArchiveHeader'
 
 const PAGE_SIZE = 12
 
@@ -255,27 +256,7 @@ function DirectoryPage() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
-        {/* Navigation Header */}
-        <div className="flex flex-col gap-4 pb-5 mb-6 border-b border-slate-800/90 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="h-2 w-2 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.45)] animate-pulse" />
-            <span className="font-heading font-extrabold tracking-[0.12em] text-xl text-white">FM SQUAD ARCHIVE</span>
-          </div>
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
-            <Link to="/" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">
-              DIRECTORY
-            </Link>
-            <Link to="/hall-of-fame" className="hover:text-white transition-colors">
-              HALL OF FAME
-            </Link>
-            <Link to="/leaderboards" className="hover:text-white transition-colors">
-              RECORDS
-            </Link>
-            <Link to="/compare" className="hover:text-white transition-colors">
-              COMPARE
-            </Link>
-          </nav>
-        </div>
+        <ArchiveHeader active="directory" />
 
         {/* Directory Card & Filters */}
         <div className="mb-8 p-5 sm:p-6 bg-[#0b1424]/90 border border-slate-800/90 backdrop-blur-md shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] relative overflow-hidden">

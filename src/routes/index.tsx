@@ -74,7 +74,6 @@ function DirectoryPage() {
         const state = JSON.parse(saved) as {
           search?: string
           status?: string
-          genderMode?: 'both' | 'male' | 'female'
           club?: string
           nation?: string
           sortBy?: string
@@ -83,9 +82,6 @@ function DirectoryPage() {
 
         if (typeof state.search === 'string') setSearch(state.search)
         if (typeof state.status === 'string') setStatus(state.status)
-        if (state.genderMode === 'both' || state.genderMode === 'male' || state.genderMode === 'female') {
-          setGenderMode(state.genderMode)
-        }
         if (typeof state.club === 'string') setClub(state.club)
         if (typeof state.nation === 'string') setNation(state.nation)
         if (
@@ -113,9 +109,9 @@ function DirectoryPage() {
 
     localStorage.setItem(
       'fm_directory_state',
-      JSON.stringify({ search, status, genderMode, club, nation, sortBy, page }),
+      JSON.stringify({ search, status, club, nation, sortBy, page }),
     )
-  }, [filtersReady, search, status, genderMode, club, nation, sortBy, page])
+  }, [filtersReady, search, status, club, nation, sortBy, page])
 
   const toggleGenderMode = () => {
     setPage(1)
@@ -288,16 +284,17 @@ function DirectoryPage() {
               <h1 className="font-heading text-3xl sm:text-5xl font-extrabold text-white tracking-[0.04em]">
                 SQUAD DIRECTORY
               </h1>
-              {genderMode === 'male' && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-red-500/60 bg-red-500/15 text-red-300 font-bold">
-                  M
-                </span>
-              )}
-              {genderMode === 'female' && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded border border-red-500/60 bg-red-500/15 text-red-300 font-bold">
-                  F
-                </span>
-              )}
+              <span
+                className={`text-xs font-mono px-2 py-0.5 rounded border font-bold transition-colors ${
+                  genderMode === 'male'
+                    ? 'border-red-500/60 bg-red-500/15 text-red-300'
+                    : genderMode === 'female'
+                      ? 'border-pink-500/60 bg-pink-500/15 text-pink-300'
+                      : 'border-violet-500/60 bg-violet-500/15 text-violet-300'
+                }`}
+              >
+                {genderMode === 'male' ? 'M' : genderMode === 'female' ? 'F' : 'M + F'}
+              </span>
             </button>
           </div>
 

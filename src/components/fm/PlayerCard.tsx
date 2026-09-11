@@ -128,7 +128,7 @@ export function PlayerCard({ player }: { player: Player }) {
     <Link
       to="/player/$id"
       params={{ id: String(player.id) }}
-      className={`group relative flex flex-col justify-between p-4 rounded-xl border backdrop-blur-md transition-[transform,box-shadow,border-color] duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.015] hover:z-10 block overflow-hidden ${cardBackground} ${statusBorder} ${statusGlow} ${genderGlow}`}
+      className={`group relative flex flex-col justify-between p-4 rounded-xl border transition-[transform,box-shadow,border-color] duration-300 ease-out hover:-translate-y-1.5 hover:z-10 block overflow-hidden ${cardBackground} ${statusBorder} ${statusGlow} ${genderGlow}`}
     >
       {/* Subtle gender-colored ambient light */}
       <div

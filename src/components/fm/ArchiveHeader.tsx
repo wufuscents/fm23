@@ -78,10 +78,18 @@ export function ArchiveHeader({ active }: { active: ArchiveSection }) {
               key={item.key}
               to={item.to}
               className={`group relative whitespace-nowrap border-b-2 border-transparent pb-2 transition-colors hover:text-white ${
-                isActive ? `${itemConfig.active} ${itemConfig.underline} font-bold` : ''
+                isActive ? `${itemConfig.active} font-bold` : ''
               }`}
             >
-              {item.label}
+              <span className="relative inline-block">
+                {item.label}
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-0 right-0 -bottom-[9px] h-0.5 ${itemConfig.underline}`}
+                  />
+                )}
+              </span>
             </Link>
           )
         })}

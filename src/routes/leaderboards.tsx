@@ -239,60 +239,28 @@ function LeaderboardsPage() {
   )
 
   return (
-    <main className="min-h-screen bg-[#07101d] px-4 py-5 text-slate-100 sm:px-8 sm:py-8">
-      <div className="mx-auto max-w-7xl space-y-5">
-        <header className="flex flex-col gap-4 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            to="/"
-            className="group flex items-center gap-2.5 text-white transition-colors hover:text-sky-300"
-          >
-            <span className="grid h-8 w-8 place-items-center border border-sky-400/40 bg-sky-400/10 font-display text-lg font-black text-sky-300 transition-colors group-hover:border-sky-300/70 group-hover:text-sky-200">
-              FM
-            </span>
-            <span className="font-display text-lg font-bold uppercase tracking-[0.15em] sm:text-xl">
-              Squad Archive
-            </span>
+    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100 sm:px-8 sm:py-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="flex flex-col gap-4 border-b border-slate-800 pb-6 sm:flex-row sm:items-center sm:justify-between">
+          <Link to="/" className="flex items-center gap-2.5 text-white transition-colors hover:text-emerald-300">
+            <span className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
+            <span className="font-heading text-xl font-extrabold tracking-wider">FM SQUAD ARCHIVE</span>
           </Link>
 
-          <nav className="flex items-center gap-1 overflow-x-auto font-mono text-[9px] uppercase tracking-[0.18em] sm:text-[10px]">
-            <Link
-              to="/"
-              activeOptions={{ exact: true }}
-              activeProps={{ className: 'bg-white/[0.06] text-white' }}
-              className="whitespace-nowrap px-3 py-2 text-slate-500 transition-colors hover:text-slate-100"
-            >
-              Directory
-            </Link>
-            <Link
-              to="/hall-of-fame"
-              activeProps={{ className: 'bg-white/[0.06] text-amber-300' }}
-              className="whitespace-nowrap px-3 py-2 text-slate-500 transition-colors hover:text-slate-100"
-            >
-              Hall of Fame
-            </Link>
-            <Link
-              to="/leaderboards"
-              activeProps={{ className: 'bg-sky-400/10 text-sky-300' }}
-              className="whitespace-nowrap px-3 py-2 text-sky-300 transition-colors"
-            >
-              Records
-            </Link>
-            <Link
-              to="/compare"
-              activeProps={{ className: 'bg-white/[0.06] text-white' }}
-              className="whitespace-nowrap px-3 py-2 text-slate-500 transition-colors hover:text-slate-100"
-            >
-              Compare
-            </Link>
+          <nav className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
+            <Link to="/" className="transition-colors hover:text-white">DIRECTORY</Link>
+            <Link to="/hall-of-fame" className="transition-colors hover:text-white">HALL OF FAME</Link>
+            <Link to="/leaderboards" className="border-b-2 border-emerald-400 pb-1 font-bold text-emerald-400">RECORDS</Link>
+            <Link to="/compare" className="transition-colors hover:text-white">COMPARE</Link>
           </nav>
         </header>
 
-        <section className="relative overflow-hidden border border-slate-800 bg-[#0a1423]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(56,189,248,0.12),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.02),transparent_45%)]" />
+        <section className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_0%,rgba(52,211,153,0.08),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.015),transparent_48%)]" />
           <div className="relative p-5 sm:p-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="font-mono text-[9px] uppercase tracking-[0.32em] text-sky-400">
+                <div className="font-mono text-[9px] uppercase tracking-[0.32em] text-emerald-400">
                   Statistical Records Room / Database Index
                 </div>
                 <h1 className="mt-2 font-display text-4xl font-black uppercase tracking-[0.03em] text-white sm:text-6xl">
@@ -313,7 +281,7 @@ function LeaderboardsPage() {
           </div>
         </section>
 
-        <section className="border border-slate-800 bg-[#0a1423]">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md">
           <div className="flex flex-col gap-4 border-b border-slate-800 p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-slate-600">Record selector</div>
@@ -331,8 +299,8 @@ function LeaderboardsPage() {
                 onClick={() => setMetric(item)}
                 className={
                   metric === item
-                    ? 'whitespace-nowrap border border-sky-400/50 bg-sky-400/10 px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-sky-300 transition-colors'
-                    : 'whitespace-nowrap border border-slate-800 bg-[#07101b] px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500 transition-colors hover:border-slate-600 hover:text-slate-200'
+                    ? 'whitespace-nowrap rounded-lg border border-emerald-400/50 bg-emerald-400/10 px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-emerald-300 transition-colors'
+                    : 'whitespace-nowrap rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500 transition-colors hover:border-slate-700 hover:text-slate-200'
                 }
               >
                 {METRIC_LABELS[item]}
@@ -342,7 +310,7 @@ function LeaderboardsPage() {
         </section>
 
         {leader && (
-          <section className="relative overflow-hidden border border-amber-400/20 bg-[#0a1423]">
+          <section className="relative overflow-hidden rounded-2xl border border-amber-400/20 bg-slate-900/75 backdrop-blur-md">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(251,191,36,0.08),transparent_30%),linear-gradient(90deg,rgba(251,191,36,0.025),transparent_40%)]" />
             <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
               <div className="font-display text-4xl font-black text-amber-300 sm:text-5xl">#01</div>
@@ -362,7 +330,7 @@ function LeaderboardsPage() {
                   <Link
                     to="/player/$id"
                     params={{ id: String(leader.id) }}
-                    className="block truncate font-display text-2xl font-black uppercase tracking-wide text-white transition-colors hover:text-sky-300"
+                    className="block truncate font-display text-2xl font-black uppercase tracking-wide text-white transition-colors hover:text-emerald-300"
                   >
                     {leader.name}
                   </Link>
@@ -391,7 +359,7 @@ function LeaderboardsPage() {
           </section>
         )}
 
-        <section className="border border-slate-800 bg-[#0a1423]">
+        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md">
           <div className="flex flex-col gap-2 border-b border-slate-800 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
             <div>
               <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-slate-600">Record Ledger / Top {TOP_LIMIT}</div>
@@ -475,7 +443,7 @@ function LeaderboardsPage() {
                       <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-500">
                         {numberValue(player, 'apps').toLocaleString()}
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-sm font-black tabular-nums text-sky-300">
+                      <td className="px-5 py-3 text-right font-mono text-sm font-black tabular-nums text-emerald-300">
                         {formatValue(value, metric)}
                       </td>
                     </tr>
@@ -492,8 +460,8 @@ function LeaderboardsPage() {
           )}
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="border border-slate-800 bg-[#0a1423] p-5 sm:p-6">
+        <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 backdrop-blur-md sm:p-6">
             <div className="font-mono text-[9px] uppercase tracking-[0.24em] text-slate-600">Methodology / Advanced metrics</div>
             <h2 className="mt-1 font-display text-xl font-black uppercase text-white">Read the numbers correctly</h2>
             <div className="mt-4 space-y-3 font-mono text-[10px] leading-relaxed text-slate-500">
@@ -508,7 +476,7 @@ function LeaderboardsPage() {
               </p>
             </div>
           </div>
-          <div className="border border-slate-800 bg-[#0a1423] p-5 sm:p-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 backdrop-blur-md sm:p-6">
             <div className="font-mono text-[9px] uppercase tracking-[0.24em] text-slate-600">GOAT index / weighting</div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Weight label="APPS" value="10%" />
@@ -532,7 +500,7 @@ function LeaderboardsPage() {
 
 function MetricCard({ label, value, suffix }: { label: string; value: number; suffix?: string }) {
   return (
-    <div className="border border-slate-800 bg-[#07101b] px-3 py-3">
+    <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-3">
       <div className="font-mono text-lg font-black tabular-nums text-slate-100">
         {value.toLocaleString()}
         {suffix ? <span className="ml-1 text-[8px] font-normal tracking-widest text-slate-600">{suffix}</span> : null}
@@ -544,7 +512,7 @@ function MetricCard({ label, value, suffix }: { label: string; value: number; su
 
 function Weight({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-slate-800 bg-[#07101b] px-3 py-2">
+    <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2">
       <div className="font-mono text-[8px] uppercase tracking-widest text-slate-600">{label}</div>
       <div className="mt-1 font-mono text-sm font-black tabular-nums text-slate-200">{value}</div>
     </div>

@@ -5,18 +5,37 @@ import { Player } from '../lib/types'
 import { storageUrl } from '../lib/fm'
 import { Flag } from '../components/fm/PlayerCard'
 
+const MIN_RATE_APPS = 50
+const TOP_LIMIT = 50
+
+type RateMetric = 'gpg' | 'goals_per_100' | 'assists_per_100' | 'ga_per_100'
+type Metric =
+  | 'apps'
+  | 'goals'
+  | 'assists'
+  | 'ga'
+  | 'trophies'
+  | 'awards'
+  | 'ballon_dor'
+  | RateMetric
+  | 'goat'
+
+type AwardRow = {
+  player_id: string | null
+  name: string | null
+  amount: number | null
+}
+
 export const Route = createFileRoute('/leaderboards')({
   loader: async () => {
-    let { data, error } = await supabase
-      .from('player_directory_view')
-      .select('*')
+    let { data, error } = await supabase.from('player_directory_view').select('*')
 
     if (error || !data || data.length === 0) {
       const fallback = await supabase.from('players').select('*')
       data = fallback.data || []
     }
 
-    const awardRows: Array<{ player_id: string | null; name: string | null; amount: number | null }> = []
+    const awardRows: AwardRow[] = []
     const pageSize = 1000
     let from = 0
 
@@ -27,12 +46,14 @@ export const Route = createFileRoute('/leaderboards')({
         .range(from, from + pageSize - 1)
 
       if (awardsError || !page || page.length === 0) break
+
       awardRows.push(...page)
       if (page.length < pageSize) break
       from += pageSize
     }
 
     const ballonDorCounts: Record<string, number> = {}
+
     for (const award of awardRows) {
       const awardName = String(award.name || '')
         .toLowerCase()
@@ -42,59 +63,93 @@ export const Route = createFileRoute('/leaderboards')({
         .replace(/[^a-z0-9]+/g, ' ')
         .trim()
 
-      if (awardName.includes('ballon dor')) {
-        const playerId = String(award.player_id || '')
-        if (playerId) {
-          ballonDorCounts[playerId] = (ballonDorCounts[playerId] || 0) + Number(award.amount || 1)
-        }
-      }
+      if (!awardName.includes('ballon dor')) continue
+
+      const playerId = String(award.player_id || '')
+      if (!playerId) continue
+
+      ballonDorCounts[playerId] = (ballonDorCounts[playerId] || 0) + Number(award.amount || 1)
     }
 
-    return { players: (data || []) as Player[], ballonDorCounts }
+    return {
+      players: (data || []) as Player[],
+      ballonDorCounts,
+    }
   },
   component: LeaderboardsPage,
 })
 
-type Metric = 'trophies' | 'apps' | 'goals' | 'assists' | 'ga' | 'gpg' | 'ballon_dor' | 'awards' | 'goals_per_100' | 'ga_per_100' | 'assists_per_100' | 'goat'
+const METRIC_LABELS: Record<Metric, string> = {
+  apps: 'Appearances',
+  goals: 'Goals',
+  assists: 'Assists',
+  ga: 'G+A',
+  trophies: 'Trophies',
+  awards: 'Awards',
+  ballon_dor: "Ballon d'Or",
+  gpg: 'Goals / Game',
+  goals_per_100: 'Goals / 100 Apps',
+  assists_per_100: 'Assists / 100 Apps',
+  ga_per_100: 'G+A / 100 Apps',
+  goat: 'GOAT Score',
+}
+
+const METRICS: Metric[] = [
+  'apps',
+  'goals',
+  'assists',
+  'ga',
+  'trophies',
+  'awards',
+  'ballon_dor',
+  'gpg',
+  'goals_per_100',
+  'assists_per_100',
+  'ga_per_100',
+  'goat',
+]
+
+function numberValue(player: Player, key: string): number {
+  return Number((player as any)[key] ?? 0) || 0
+}
+
+function getBaseStats(player: Player) {
+  const apps = numberValue(player, 'apps')
+  const goals = numberValue(player, 'goals')
+  const assists = numberValue(player, 'assists')
+  return {
+    apps,
+    goals,
+    assists,
+    ga: goals + assists,
+    trophies: numberValue(player, 'trophies'),
+    awards: numberValue(player, 'awards'),
+  }
+}
 
 function getStatValue(player: Player, metric: Metric, ballonDorCounts: Record<string, number>): number {
-  const apps = Number((player as any).apps ?? 0)
-  const goals = Number((player as any).goals ?? 0)
-  const assists = Number((player as any).assists ?? 0)
+  const { apps, goals, assists, ga, trophies, awards } = getBaseStats(player)
 
-  if (metric === 'ga') return goals + assists
+  if (metric === 'apps') return apps
+  if (metric === 'goals') return goals
+  if (metric === 'assists') return assists
+  if (metric === 'ga') return ga
+  if (metric === 'trophies') return trophies
+  if (metric === 'awards') return awards
+  if (metric === 'ballon_dor') return ballonDorCounts[String(player.id)] || 0
   if (metric === 'gpg') return apps > 0 ? goals / apps : 0
   if (metric === 'goals_per_100') return apps > 0 ? (goals / apps) * 100 : 0
   if (metric === 'assists_per_100') return apps > 0 ? (assists / apps) * 100 : 0
-  if (metric === 'ga_per_100') return apps > 0 ? ((goals + assists) / apps) * 100 : 0
-  if (metric === 'ballon_dor') return ballonDorCounts[String(player.id)] || 0
-  return Number((player as any)[metric] ?? 0)
+  if (metric === 'ga_per_100') return apps > 0 ? (ga / apps) * 100 : 0
+  return 0
 }
 
-function getMetricLabel(metric: Metric): string {
-  const labels: Record<Metric, string> = {
-    trophies: 'Trophies',
-    apps: 'Appearances',
-    goals: 'Goals',
-    assists: 'Assists',
-    ga: 'G+A',
-    gpg: 'G/GM',
-    ballon_dor: "Ballon d'Or",
-    awards: 'Awards',
-    goals_per_100: 'Goals / 100 Apps',
-    assists_per_100: 'Assists / 100 Apps',
-    ga_per_100: 'G+A / 100 Apps',
-    goat: 'GOAT Score',
-  }
-  return labels[metric]
-}
-
-function normalize(value: number, max: number) {
+function normalized(value: number, max: number): number {
   return max > 0 ? value / max : 0
 }
 
 function getGoatScore(player: Player, players: Player[], ballonDorCounts: Record<string, number>): number {
-  const metrics: Array<[Metric, number]> = [
+  const components: Array<[Metric, number]> = [
     ['apps', 10],
     ['goals', 20],
     ['assists', 20],
@@ -104,204 +159,278 @@ function getGoatScore(player: Player, players: Player[], ballonDorCounts: Record
   ]
 
   let score = 0
-  for (const [metric, weight] of metrics) {
-    const max = Math.max(...players.map((p) => getStatValue(p, metric, ballonDorCounts)), 0)
-    score += normalize(getStatValue(player, metric, ballonDorCounts), max) * weight
+
+  for (const [metric, weight] of components) {
+    const maximum = Math.max(...players.map((p) => getStatValue(p, metric, ballonDorCounts)), 0)
+    score += normalized(getStatValue(player, metric, ballonDorCounts), maximum) * weight
   }
 
-  // Status/Legacy is a deliberate prestige component:
-  // Legend = full 5%, Icon = 75% of the component, everyone else = 0%.
   const status = String((player as any).status ?? '').toLowerCase()
-  const statusLegacyScore = status.includes('legend')
-    ? 1
-    : status.includes('icon')
-      ? 0.75
-      : 0
+  const legacyComponent = status.includes('legend') ? 1 : status.includes('icon') ? 0.75 : 0
 
-  score += statusLegacyScore * 5
-  return score
+  return score + legacyComponent * 5
 }
 
-function formatMetricValue(value: number, metric: Metric) {
-  if (metric === 'gpg' || metric === 'goals_per_100' || metric === 'assists_per_100' || metric === 'ga_per_100' || metric === 'goat') {
-    return value.toFixed(2)
-  }
+function getMetricValue(player: Player, metric: Metric, players: Player[], ballonDorCounts: Record<string, number>) {
+  return metric === 'goat'
+    ? getGoatScore(player, players, ballonDorCounts)
+    : getStatValue(player, metric, ballonDorCounts)
+}
+
+function isRateMetric(metric: Metric): metric is RateMetric {
+  return metric === 'gpg' || metric === 'goals_per_100' || metric === 'assists_per_100' || metric === 'ga_per_100'
+}
+
+function eligibleForMetric(player: Player, metric: Metric, ballonDorCounts: Record<string, number>): boolean {
+  if (metric === 'ballon_dor') return (ballonDorCounts[String(player.id)] || 0) > 0
+  if (isRateMetric(metric)) return numberValue(player, 'apps') >= MIN_RATE_APPS
+  return true
+}
+
+function formatValue(value: number, metric: Metric): string {
+  if (metric === 'goat' || isRateMetric(metric)) return value.toFixed(2)
   return value.toLocaleString()
 }
 
-function statusClasses(player: Player) {
+function statusKind(player: Player): 'legend' | 'icon' | 'other' {
   const status = String((player as any).status ?? '').toLowerCase()
-  if (status.includes('legend')) return 'border-amber-400/40 bg-amber-400/10 text-amber-300'
-  if (status.includes('icon')) return 'border-slate-300/40 bg-slate-300/10 text-slate-200'
-  return 'border-slate-700 bg-slate-950/70 text-slate-400'
+  if (status.includes('legend')) return 'legend'
+  if (status.includes('icon')) return 'icon'
+  return 'other'
+}
+
+function statusClasses(player: Player): string {
+  const kind = statusKind(player)
+  if (kind === 'legend') return 'border-amber-400/35 bg-amber-400/10 text-amber-300'
+  if (kind === 'icon') return 'border-slate-300/30 bg-slate-200/10 text-slate-200'
+  return 'border-white/10 bg-white/[0.03] text-slate-500'
 }
 
 function LeaderboardsPage() {
   const { players, ballonDorCounts } = Route.useLoaderData()
-  const [metric, setMetric] = useState<Metric>('trophies')
+  const [metric, setMetric] = useState<Metric>('goals')
 
-  const metrics: Metric[] = [
-    'trophies', 'apps', 'goals', 'assists', 'ga', 'gpg', 'goals_per_100', 'assists_per_100', 'ga_per_100', 'ballon_dor', 'awards', 'goat',
-  ]
-
-  const topPlayers = useMemo(() => {
+  const rankedPlayers = useMemo(() => {
     return [...players]
-      .filter((player) => metric !== 'ballon_dor' || getStatValue(player, metric, ballonDorCounts) > 0)
+      .filter((player) => eligibleForMetric(player, metric, ballonDorCounts))
       .sort((a, b) => {
-        const valueA = metric === 'goat' ? getGoatScore(a, players, ballonDorCounts) : getStatValue(a, metric, ballonDorCounts)
-        const valueB = metric === 'goat' ? getGoatScore(b, players, ballonDorCounts) : getStatValue(b, metric, ballonDorCounts)
-        return valueB - valueA
-      })
-      .slice(0, 50)
-  }, [players, metric, ballonDorCounts])
+        const valueA = getMetricValue(a, metric, players, ballonDorCounts)
+        const valueB = getMetricValue(b, metric, players, ballonDorCounts)
+        if (valueB !== valueA) return valueB - valueA
 
-  const leader = topPlayers[0]
-  const leaderValue = leader
-    ? metric === 'goat'
-      ? getGoatScore(leader, players, ballonDorCounts)
-      : getStatValue(leader, metric, ballonDorCounts)
-    : 0
+        const appsA = numberValue(a, 'apps')
+        const appsB = numberValue(b, 'apps')
+        if (appsB !== appsA) return appsB - appsA
+
+        const goalsA = numberValue(a, 'goals')
+        const goalsB = numberValue(b, 'goals')
+        if (goalsB !== goalsA) return goalsB - goalsA
+
+        return String(a.name || '').localeCompare(String(b.name || ''))
+      })
+      .slice(0, TOP_LIMIT)
+  }, [ballonDorCounts, metric, players])
+
+  const leader = rankedPlayers[0]
+  const leaderValue = leader ? getMetricValue(leader, metric, players, ballonDorCounts) : 0
+  const eligibleCount = useMemo(
+    () => players.filter((player) => eligibleForMetric(player, metric, ballonDorCounts)).length,
+    [ballonDorCounts, metric, players],
+  )
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-heading font-extrabold tracking-wider text-xl text-white">FM SQUAD ARCHIVE</span>
+    <main className="min-h-screen bg-[#07101d] px-4 py-5 text-slate-100 sm:px-8 sm:py-8">
+      <div className="mx-auto max-w-7xl space-y-5">
+        <section className="relative overflow-hidden border border-slate-800 bg-[#0a1423]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(56,189,248,0.12),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.02),transparent_45%)]" />
+          <div className="relative p-5 sm:p-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.32em] text-sky-400">
+                  Statistical Records Room / Database Index
+                </div>
+                <h1 className="mt-2 font-display text-4xl font-black uppercase tracking-[0.03em] text-white sm:text-6xl">
+                  Records
+                </h1>
+                <p className="mt-3 max-w-3xl font-mono text-[10px] leading-relaxed tracking-wide text-slate-500 sm:text-xs">
+                  Career-wide statistical records, efficiency benchmarks, honours, and the archive composite GOAT index.
+                  All rankings resolve from the live player database.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <MetricCard label="PLAYERS" value={players.length} />
+                <MetricCard label="RANKED" value={eligibleCount} />
+                <MetricCard label="TOP LIMIT" value={TOP_LIMIT} />
+                <MetricCard label="RATE FLOOR" value={MIN_RATE_APPS} suffix="APPS" />
+              </div>
             </div>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">All-time statistical records</p>
           </div>
-          <nav className="flex items-center gap-5 font-mono text-xs uppercase tracking-widest text-slate-400">
-            <Link to="/" className="hover:text-white transition-colors">DIRECTORY</Link>
-            <Link to="/hall-of-fame" className="hover:text-white transition-colors">HALL OF FAME</Link>
-            <Link to="/leaderboards" className="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-1">RECORDS</Link>
-            <Link to="/compare" className="hover:text-white transition-colors">COMPARE</Link>
-          </nav>
-        </div>
+        </section>
 
-        <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
-          <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-400">Archive Records</p>
-          <h1 className="mt-1 font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-wide uppercase">HALL OF FAME</h1>
-          <p className="text-slate-400 text-xs font-mono mt-2 max-w-3xl">
-            Career totals, efficiency records, honours, and the FM Squad Archive's composite GOAT score.
-          </p>
-
-          <div className="flex flex-wrap gap-2 mt-5 font-mono text-[10px]">
-            {metrics.map((m) => (
+        <section className="border border-slate-800 bg-[#0a1423]">
+          <div className="flex flex-col gap-4 border-b border-slate-800 p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-slate-600">Record selector</div>
+              <h2 className="mt-1 font-display text-2xl font-black uppercase tracking-wide text-white">Choose a statistical axis</h2>
+            </div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">
+              Career totals / efficiency / prestige
+            </div>
+          </div>
+          <div className="flex gap-2 overflow-x-auto p-4 sm:flex-wrap sm:p-5">
+            {METRICS.map((item) => (
               <button
-                key={m}
-                onClick={() => setMetric(m)}
-                className={`px-3 py-2 rounded-lg font-bold uppercase transition-all ${
-                  metric === m
-                    ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                    : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
-                }`}
+                key={item}
+                type="button"
+                onClick={() => setMetric(item)}
+                className={
+                  metric === item
+                    ? 'whitespace-nowrap border border-sky-400/50 bg-sky-400/10 px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-sky-300 transition-colors'
+                    : 'whitespace-nowrap border border-slate-800 bg-[#07101b] px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500 transition-colors hover:border-slate-600 hover:text-slate-200'
+                }
               >
-                {getMetricLabel(m)}
+                {METRIC_LABELS[item]}
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
         {leader && (
-          <div className="relative overflow-hidden p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-amber-400/20 backdrop-blur-md shadow-[0_0_45px_rgba(251,191,36,0.06)]">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-amber-400/10 via-transparent to-emerald-400/5" />
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="text-3xl font-heading font-extrabold text-amber-300">#1</div>
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-700 flex items-center justify-center p-1 shrink-0">
-                {(leader as any).image_url || (leader as any).photo_url ? (
-                  <img src={storageUrl((leader as any).image_url || (leader as any).photo_url)} alt={leader.name} className="w-full h-full object-contain" />
-                ) : <span className="text-[8px] text-slate-500">NO IMG</span>}
-              </div>
-              <div className="min-w-0 flex-1">
-                <Link to="/player/$id" params={{ id: String(leader.id) }} className="font-heading text-xl font-extrabold uppercase text-white hover:text-emerald-400 transition-colors">
-                  {leader.name}
-                </Link>
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-mono text-slate-400 uppercase">
-                  <Flag url={(leader as any).nationality_flag_url || (leader as any).nation_flag || null} name={(leader as any).nationality || (leader as any).nation || 'Global'} />
-                  <span>{(leader as any).nationality || (leader as any).nation || 'Global'}</span>
-                  <span>•</span>
-                  <span className={`px-1.5 py-0.5 rounded border ${statusClasses(leader)}`}>{(leader as any).status || 'SQUAD'}</span>
+          <section className="relative overflow-hidden border border-amber-400/20 bg-[#0a1423]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(251,191,36,0.08),transparent_30%),linear-gradient(90deg,rgba(251,191,36,0.025),transparent_40%)]" />
+            <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+              <div className="font-display text-4xl font-black text-amber-300 sm:text-5xl">#01</div>
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="h-14 w-14 shrink-0 overflow-hidden border border-slate-700 bg-[#050b14] p-1">
+                  {(leader as any).image_url || (leader as any).photo_url ? (
+                    <img
+                      src={storageUrl((leader as any).image_url || (leader as any).photo_url)}
+                      alt={leader.name}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <div className="grid h-full place-items-center font-mono text-[8px] text-slate-700">NO IMG</div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <Link
+                    to="/player/$id"
+                    params={{ id: String(leader.id) }}
+                    className="block truncate font-display text-2xl font-black uppercase tracking-wide text-white transition-colors hover:text-sky-300"
+                  >
+                    {leader.name}
+                  </Link>
+                  <div className="mt-1 flex items-center gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
+                    <Flag
+                      url={(leader as any).nationality_flag_url || (leader as any).nation_flag || null}
+                      name={(leader as any).nationality || (leader as any).nation || 'Global'}
+                    />
+                    <span>{(leader as any).nationality || (leader as any).nation || 'Global'}</span>
+                    <span className={`border px-1.5 py-0.5 ${statusClasses(leader)}`}>
+                      {(leader as any).status || 'SQUAD'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="sm:text-right">
-                <div className="text-[9px] font-mono uppercase tracking-widest text-slate-500">Current leader</div>
-                <div className="mt-1 text-2xl font-mono font-extrabold text-amber-300">{formatMetricValue(leaderValue, metric)}</div>
-                <div className="text-[9px] font-mono uppercase text-slate-500">{getMetricLabel(metric)}</div>
+              <div className="border-l border-slate-800 pl-5 lg:text-right">
+                <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-600">Current record holder</div>
+                <div className="mt-1 font-mono text-3xl font-black tabular-nums text-amber-300 sm:text-4xl">
+                  {formatValue(leaderValue, metric)}
+                </div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">
+                  {METRIC_LABELS[metric]}
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {metric === 'goat' && (
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-[10px] font-mono text-slate-500 leading-relaxed">
-            <span className="text-slate-300 font-bold">GOAT SCORE FORMULA:</span> Apps 10% • Goals 20% • Assists 20% • Trophies 25% • Awards 15% • Ballon d'Or 5% • Status/Legacy 5%. Status/Legacy: Legend = 100%, Icon = 75%, other status = 0%. Each statistical category is normalized against the strongest player in the current archive.
-          </div>
-        )}
-
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md overflow-hidden">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-800 flex items-end justify-between gap-4">
+        <section className="border border-slate-800 bg-[#0a1423]">
+          <div className="flex flex-col gap-2 border-b border-slate-800 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-slate-500">Top 50 records</p>
-              <h2 className="mt-1 font-heading text-xl sm:text-2xl font-extrabold uppercase text-white">{getMetricLabel(metric)}</h2>
+              <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-slate-600">Record Ledger / Top {TOP_LIMIT}</div>
+              <h2 className="mt-1 font-display text-2xl font-black uppercase text-white sm:text-3xl">{METRIC_LABELS[metric]}</h2>
             </div>
-            <div className="text-[10px] font-mono uppercase text-slate-500">{topPlayers.length} ranked</div>
+            <div className="font-mono text-[9px] uppercase tracking-widest text-slate-600">
+              {eligibleCount.toLocaleString()} eligible profiles
+            </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono text-xs sm:text-sm">
+            <table className="w-full min-w-[760px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-500 uppercase text-[9px]">
-                  <th className="py-3 px-4">#</th>
-                  <th className="py-3 px-4">Player</th>
-                  <th className="py-3 px-4">Nation</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">{getMetricLabel(metric)}</th>
+                <tr className="border-b border-slate-800 font-mono text-[8px] uppercase tracking-[0.2em] text-slate-600">
+                  <th className="px-5 py-3 text-left">Rank</th>
+                  <th className="px-5 py-3">Player</th>
+                  <th className="px-5 py-3">Nation</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Apps</th>
+                  <th className="px-5 py-3 text-right">Record</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {topPlayers.map((player, idx) => {
-                  const playerImage = (player as any).image_url || (player as any).photo_url || ''
-                  const playerNation = (player as any).nationality || (player as any).nation || 'Global'
-                  const playerFlag = (player as any).nationality_flag_url || (player as any).nation_flag || null
-                  const value = metric === 'goat' ? getGoatScore(player, players, ballonDorCounts) : getStatValue(player, metric, ballonDorCounts)
-                  const isTopThree = idx < 3
+              <tbody className="divide-y divide-slate-900">
+                {rankedPlayers.map((player, index) => {
+                  const value = getMetricValue(player, metric, players, ballonDorCounts)
+                  const nation = (player as any).nationality || (player as any).nation || 'Global'
+                  const flag = (player as any).nationality_flag_url || (player as any).nation_flag || null
+                  const image = (player as any).image_url || (player as any).photo_url || ''
+                  const rankClass =
+                    index === 0
+                      ? 'text-amber-300'
+                      : index === 1
+                        ? 'text-slate-200'
+                        : index === 2
+                          ? 'text-orange-300'
+                          : 'text-slate-600'
 
                   return (
-                    <tr key={player.id} className="group hover:bg-slate-800/40 transition-colors">
-                      <td className={`py-3 px-4 font-bold ${idx === 0 ? 'text-amber-300' : idx === 1 ? 'text-slate-200' : idx === 2 ? 'text-orange-300' : 'text-slate-500'}`}>
-                        {isTopThree ? ['🥇', '🥈', '🥉'][idx] : idx + 1}
+                    <tr key={player.id} className="group transition-colors hover:bg-white/[0.018]">
+                      <td className={`px-5 py-3 font-mono text-xs font-bold tabular-nums ${rankClass}`}>
+                        {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="py-3 px-4">
-                        <Link to="/player/$id" params={{ id: String(player.id) }} className="flex items-center gap-3 group/link">
-                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex-shrink-0 flex items-center justify-center p-0.5">
-                            {playerImage ? (
-                              <img src={storageUrl(playerImage)} alt={player.name} className="w-full h-full object-contain transition-transform duration-300 group-hover/link:scale-105" />
+                      <td className="px-5 py-3">
+                        <Link
+                          to="/player/$id"
+                          params={{ id: String(player.id) }}
+                          className="flex items-center gap-3"
+                        >
+                          <div className="h-10 w-10 shrink-0 overflow-hidden border border-slate-800 bg-[#07101b] p-0.5">
+                            {image ? (
+                              <img
+                                src={storageUrl(image)}
+                                alt={player.name}
+                                className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
+                              />
                             ) : (
-                              <span className="text-[8px] text-slate-500">NO IMG</span>
+                              <div className="grid h-full place-items-center font-mono text-[7px] text-slate-700">NO IMG</div>
                             )}
                           </div>
-                          <div>
-                            <div className="font-bold text-white uppercase group-hover/link:text-emerald-400 transition-colors">{player.name}</div>
-                            <div className="text-[9px] text-slate-500">{(player as any).role || (player as any).positions_short || '-'}</div>
+                          <div className="min-w-0">
+                            <div className="truncate font-display text-sm font-bold uppercase tracking-wide text-slate-200 transition-colors group-hover:text-white">
+                              {player.name}
+                            </div>
+                            <div className="mt-0.5 truncate font-mono text-[8px] uppercase tracking-widest text-slate-600">
+                              {(player as any).role || (player as any).positions_short || 'PLAYER'}
+                            </div>
                           </div>
                         </Link>
                       </td>
-                      <td className="py-3 px-4 text-slate-300">
-                        <div className="flex items-center gap-2">
-                          <Flag url={playerFlag} name={playerNation} />
-                          <span>{playerNation}</span>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2 font-mono text-[9px] uppercase text-slate-400">
+                          <Flag url={flag} name={nation} />
+                          <span className="whitespace-nowrap">{nation}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex px-2 py-1 rounded border text-[9px] font-bold uppercase ${statusClasses(player)}`}>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex border px-2 py-1 font-mono text-[8px] font-bold uppercase tracking-widest ${statusClasses(player)}`}>
                           {(player as any).status || 'SQUAD'}
                         </span>
                       </td>
-                      <td className={`py-3 px-4 text-right font-extrabold text-base ${metric === 'goat' || metric === 'ballon_dor' || metric === 'trophies' ? 'text-amber-300' : 'text-emerald-300'}`}>
-                        {formatMetricValue(value, metric)}
+                      <td className="px-5 py-3 text-right font-mono text-xs tabular-nums text-slate-500">
+                        {numberValue(player, 'apps').toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-sm font-black tabular-nums text-sky-300">
+                        {formatValue(value, metric)}
                       </td>
                     </tr>
                   )
@@ -309,8 +438,69 @@ function LeaderboardsPage() {
               </tbody>
             </table>
           </div>
+
+          {!rankedPlayers.length && (
+            <div className="border-t border-slate-800 p-10 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-slate-700">
+              No qualifying records in this archive.
+            </div>
+          )}
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="border border-slate-800 bg-[#0a1423] p-5 sm:p-6">
+            <div className="font-mono text-[9px] uppercase tracking-[0.24em] text-slate-600">Methodology / Advanced metrics</div>
+            <h2 className="mt-1 font-display text-xl font-black uppercase text-white">Read the numbers correctly</h2>
+            <div className="mt-4 space-y-3 font-mono text-[10px] leading-relaxed text-slate-500">
+              <p>
+                Rate-based records require at least {MIN_RATE_APPS.toLocaleString()} appearances. This prevents extremely small samples from dominating efficiency leaderboards.
+              </p>
+              <p>
+                G+A is calculated as goals plus assists. Per-100 figures are derived from career totals divided by appearances, then scaled to 100 matches.
+              </p>
+              <p>
+                The GOAT index uses normalized career output across appearances, goals, assists, trophies, awards, and Ballon d&apos;Or wins, plus a legacy component for Legends and Icons.
+              </p>
+            </div>
+          </div>
+          <div className="border border-slate-800 bg-[#0a1423] p-5 sm:p-6">
+            <div className="font-mono text-[9px] uppercase tracking-[0.24em] text-slate-600">GOAT index / weighting</div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Weight label="APPS" value="10%" />
+              <Weight label="GOALS" value="20%" />
+              <Weight label="ASSISTS" value="20%" />
+              <Weight label="TROPHIES" value="25%" />
+              <Weight label="AWARDS" value="15%" />
+              <Weight label="BALLON D'OR" value="5%" />
+              <Weight label="LEGACY" value="5%" />
+            </div>
+          </div>
+        </section>
+
+        <div className="border-t border-slate-900 pt-4 font-mono text-[8px] uppercase tracking-[0.24em] text-slate-700">
+          FM SQUAD ARCHIVE // STATISTICAL RECORDS ROOM // SOURCE: LIVE PLAYER DATABASE + AWARDS ARCHIVE
         </div>
       </div>
+    </main>
+  )
+}
+
+function MetricCard({ label, value, suffix }: { label: string; value: number; suffix?: string }) {
+  return (
+    <div className="border border-slate-800 bg-[#07101b] px-3 py-3">
+      <div className="font-mono text-lg font-black tabular-nums text-slate-100">
+        {value.toLocaleString()}
+        {suffix ? <span className="ml-1 text-[8px] font-normal tracking-widest text-slate-600">{suffix}</span> : null}
+      </div>
+      <div className="mt-1 font-mono text-[7px] uppercase tracking-[0.2em] text-slate-600">{label}</div>
+    </div>
+  )
+}
+
+function Weight({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-slate-800 bg-[#07101b] px-3 py-2">
+      <div className="font-mono text-[8px] uppercase tracking-widest text-slate-600">{label}</div>
+      <div className="mt-1 font-mono text-sm font-black tabular-nums text-slate-200">{value}</div>
     </div>
   )
 }

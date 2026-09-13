@@ -63,7 +63,7 @@ function DirectoryPage() {
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
-  const [genderMode, setGenderMode] = useState<'both' | 'male' | 'female'>('male')
+  const [genderMode, setGenderMode] = useState<'both' | 'male' | 'female'>('both')
 
   const genderTheme = useMemo(() => {
     if (genderMode === 'female') {
@@ -111,6 +111,7 @@ function DirectoryPage() {
           nation?: string
           sortBy?: string
           page?: number
+          genderMode?: 'both' | 'male' | 'female'
         }
 
         if (typeof state.search === 'string') setSearch(state.search)
@@ -129,6 +130,13 @@ function DirectoryPage() {
         if (typeof state.page === 'number' && Number.isFinite(state.page) && state.page >= 1) {
           setPage(Math.floor(state.page))
         }
+        if (
+          state.genderMode === 'both' ||
+          state.genderMode === 'male' ||
+          state.genderMode === 'female'
+        ) {
+          setGenderMode(state.genderMode)
+        }
       }
     } catch {
       // Ignore malformed saved directory state and use the defaults.
@@ -142,9 +150,9 @@ function DirectoryPage() {
 
     localStorage.setItem(
       'fm_directory_state',
-      JSON.stringify({ search, status, club, nation, sortBy, page }),
+      JSON.stringify({ search, status, genderMode, club, nation, sortBy, page }),
     )
-  }, [filtersReady, search, status, club, nation, sortBy, page])
+  }, [filtersReady, search, status, genderMode, club, nation, sortBy, page])
 
   const toggleGenderMode = () => {
     if (archiveProfile === 'Yggdrasil') return
